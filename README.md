@@ -12,9 +12,9 @@ lessons, review your games, earn achievements, and play online against friends.
   Mistake/Blunder classifications, accuracy for both sides, eval graph, best-move arrows.
 * **Puzzles** — rated (Glicko-2) with ranks, Puzzle Rush (3 min / 5 min / Survival), a daily puzzle
   with streaks, and practice by theme (mates, forks, pins, discovered attacks, sacrifices…).
-* **Lessons** — 5 courses, 47 interactive lessons: how pieces move (with star-collecting
+* **Lessons** — 5 courses, 48 interactive lessons: how pieces move (with star-collecting
   mini-games), checkmate patterns, tactics, openings (Italian, Ruy Lopez, Scotch, Sicilian,
-  French, Caro-Kann, Queen's Gambit, London, King's Indian, English) and endgames (two-bishop mate, opposition, key squares, Lucena, Philidor…).
+  French, Caro-Kann, Queen's Gambit, London, King's Indian, English) and endgames (two-bishop and bishop-knight mates, opposition, key squares, Lucena, Philidor…).
 * **Online play** — quick pairing by time control or private games with a friend code (with rematches), against a
   self-hostable server (ASP.NET Core + SignalR, authoritative, rated). See [docs/ONLINE.md](docs/ONLINE.md).
 * **Analysis board** with a multi-line engine, evaluation bar, opening names, a position editor and FEN/PGN import/export.

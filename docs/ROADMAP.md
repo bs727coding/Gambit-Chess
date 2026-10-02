@@ -77,9 +77,9 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 - [x] **Opening principles** + opening courses with main lines, ideas and traps: Italian, Ruy Lopez,
       Scotch, Sicilian (incl. Alapin), French, Caro-Kann, Queen's Gambit (QGD, QGA, Slav), London,
       King's Indian, English ✔ — drilled with a "play the line" trainer
-- [~] **Endgames**: K+Q, K+R and two-bishop mates, opposition, key squares, square rule, Lucena,
-      Philidor, wrong bishop (rook-pawn draws), rooks behind passed pawns ✔ — B+N mate and
-      triangulation still to write
+- [~] **Endgames**: K+Q, K+R, two-bishop and bishop+knight mates, opposition, key squares, square rule, Lucena,
+      Philidor, wrong bishop (rook-pawn draws), rooks behind passed pawns ✔ — triangulation
+      still to write; the B+N lesson teaches the corner rule, not the full W manoeuvre
 - [~] Opening trainer: "play the line" drills in each opening lesson ✔ — spaced repetition still to do
 
 ## Session 6 — Profile: statistics, achievements, themes

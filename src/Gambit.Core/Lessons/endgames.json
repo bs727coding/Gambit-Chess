@@ -80,6 +80,28 @@
       ]
     },
     {
+      "id": "bishop-knight",
+      "title": "Mate with bishop and knight",
+      "summary": "The hardest basic mate: it needs the right corner.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "7k/4N3/1B4K1/8/8/8/8/8 w - - 0 1",
+          "highlights": ["h8", "a1"],
+          "text": "Bishop and knight can force mate, but only in a corner the bishop controls. This bishop moves on dark squares, so the enemy king must be driven to h8 or a1. If it runs to a light corner, push it along the edge to a dark one. The knight and king take away the last escape squares."
+        },
+        {
+          "kind": "moves",
+          "fen": "7k/4N3/1B4K1/8/8/8/8/8 w - - 0 1",
+          "moves": ["Bd4#"],
+          "goal": "mate",
+          "text": "Finish it: mate in one.",
+          "hint": "The knight covers g8 and your king covers g7 and h7. Check along the long diagonal.",
+          "success": "Checkmate in the dark corner, exactly where the bishop rules."
+        }
+      ]
+    },
+    {
       "id": "opposition",
       "title": "The opposition",
       "summary": "The key idea of king and pawn endings.",
