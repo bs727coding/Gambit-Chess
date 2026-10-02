@@ -39,11 +39,14 @@ download Microsoft installers directly from builds.dotnet.microsoft.com and veri
 
 ## Verifying the UI without disturbing the user
 
-The user works on this PC while sessions run. **Don't foreground the app repeatedly.**
+The user works on this PC while sessions run — and sometimes plays Gambit itself. **Don't foreground
+the app repeatedly**, and before driving it with UI Automation check that the user isn't using it
+(e.g. it's on a page you didn't open, or a game you didn't start); if they are, stop and verify
+through tests instead.
 * `tools/ui.ps1` drives the app via UI Automation without the mouse: `invoke -Name "Play"`,
   `board -Moves "e2e4,g1f3"` (board squares are invokable elements `sq-e4`), `list`.
-* `tools/screenshot-quiet.ps1 -Out x.png` restores the window without activation behind other
-  windows, captures it, and re-minimizes. (`tools/screenshot.ps1` is the foreground version.)
+* `tools/screenshot-quiet.ps1 -Out x.png` captures an on-screen window in place (never moves it);
+  a minimized one is restored behind other windows, captured and re-minimized. (`tools/screenshot.ps1` is the foreground version.)
 * Read state through UIA by AutomationId (x:Name), e.g. `StatusText`, `CodeText`, `FeedbackText`.
 
 ## Layout & rules

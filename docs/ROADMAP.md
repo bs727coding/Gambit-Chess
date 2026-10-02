@@ -44,7 +44,7 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 - [x] Opening book (curated SAN lines → hash table), opening name detection (ECO subset)
 - [x] Game review: engine pass over finished games; move classes (Brilliant, Great, Best, Excellent,
       Good, Book, Inaccuracy, Mistake, Miss, Blunder); accuracy %; eval graph; key moments
-- [~] Analysis board: free play, MultiPV engine lines, eval bar, FEN/PGN import + export ✔, board editor ✔ — variations still to do
+- [x] Analysis board: free play, MultiPV engine lines, eval bar, FEN/PGN import + export, board editor, variations (PGN export with nested variations; import reads the main line)
 - [x] Game archive: every finished game saved (PGN); list + reopen in analysis
 - [x] Sounds (generated locally: move, capture, check, castle, promote, game end, low time)
 - [x] Keyboard navigation, Play a Friend (hot-seat), hints, resume after restart, premoves

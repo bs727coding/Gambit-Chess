@@ -20,11 +20,18 @@ namespace Gambit.App.Pages;
 /// <summary>What to open in the analysis board.</summary>
 public sealed record AnalysisRequest(string? Fen = null, string? PgnFile = null, string? Pgn = null);
 
-/// <summary>Free analysis: move both sides, engine lines with an eval bar, FEN/PGN import and export.</summary>
+/// <summary>
+/// Free analysis: move both sides, engine lines with an eval bar, FEN/PGN import and export. Moves
+/// played from an earlier position become variations (<see cref="MoveTree"/>); the page shows one
+/// line at a time as a <see cref="Game"/> and offers the alternatives at each position.
+/// </summary>
 public sealed partial class AnalysisPage : Page
 {
     private readonly AnalysisEngine _engine = new();
-    private Game _game = NewGame(null);
+    private MoveTree _tree = new();
+    private List<MoveNode> _line;       // root first: the line on display
+    private Game _game = NewGame(null); // _line replayed (move list, openings, navigation)
+    private Dictionary<string, string> _tags = [];
     private int _viewPly = -1;
     private bool _editing;
     private readonly Piece[] _editBoard = new Piece[64];
@@ -34,6 +41,7 @@ public sealed partial class AnalysisPage : Page
 
     public AnalysisPage()
     {
+        _line = MoveTree.LineThrough(_tree.Root);
         InitializeComponent();
         _engine.InfoUpdated += Engine_InfoUpdated;
         _toastTimer.Tick += (_, _) =>
@@ -90,10 +98,9 @@ public sealed partial class AnalysisPage : Page
     {
         PgnGame pgn = Pgn.ReadOne(text);
         Game game = pgn.ToGame(out string? error);
-        game.AutoDrawRules = false;
-        _game = game;
-        _viewPly = -1;
-        Refresh(animate: false);
+        _tree = MoveTree.FromGame(game);
+        _tags = new Dictionary<string, string>(game.Tags);
+        ShowLine(MoveTree.LineThrough(_tree.Root)[^1]);
         if (error != null) ShowToast("PGN partially loaded", error, InfoBarSeverity.Warning);
         else ShowToast("Game loaded", $"{pgn.Tag("White") ?? "?"} vs {pgn.Tag("Black") ?? "?"} · {game.Moves.Count} plies", InfoBarSeverity.Success);
     }
@@ -105,24 +112,74 @@ public sealed partial class AnalysisPage : Page
             ShowToast("Invalid FEN", error ?? "That position could not be read.", InfoBarSeverity.Error);
             return;
         }
-        _game = NewGame(pos.ToFen());
-        _viewPly = -1;
-        Refresh(animate: false);
+        _tree = new MoveTree(pos.ToFen());
+        _tags = [];
+        ShowLine(_tree.Root);
     }
 
     // ------------------------------------------------------------------ board + history
 
+    private MoveNode CurrentNode => _line[_viewPly < 0 ? _line.Count - 1 : _viewPly];
+
+    /// <summary>Displays the line through <paramref name="node"/> with the board at <paramref name="viewAt"/> (default: the node).</summary>
+    private void ShowLine(MoveNode node, MoveNode? viewAt = null, bool animate = false)
+    {
+        _line = MoveTree.LineThrough(node);
+        _game = _tree.ToGame(_line);
+        foreach (var (name, value) in _tags) _game.Tags[name] = value;
+        int ply = (viewAt ?? node).Ply;
+        _viewPly = ply >= _game.Moves.Count ? -1 : ply;
+        Refresh(animate);
+    }
+
     private void Board_MoveRequested(object? sender, BoardMoveEventArgs e)
     {
-        // Moving from an earlier position replaces the rest of the line.
-        if (_viewPly >= 0)
+        // A move from an earlier position starts (or follows) a variation; the old line is kept.
+        MoveNode at = CurrentNode;
+        if (!MoveGenerator.LegalMoves(at.Position).Contains(e.Move)) return;
+        MoveNode child = _tree.Play(at, e.Move);
+        if (at.Ply + 1 < _line.Count && ReferenceEquals(_line[at.Ply + 1], child)) ShowPly(at.Ply + 1);
+        else ShowLine(child, animate: true);
+        SoundService.PlayFor(_game.Moves[at.Ply]);
+    }
+
+    private void UpdateVariations()
+    {
+        MoveNode at = CurrentNode;
+        MoveNode? next = at.Ply + 1 < _line.Count ? _line[at.Ply + 1] : null;
+        List<MoveNode> others = at.Children.Where(c => !ReferenceEquals(c, next)).ToList();
+        AlternativeButtons.Children.Clear();
+        foreach (MoveNode alternative in others)
         {
-            while (_game.Moves.Count > _viewPly) _game.Undo();
-            _viewPly = -1;
+            var button = new Button { Content = MoveLabel(alternative), Padding = new Thickness(8, 2, 8, 3), FontSize = 12 };
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, $"Variation {MoveLabel(alternative)}");
+            ToolTipService.SetToolTip(button, "Switch to this line");
+            button.Click += (_, _) => ShowLine(alternative, animate: true);
+            AlternativeButtons.Children.Add(button);
         }
-        if (_game.IsOver || !_game.IsLegal(e.Move)) return;
-        SoundService.PlayFor(_game.Play(e.Move));
-        Refresh(animate: true);
+        AlternativesRow.Visibility = others.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        MoveNode? branch = _line[^1].BranchPoint;
+        SideLineRow.Visibility = branch != null ? Visibility.Visible : Visibility.Collapsed;
+        if (branch != null) SideLineText.Text = $"Side line from {MoveLabel(branch)}";
+        VariationPanel.Visibility = others.Count > 0 || branch != null ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private static string MoveLabel(MoveNode n) => $"{n.MoveNumber}{(n.Side == Color.White ? "." : "…")} {n.San}";
+
+    private void PromoteLine_Click(object sender, RoutedEventArgs e)
+    {
+        MoveNode view = CurrentNode;
+        MoveTree.Promote(_line[^1]);
+        ShowLine(_line[^1], view);
+        ShowToast("Main line updated", "This line is now the main line.", InfoBarSeverity.Success);
+    }
+
+    private void DeleteLine_Click(object sender, RoutedEventArgs e)
+    {
+        if (_line[^1].BranchPoint is not MoveNode branch || branch.Parent is not MoveNode parent) return;
+        MoveTree.Remove(branch);
+        ShowLine(parent);
     }
 
     private void MoveList_PlySelected(object? sender, int ply) => ShowPly(ply);
@@ -143,12 +200,14 @@ public sealed partial class AnalysisPage : Page
         _viewPly = ply == count ? -1 : ply;
         ShowBoard(animate: forwardOne);
         MoveList.Highlight(ply);
+        UpdateVariations();
     }
 
     private void Refresh(bool animate)
     {
         MoveList.SetMoves(_game.Moves, _viewPly < 0 ? _game.Moves.Count : _viewPly);
         ShowBoard(animate);
+        UpdateVariations();
     }
 
     private void ShowBoard(bool animate)
@@ -269,9 +328,9 @@ public sealed partial class AnalysisPage : Page
 
     private void Reset_Click(object sender, RoutedEventArgs e)
     {
-        _game = NewGame(null);
-        _viewPly = -1;
-        Refresh(animate: false);
+        _tree = new MoveTree();
+        _tags = [];
+        ShowLine(_tree.Root);
     }
 
     private void LoadFen_Click(object sender, RoutedEventArgs e) => LoadFen(FenBox.Text);
@@ -284,9 +343,14 @@ public sealed partial class AnalysisPage : Page
 
     private void CopyPgn_Click(object sender, RoutedEventArgs e)
     {
-        CopyText(Pgn.Write(_game));
-        ShowToast("PGN copied", "The game is on the clipboard.", InfoBarSeverity.Success);
+        Game main = _tree.ToGame(_tree.MainLine());
+        foreach (var (name, value) in _tags) main.Tags[name] = value;
+        CopyText(Pgn.Write(main, _tree));
+        bool hasVariations = HasVariations(_tree.Root);
+        ShowToast("PGN copied", hasVariations ? "The game and its variations are on the clipboard." : "The game is on the clipboard.", InfoBarSeverity.Success);
     }
+
+    private static bool HasVariations(MoveNode n) => n.Children.Count > 1 || n.Children.Any(HasVariations);
 
     private async void PastePgn_Click(object sender, RoutedEventArgs e)
     {

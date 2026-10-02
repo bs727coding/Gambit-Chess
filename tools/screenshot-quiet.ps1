@@ -1,8 +1,9 @@
 <#
 .SYNOPSIS
-    Screenshots the Gambit window without disturbing the user: the window is restored without
-    activation, sent to the bottom of the z-order (behind the user's windows), captured with
-    PrintWindow, then put back (re-minimized if it was minimized).
+    Screenshots the Gambit window without disturbing the user. A window that is on screen is
+    captured in place with PrintWindow (never moved, resized or reordered: the user may be using
+    it). A minimized window is restored without activation behind the user's windows, captured,
+    then minimized again.
 #>
 param(
     [string]$Out = (Join-Path ([IO.Path]::GetTempPath()) 'gambit-shot.png'),
@@ -37,13 +38,15 @@ $wp.length = [Runtime.InteropServices.Marshal]::SizeOf($wp)
 [GambitOff.Win]::GetWindowPlacement($h, [ref]$wp) | Out-Null
 $saved = $wp
 
-# Restore without activating (SW_SHOWNOACTIVATE = 4), then send to the bottom of the z-order.
-$wp.showCmd = 4
-$wp.rcNormal.Left = 40; $wp.rcNormal.Top = 40
-$wp.rcNormal.Right = 40 + $Width; $wp.rcNormal.Bottom = 40 + $Height
-[GambitOff.Win]::SetWindowPlacement($h, [ref]$wp) | Out-Null
-[GambitOff.Win]::SetWindowPos($h, [IntPtr]1, 0, 0, 0, 0, 0x0013) | Out-Null  # HWND_BOTTOM, NOSIZE|NOMOVE|NOACTIVATE
-Start-Sleep -Milliseconds 900
+if ($wasMinimized) {
+    # Restore without activating (SW_SHOWNOACTIVATE = 4), then send to the bottom of the z-order.
+    $wp.showCmd = 4
+    $wp.rcNormal.Left = 40; $wp.rcNormal.Top = 40
+    $wp.rcNormal.Right = 40 + $Width; $wp.rcNormal.Bottom = 40 + $Height
+    [GambitOff.Win]::SetWindowPlacement($h, [ref]$wp) | Out-Null
+    [GambitOff.Win]::SetWindowPos($h, [IntPtr]1, 0, 0, 0, 0, 0x0013) | Out-Null  # HWND_BOTTOM, NOSIZE|NOMOVE|NOACTIVATE
+    Start-Sleep -Milliseconds 900
+}
 
 $rect = New-Object GambitOff.Win+RECT
 [GambitOff.Win]::GetWindowRect($h, [ref]$rect) | Out-Null
@@ -57,7 +60,9 @@ $g.Dispose()
 $bmp.Save($Out, [System.Drawing.Imaging.ImageFormat]::Png)
 $bmp.Dispose()
 
-# Put things back the way they were.
-if ($wasMinimized) { $saved.showCmd = 7 }  # SW_SHOWMINNOACTIVE
-[GambitOff.Win]::SetWindowPlacement($h, [ref]$saved) | Out-Null
+# Put a minimized window back the way it was (an on-screen window was never touched).
+if ($wasMinimized) {
+    $saved.showCmd = 7  # SW_SHOWMINNOACTIVE
+    [GambitOff.Win]::SetWindowPlacement($h, [ref]$saved) | Out-Null
+}
 "$Out ($Width x $Height)"

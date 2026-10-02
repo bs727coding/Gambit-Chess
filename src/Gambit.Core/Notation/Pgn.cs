@@ -49,7 +49,11 @@ public static class Pgn
 {
     private static readonly string[] SevenTagRoster = ["Event", "Site", "Date", "Round", "White", "Black", "Result"];
 
-    public static string Write(Game game)
+    /// <summary>
+    /// Writes <paramref name="game"/> as PGN. With a <paramref name="tree"/>, the movetext is the tree's
+    /// main line with its variations (tags and result still come from the game).
+    /// </summary>
+    public static string Write(Game game, MoveTree? tree = null)
     {
         var sb = new StringBuilder();
         var tags = new Dictionary<string, string>(game.Tags);
@@ -76,6 +80,7 @@ public static class Pgn
         sb.Append('\n');
 
         var line = new StringBuilder();
+        string previous = "";
         void Emit(string token)
         {
             if (line.Length > 0 && line.Length + 1 + token.Length > 80)
@@ -83,16 +88,25 @@ public static class Pgn
                 sb.Append(line).Append('\n');
                 line.Clear();
             }
-            if (line.Length > 0) line.Append(' ');
+            // Variations print as "(1... c5 2. Nf3)": no space inside the parentheses.
+            if (line.Length > 0 && previous != "(" && token != ")") line.Append(' ');
             line.Append(token);
+            previous = token;
         }
 
-        foreach (GameMove m in game.Moves)
+        if (tree != null)
         {
-            if (m.Side == Board.Color.White) Emit($"{m.MoveNumber}.");
-            else if (m.Ply == 1) Emit($"{m.MoveNumber}...");
-            Emit(m.San);
-            if (m.ClockAfter is TimeSpan clk) Emit($"{{[%clk {(int)clk.TotalHours}:{clk.Minutes:00}:{clk.Seconds:00}]}}");
+            foreach (string token in tree.MovetextTokens()) Emit(token);
+        }
+        else
+        {
+            foreach (GameMove m in game.Moves)
+            {
+                if (m.Side == Board.Color.White) Emit($"{m.MoveNumber}.");
+                else if (m.Ply == 1) Emit($"{m.MoveNumber}...");
+                Emit(m.San);
+                if (m.ClockAfter is TimeSpan clk) Emit($"{{[%clk {(int)clk.TotalHours}:{clk.Minutes:00}:{clk.Seconds:00}]}}");
+            }
         }
         Emit(game.ResultString);
         sb.Append(line).Append('\n');
