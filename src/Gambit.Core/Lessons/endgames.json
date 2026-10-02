@@ -58,6 +58,28 @@
       ]
     },
     {
+      "id": "two-bishops",
+      "title": "Mate with two bishops",
+      "summary": "Side by side, the bishops build a wall.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "7k/8/6K1/8/2B5/6B1/8/8 w - - 0 1",
+          "highlights": ["g8", "g7", "h7"],
+          "text": "Two bishops can mate a lone king, but only in a corner. Keep the bishops next to each other so their diagonals form a wall, bring your king up, and squeeze the enemy king toward a corner. At the end your king covers the squares in front of the corner and the bishops do the rest."
+        },
+        {
+          "kind": "moves",
+          "fen": "7k/8/6K1/8/2B5/6B1/8/8 w - - 0 1",
+          "moves": ["Be5#"],
+          "goal": "mate",
+          "text": "Deliver mate.",
+          "hint": "The light bishop already covers g8. Check along the long diagonal.",
+          "success": "Checkmate: the king guards g7 and h7, one bishop covers g8, the other gives check."
+        }
+      ]
+    },
+    {
       "id": "opposition",
       "title": "The opposition",
       "summary": "The key idea of king and pawn endings.",
@@ -75,6 +97,35 @@
           "choices": ["White", "Black"],
           "answer": 1,
           "success": "Correct — White must move, so Black holds the opposition and can stop the pawn."
+        }
+      ]
+    },
+    {
+      "id": "key-squares",
+      "title": "Key squares",
+      "summary": "Reach the right square and the pawn promotes.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "8/8/8/8/3P4/8/8/3K3k w - - 0 1",
+          "highlights": ["c6", "d6", "e6"],
+          "text": "Every pawn has key squares: if your king reaches one, the pawn promotes no matter where the enemy king stands. For a pawn on the 2nd, 3rd or 4th rank they are the three squares two ranks in front of it. For this pawn on d4 that's c6, d6 and e6."
+        },
+        {
+          "kind": "quiz",
+          "fen": "8/8/8/8/8/8/3P4/3K3k w - - 0 1",
+          "text": "Now the pawn is on d2. Which squares are its key squares?",
+          "choices": ["c4, d4 and e4", "c3, d3 and e3", "Only d8"],
+          "answer": 0,
+          "success": "Right, two ranks in front of the pawn. Get the king to c4, d4 or e4 and the pawn queens."
+        },
+        {
+          "kind": "quiz",
+          "fen": "3k4/8/3K4/8/3P4/8/8/8 b - - 0 1",
+          "text": "White's king has reached d6, a key square of the d4 pawn. Black is to move. What happens?",
+          "choices": ["White wins", "Draw: Black has the opposition"],
+          "answer": 0,
+          "success": "White wins. From a key square the king escorts the pawn home, whoever is to move."
         }
       ]
     },
