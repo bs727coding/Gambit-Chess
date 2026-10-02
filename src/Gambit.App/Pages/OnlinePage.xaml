@@ -24,7 +24,7 @@
                     </Grid.RowDefinitions>
                     <TextBox x:Name="ServerBox" Header="Server address" PlaceholderText="http://localhost:5080" />
                     <Button x:Name="ConnectButton" Grid.Column="1" VerticalAlignment="Bottom" Style="{StaticResource AccentButtonStyle}" MinWidth="120"
-                            Click="Connect_Click" AutomationProperties.Name="Connect" Content="Connect" />
+                            Click="Connect_Click" Content="Connect" />
                     <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="10">
                         <Ellipse x:Name="StatusDot" Width="10" Height="10" Fill="#8A8A8A" VerticalAlignment="Center" />
                         <TextBlock x:Name="StatusText" Text="Not connected" VerticalAlignment="Center" />

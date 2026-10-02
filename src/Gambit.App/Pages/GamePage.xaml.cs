@@ -583,12 +583,17 @@ public sealed partial class GamePage : Page
     {
         if (_session == null || _setup == null) return;
         Game g = _session.Game;
-        string title = _setup.IsHotSeat
-            ? g.Winner switch { Color.White => "White wins", Color.Black => "Black wins", _ => "Draw" }
+        bool aborted = g.Termination == Termination.Aborted;
+        string title = aborted ? "Game aborted"
+            : _setup.IsHotSeat ? g.Winner switch { Color.White => "White wins", Color.Black => "Black wins", _ => "Draw" }
             : g.Winner == _setup.HumanColor ? "You won!" : g.Winner == null ? "Draw" : "You lost";
 
         var content = new StackPanel { Spacing = 10 };
-        content.Children.Add(new TextBlock { Text = e.Description + ".", TextWrapping = TextWrapping.Wrap });
+        content.Children.Add(new TextBlock
+        {
+            Text = aborted ? "The game ended before both players had moved, so it doesn't count." : e.Description + ".",
+            TextWrapping = TextWrapping.Wrap,
+        });
         if (_setup.Bot is BotProfile bp)
         {
             BotRecord rec = App.Profile.RecordAgainst(bp.Id);
