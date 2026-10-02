@@ -148,6 +148,64 @@
           "success": "Exactly — with the pawn on e6 the white king has no shelter, so endless checks from behind draw."
         }
       ]
+    },
+    {
+      "id": "wrong-bishop",
+      "title": "The wrong bishop",
+      "summary": "Bishop and rook pawn: sometimes only a draw.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "7k/8/6K1/7P/8/3B4/8/8 b - - 0 1",
+          "highlights": ["h8"],
+          "text": "An extra bishop and pawn usually win easily, but a rook pawn (a- or h-pawn) is special: the bishop must control the promotion square. h8 is a dark square and this bishop only ever stands on light squares, so it can never drive Black's king out of the corner."
+        },
+        {
+          "kind": "quiz",
+          "fen": "7k/8/6K1/7P/8/3B4/8/8 b - - 0 1",
+          "text": "Black to move. What is the result with best play?",
+          "choices": ["White wins", "Draw"],
+          "answer": 1,
+          "success": "Draw. Black shuffles between h8 and g8, and White can't make progress without stalemating."
+        },
+        {
+          "kind": "quiz",
+          "fen": "7k/8/6K1/7P/8/8/8/2B5 b - - 0 1",
+          "text": "Same position, but the bishop is on c1. Can White win now?",
+          "choices": ["Yes", "No"],
+          "answer": 0,
+          "success": "Yes. A dark-squared bishop controls h8, so Black's king can be driven out and the pawn promotes."
+        }
+      ]
+    },
+    {
+      "id": "rook-behind-passer",
+      "title": "Rooks behind passed pawns",
+      "summary": "Tarrasch's rule, and why it works.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "6k1/8/8/P7/8/8/8/R5K1 w - - 0 1",
+          "arrows": ["a1a5"],
+          "text": "Rooks belong behind passed pawns, your own or your opponent's. Behind its own pawn, the rook gains a square of range with every step the pawn takes and guards it all the way to promotion. In front of the pawn, the rook just gets in the way."
+        },
+        {
+          "kind": "quiz",
+          "fen": "6k1/8/8/P7/8/8/8/5RK1 w - - 0 1",
+          "text": "White wants to push the a-pawn. Where does the rook belong?",
+          "choices": ["a1, behind the pawn", "a8, in front of the pawn", "f7, on the seventh rank"],
+          "answer": 0,
+          "success": "Behind the pawn: from a1 the rook supports it on every square up to a8."
+        },
+        {
+          "kind": "quiz",
+          "fen": "6k1/8/8/p7/8/8/8/5RK1 w - - 0 1",
+          "text": "Now Black has the passed a-pawn. Where should White's rook go to stop it?",
+          "choices": ["a1, in front of the pawn", "a8, behind the pawn"],
+          "answer": 1,
+          "success": "Behind it again: from a8 the rook attacks the pawn on every step, and the rook keeps more room the further the pawn goes."
+        }
+      ]
     }
   ]
 }

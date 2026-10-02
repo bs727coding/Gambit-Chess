@@ -12,7 +12,7 @@ lessons, review your games, earn achievements, and play online against friends.
   Mistake/Blunder classifications, accuracy for both sides, eval graph, best-move arrows.
 * **Puzzles** — rated (Glicko-2) with ranks, Puzzle Rush (3 min / 5 min / Survival), a daily puzzle
   with streaks, and practice by theme (mates, forks, pins, discovered attacks, sacrifices…).
-* **Lessons** — 5 courses, 36 interactive lessons: how pieces move (with star-collecting
+* **Lessons** — 5 courses, 42 interactive lessons: how pieces move (with star-collecting
   mini-games), checkmate patterns, tactics, openings (Italian, Ruy Lopez, Sicilian, French,
   Caro-Kann, Queen's Gambit, London, King's Indian) and endgames (opposition, Lucena, Philidor…).
 * **Online play** — quick pairing by time control or private games with a friend code (with rematches), against a

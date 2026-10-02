@@ -67,17 +67,19 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
       multiple choice, play-it-out vs bot from position), arrows + square highlights, hints
 - [x] Lesson player UI with progress, stars/score, retry; course map with unlock progression
 - [x] Content validator test (all FENs/moves legal, all steps reachable)
-- [x] Courses: **Basics** (pieces, check, mate, special moves), **Checkmate patterns**,
-      **Tactics** (fork, pin, skewer, discovered attack, double check, deflection, decoy,
-      removing the defender, overloading, zwischenzug, back rank, X-ray)
+- [~] Courses: **Basics** (pieces, check, mate, special moves) ✔, **Checkmate patterns** ✔,
+      **Tactics**: fork, pin, skewer, discovered attack, double check, removing the defender,
+      overloading, trapped pieces ✔ (back rank is in Checkmate patterns) — deflection, decoy,
+      zwischenzug, X-ray still to write
 
 ## Session 5 — Lessons II: openings + endgames
 
-- [x] **Opening principles** + opening courses with main lines, ideas and traps: Italian, Ruy Lopez,
-      Scotch, Sicilian (Open/Alapin), French, Caro-Kann, Queen's Gambit (QGD/QGA/Slav), London,
-      King's Indian, English — drilled with a "play the line" trainer
-- [x] **Endgames**: K+Q/K+R/2B/B+N mates, opposition, square rule, key squares, Lucena, Philidor,
-      triangulation, rook-pawn draws, basic rook/queen endings
+- [~] **Opening principles** + opening courses with main lines, ideas and traps: Italian, Ruy Lopez,
+      Sicilian, French, Caro-Kann, Queen's Gambit, London, King's Indian ✔ — drilled with a
+      "play the line" trainer; Scotch, English and sub-lines (Alapin, QGA, Slav) still to write
+- [~] **Endgames**: K+Q and K+R mates, opposition, square rule, Lucena, Philidor, wrong bishop
+      (rook-pawn draws), rooks behind passed pawns ✔ — two-bishop and B+N mates, key squares,
+      triangulation still to write
 - [~] Opening trainer: "play the line" drills in each opening lesson ✔ — spaced repetition still to do
 
 ## Session 6 — Profile: statistics, achievements, themes

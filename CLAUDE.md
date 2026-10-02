@@ -30,7 +30,8 @@ session short at any moment, so **checkpoint often**).
 * Puzzles: `dotnet run -c Release --project tools/Gambit.PuzzleGen -- <minutes> src/Gambit.Core/Puzzles/puzzles.csv [minBot] [maxBot]` (appends, below-normal priority)
 * Online bot: `dotnet run -c Release --project tools/Gambit.OnlineBot -- http://localhost:5080 <bot-id> <tc|code>`
 * Sounds: `python tools/gen_sounds.py`; icon: `tools/make-icon.ps1`.
-* Edit files with the Edit/Write tools or `sed` — Windows PowerShell 5.1 `Set-Content -Encoding utf8` adds a BOM.
+* Edit files with the Edit/Write tools, `sed` or Python — in Windows PowerShell 5.1 `Set-Content -Encoding utf8`
+  adds a BOM and `Get-Content` without `-Encoding utf8` reads UTF-8 as ANSI (mangles —, →, ≥).
 
 **Network quirk:** one of api.nuget.org's CDN IPs is unreachable from this machine (TCP timeouts of
 21 s). Restores usually still succeed (build.ps1 retries). If NuGet fails repeatedly, switch

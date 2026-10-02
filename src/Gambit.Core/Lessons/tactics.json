@@ -1,7 +1,7 @@
 {
   "id": "tactics",
   "title": "Tactics",
-  "description": "Forks, pins, skewers and discovered attacks — the tricks that win material.",
+  "description": "Forks, pins, skewers, discovered and double checks, overloaded and trapped pieces — the tricks that win material.",
   "glyph": "",
   "color": "#C62828",
   "lessons": [
@@ -104,6 +104,93 @@
           "text": "Win the queen with a discovered check.",
           "hint": "Move the bishop — the rook does the checking.",
           "success": "Discovered check wins the queen for free."
+        }
+      ]
+    },
+    {
+      "id": "double-check",
+      "title": "Double check",
+      "summary": "Two checks at once — only the king can answer.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "1q4k1/6pp/8/3R4/8/1B6/5PPP/6K1 w - - 0 1",
+          "arrows": ["d5d8", "b3g8"],
+          "text": "In a double check two pieces give check at the same time. Blocking or capturing can only deal with one of them, so the king has to move — and if it can't, it's checkmate. It happens when the piece that moves away gives check too."
+        },
+        {
+          "kind": "moves",
+          "fen": "1q4k1/6pp/8/3R4/8/1B6/5PPP/6K1 w - - 0 1",
+          "moves": ["Rd8#"],
+          "text": "Black's queen guards d8, but that won't matter. Mate in one.",
+          "hint": "Move the rook out of the bishop's way — with check.",
+          "success": "Double check and mate. The queen can't take the rook, because the bishop's check would remain."
+        }
+      ]
+    },
+    {
+      "id": "removing-the-defender",
+      "title": "Removing the defender",
+      "summary": "Chase away the piece that holds everything together.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "r4rk1/ppp2ppp/5n2/8/4P3/3Q4/PP3PPP/1B4K1 w - - 0 1",
+          "arrows": ["f6h7"],
+          "highlights": ["f6", "h7"],
+          "text": "White's queen and bishop are lined up at h7, and only the knight on f6 guards it. When one piece is doing all the defending, capture it, chase it away, or lure it off — and what it guarded falls."
+        },
+        {
+          "kind": "moves",
+          "fen": "r4rk1/ppp2ppp/5n2/8/4P3/3Q4/PP3PPP/1B4K1 w - - 0 1",
+          "moves": ["e5", "Nd5", "Qxh7#"],
+          "text": "Get rid of the defender of h7.",
+          "hint": "A pawn can attack the knight — and open the queen's diagonal at the same time.",
+          "success": "The knight had to leave f6, and h7 fell with mate."
+        }
+      ]
+    },
+    {
+      "id": "overloading",
+      "title": "Overloaded pieces",
+      "summary": "One defender, two jobs.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "4r1k1/pppq1ppp/8/8/3n4/1P5P/P1P2PP1/QN2R1K1 w - - 0 1",
+          "arrows": ["d7e8", "d7d4"],
+          "highlights": ["d7"],
+          "text": "Black's queen has two jobs: guarding the rook on e8 and the knight on d4. A piece with two jobs is overloaded — force it to do one of them, and the other is left hanging."
+        },
+        {
+          "kind": "moves",
+          "fen": "4r1k1/pppq1ppp/8/8/3n4/1P5P/P1P2PP1/QN2R1K1 w - - 0 1",
+          "moves": ["Rxe8+", "Qxe8", "Qxd4"],
+          "text": "Exploit the overloaded queen and win a piece.",
+          "hint": "Start with the capture that comes with check.",
+          "success": "The queen had to recapture on e8, and the knight on d4 was left without a defender."
+        }
+      ]
+    },
+    {
+      "id": "trapped-piece",
+      "title": "Trapped pieces",
+      "summary": "No safe squares, no escape.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "8/4k3/8/8/8/8/bPP5/2K5 w - - 0 1",
+          "highlights": ["a2"],
+          "arrows": ["a2g8"],
+          "text": "A piece with no safe squares is trapped: you can attack it at your leisure. Black's bishop grabbed the a2 pawn, and its only way back out is the long diagonal."
+        },
+        {
+          "kind": "moves",
+          "fen": "8/4k3/8/8/8/8/bPP5/2K5 w - - 0 1",
+          "moves": ["b3", "Kd7", "Kb2"],
+          "text": "Trap the bishop, then win it.",
+          "hint": "Block its diagonal with a pawn that's defended.",
+          "success": "The bishop is trapped — the best it can do is give itself up for a pawn."
         }
       ]
     }
