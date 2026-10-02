@@ -2,7 +2,7 @@
 
 ## Current state (update at every milestone)
 
-**Session 1 complete** (plus several Session 2 items). The app builds, runs natively on Arm64 and is
+**Session 1 complete; Session 2 mostly complete** (sounds, opening book, Game Review, hints, resume). The app builds, runs natively on Arm64 and is
 playable end to end: pick one of 13 bots, play with clocks, resign/draw/takeback, see the result,
 review the game in the analysis board with a live engine.
 
@@ -12,17 +12,17 @@ review the game in the analysis board with a live engine.
 | Gambit.Core | Board, legal movegen (perft-verified), FEN/SAN/UCI/PGN, Game + draw rules, clock, Glicko-2, sessions |
 | Gambit.Engine | PVS + TT + QS/SEE + null-move + LMR + MultiPV; PeSTO eval; ~700 knps search / ~8–10 Mnps perft (Release) |
 | Bots | 13 bots, Acorn 250 → Monolith (max). Ratings are estimates, not yet calibrated |
-| Gambit.App | Home, Play (bot picker), Game, Analysis, Profile, Settings, Puzzles/Learn previews |
-| Tests | 72 passing (`./build.ps1 test`) |
+| Gambit.App | Home, Play (bot picker), Game (hints, resume after restart), Game Review, Analysis, Profile, Settings, Puzzles/Learn previews |
+| Content | ~150 named openings (embedded TSV, transposition-aware) used for names + bot books; synthesized sounds |
+| Tests | 86 passing (`./build.ps1 test`) |
 
 ## Next steps (start of Session 2)
 
-1. Sounds (generate WAVs with a script — no downloads needed), move/capture/check/castle/game-end.
-2. Opening book + opening-name detection; bot personalities (book choices, styles).
-3. Game review (move classification + accuracy + eval graph) — reuse `AnalysisEngine`.
-4. Board editor for the analysis page; analysis variations (currently a single line).
-5. Calibrate bot strength by self-play between adjacent bots (script in tools/).
-6. Persist an unfinished game across app restarts.
+1. **Puzzles (Session 3)** — in progress: engine-generated puzzle set (tools/Gambit.PuzzleGen mines
+   tactics from bot self-play; no download needed), puzzle trainer with Glicko-2 rating, Puzzle Rush,
+   daily puzzle, themes. Optional upgrade: import the Lichess CC0 puzzle DB (~250 MB download — ask first).
+2. Remaining Session 2 items: board editor + variations for analysis, premoves, bot calibration by
+   self-play, bot style personalities beyond the opening book.
 
 ## Known issues / notes
 
@@ -56,3 +56,5 @@ review the game in the analysis board with a live engine.
   8 board themes; Play/Game/Analysis/Home/Profile/Settings pages; JSON settings + profile + PGN archive.
 * Verified visually via screenshots and UI Automation: game vs Acorn, check, resign → game-over dialog,
   analysis engine lines, settings preview, profile stats.
+* Session 2 work (same day): synthesized sounds, opening book/names, Game Review (parallel engine
+  analysis, move classes, accuracy, eval graph), hints, resume unfinished games after restart.

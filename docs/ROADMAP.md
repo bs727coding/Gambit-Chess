@@ -40,14 +40,14 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 ## Session 2 — Play experience & analysis
 
 - [x] Time controls (bullet/blitz/rapid/classical/unlimited) with clocks + flagging
-- [ ] Bot personalities: opening book per bot, avatars, short "chat" lines, play styles
-- [ ] Opening book (curated SAN lines → hash table), opening name detection (ECO subset)
-- [ ] Game review: engine pass over finished games; move classes (Brilliant, Great, Best, Excellent,
+- [~] Bot personalities: opening book per bot ✔, avatars ✔, chat lines ✔ — distinct play styles still to do
+- [x] Opening book (curated SAN lines → hash table), opening name detection (ECO subset)
+- [x] Game review: engine pass over finished games; move classes (Brilliant, Great, Best, Excellent,
       Good, Book, Inaccuracy, Mistake, Miss, Blunder); accuracy %; eval graph; key moments
 - [~] Analysis board: free play, MultiPV engine lines, eval bar, FEN/PGN import + export ✔ — board editor + variations still to do
 - [x] Game archive: every finished game saved (PGN); list + reopen in analysis
-- [ ] Sounds (generated locally: move, capture, check, castle, promote, game end, low time)
-- [~] Keyboard navigation of the move list ✔, Play a Friend (hot-seat) ✔ — hints + premoves still to do
+- [x] Sounds (generated locally: move, capture, check, castle, promote, game end, low time)
+- [~] Keyboard navigation ✔, Play a Friend (hot-seat) ✔, hints ✔, resume after restart ✔ — premoves still to do
 
 ## Session 3 — Puzzles
 
