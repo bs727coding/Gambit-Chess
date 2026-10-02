@@ -1,0 +1,153 @@
+{
+  "id": "endgames",
+  "title": "Endgames",
+  "description": "Basic mates, king and pawn endings, and the two most important rook endgames.",
+  "glyph": "",
+  "color": "#00838F",
+  "lessons": [
+    {
+      "id": "queen-technique",
+      "title": "Queen vs king",
+      "summary": "Mate quickly — and never stalemate.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "7k/5K2/8/6Q1/8/8/8/8 w - - 0 1",
+          "highlights": ["g8", "g7", "h7"],
+          "text": "With king and queen against a lone king, use the queen to shrink the king's box, then walk your king over to help. In the final position the queen mates while your king guards the escape squares."
+        },
+        {
+          "kind": "moves",
+          "fen": "7k/5K2/8/6Q1/8/8/8/8 w - - 0 1",
+          "moves": ["Qg7#"],
+          "goal": "mate",
+          "text": "Deliver mate.",
+          "hint": "The queen can't be taken on g7 — your king protects it.",
+          "success": "Checkmate!"
+        },
+        {
+          "kind": "quiz",
+          "fen": "7k/5K2/8/6Q1/8/8/8/8 w - - 0 1",
+          "text": "One of these moves throws away the win. Which one?",
+          "choices": ["Qg7#", "Qg6", "Qh6#"],
+          "answer": 1,
+          "success": "Right — after Qg6 Black has no legal move but isn't in check: stalemate, a draw."
+        }
+      ]
+    },
+    {
+      "id": "rook-technique",
+      "title": "Rook vs king",
+      "summary": "Use your king and rook together.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "6k1/8/6K1/8/8/8/8/R7 w - - 0 1",
+          "arrows": ["a1a8"],
+          "highlights": ["f7", "g7", "h7"],
+          "text": "A rook alone can't mate — it needs its king. Push the enemy king to the edge, put your king opposite it, then check along the edge."
+        },
+        {
+          "kind": "moves",
+          "fen": "6k1/8/6K1/8/8/8/8/R7 w - - 0 1",
+          "moves": ["Ra8#"],
+          "goal": "mate",
+          "text": "The kings face each other. Mate in one.",
+          "success": "Textbook rook mate."
+        }
+      ]
+    },
+    {
+      "id": "opposition",
+      "title": "The opposition",
+      "summary": "The key idea of king and pawn endings.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "8/8/4k3/8/4K3/4P3/8/8 w - - 0 1",
+          "highlights": ["e4", "e6"],
+          "text": "When the kings stand face to face with one square between them, the player who does NOT have to move has the opposition. The other king must step aside and give ground."
+        },
+        {
+          "kind": "quiz",
+          "fen": "8/8/4k3/8/4K3/4P3/8/8 w - - 0 1",
+          "text": "White to move. Who has the opposition?",
+          "choices": ["White", "Black"],
+          "answer": 1,
+          "success": "Correct — White must move, so Black holds the opposition and can stop the pawn."
+        }
+      ]
+    },
+    {
+      "id": "square-rule",
+      "title": "The square rule",
+      "summary": "Can the king catch the pawn?",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "8/8/8/1P6/5k2/8/8/7K b - - 0 1",
+          "highlights": ["b5", "e5", "e8", "b8"],
+          "text": "Imagine a square from the pawn to its promotion rank (here b5–e5–e8–b8). If the defending king can step into that square, it catches the pawn. If not, the pawn queens."
+        },
+        {
+          "kind": "quiz",
+          "fen": "8/8/8/1P6/5k2/8/8/7K b - - 0 1",
+          "text": "Black to move. Can the black king catch the pawn?",
+          "choices": ["Yes", "No"],
+          "answer": 0,
+          "success": "Yes — …Ke5 steps into the square and the king catches the pawn."
+        },
+        {
+          "kind": "quiz",
+          "fen": "8/8/8/1P6/6k1/8/8/7K b - - 0 1",
+          "text": "Now the king is one file further away. Can it still catch the pawn?",
+          "choices": ["Yes", "No"],
+          "answer": 1,
+          "success": "No — the king can't enter the square in time, and the pawn promotes."
+        }
+      ]
+    },
+    {
+      "id": "lucena",
+      "title": "The Lucena position",
+      "summary": "Building a bridge to win a rook endgame.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "1K6/1P1k4/8/8/8/8/r7/5R2 w - - 0 1",
+          "highlights": ["b8", "b7"],
+          "text": "White's king is in front of its pawn on the seventh rank, and Black's king is cut off. White wins by \"building a bridge\": the rook goes to the fourth rank to shield the king from checks."
+        },
+        {
+          "kind": "moves",
+          "fen": "1K6/1P1k4/8/8/8/8/r7/5R2 w - - 0 1",
+          "moves": ["Rd1+", "Ke7", "Rd4"],
+          "text": "First push the black king further away with a check, then bring your rook to the fourth rank.",
+          "hint": "Check on the d-file, then Rd4.",
+          "success": "The bridge is ready: when the checks come, Rb4 will block them and the pawn queens."
+        }
+      ]
+    },
+    {
+      "id": "philidor",
+      "title": "The Philidor position",
+      "summary": "How to draw a rook endgame a pawn down.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "4k3/8/r7/4PK2/8/8/8/7R b - - 0 1",
+          "arrows": ["a6h6"],
+          "text": "The defender keeps the king in front of the pawn and the rook on its third rank (here the sixth), stopping the enemy king from advancing."
+        },
+        {
+          "kind": "quiz",
+          "fen": "4k3/8/r3P3/5K2/8/8/8/7R b - - 0 1",
+          "text": "White has just pushed the pawn to e6. What is Black's drawing idea now?",
+          "choices": ["Check the white king from behind, from far away", "Keep the rook on the sixth rank", "Attack the pawn with the king"],
+          "answer": 0,
+          "success": "Exactly — with the pawn on e6 the white king has no shelter, so endless checks from behind draw."
+        }
+      ]
+    }
+  ]
+}

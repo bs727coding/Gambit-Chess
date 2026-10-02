@@ -21,8 +21,8 @@
             </Grid>
             <StackPanel x:Name="CourseList" Spacing="16" Margin="0,12,0,0" />
             <InfoBar IsOpen="True" IsClosable="False" Severity="Informational" Margin="0,8,0,0"
-                     Title="More courses coming"
-                     Message="Opening repertoires (Italian, Ruy Lopez, Sicilian, French, Caro-Kann, Queen's Gambit, London, King's Indian) and endgame technique are next on the roadmap." />
+                     Title="Tip"
+                     Message="Lessons award up to three stars — finish without mistakes for a perfect score. Use Hint whenever you are stuck." />
         </StackPanel>
     </ScrollViewer>
 </Page>
