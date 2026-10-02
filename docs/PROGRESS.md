@@ -19,10 +19,11 @@ natively on Arm64.
 
 ## Next steps
 
-1. **Bot ladder** — see [BOT-CALIBRATION.md](BOT-CALIBRATION.md). Self-play shows cliffs in the
-   middle (Dash → Kestrel steps measure +265…+645 bot-Elo instead of +200) and a flat, drawish low
-   end. Tune the steepest steps first (Harbor → Iris, Dash → Ember) with `tools/Gambit.BotArena`,
-   then help the weakest bots convert won endgames.
+1. **Bot ladder** — see [BOT-CALIBRATION.md](BOT-CALIBRATION.md). Revision 2 (bots convert won
+   endgames) fixed the flat, drawish low end. The middle still has cliffs (Dash → Kestrel steps
+   +265…+645 bot-Elo instead of +200): re-measure the whole ladder under revision 2, then follow
+   the systematic approach in that document (plausible mistakes instead of uniformly random moves;
+   one skill number per bot).
 2. **Lessons** still missing per the roadmap: zwischenzug, X-ray, triangulation. New tactics must
    pass the engine audit in `LessonTests` (the scripted move has to be the engine's choice).
 3. **Puzzles:** harder ones from stronger bots
@@ -87,7 +88,8 @@ natively on Arm64.
   decoy, deflection), openings (Scotch, English, QGA, Slav, Alapin), endgames (two-bishop and
   bishop+knight mates, key squares, wrong bishop, rooks behind passed pawns). A new engine audit
   in `LessonTests` found and fixed four flawed older steps.
-* `tools/Gambit.BotArena` and the first ladder measurement (docs/BOT-CALIBRATION.md).
+* `tools/Gambit.BotArena` and the first ladder measurement (docs/BOT-CALIBRATION.md); bots now
+  convert won endgames (low-end draws fell from ~50% to ~1%).
 * Puzzles 564 → 649 with unique ids. Fixed a double-encoded PROGRESS.md (PowerShell 5.1).
 * The user was playing Gambit during the session; `screenshot-quiet.ps1` no longer moves an
   on-screen window, and CLAUDE.md says to check before driving the app.

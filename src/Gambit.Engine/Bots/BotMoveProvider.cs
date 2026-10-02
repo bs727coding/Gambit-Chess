@@ -14,6 +14,15 @@ namespace Gambit.Engine.Bots;
 /// </summary>
 public sealed class BotMoveProvider : IMoveProvider
 {
+    /// <summary>
+    /// Bump when the move-choice logic changes: calibration results (tools/Gambit.BotArena) are
+    /// fingerprinted with it, so games from older logic stop counting.
+    /// </summary>
+    public const int Revision = 2;
+
+    /// <summary>Advantage (cp, bot's view) from which a bot plays its best move in an endgame.</summary>
+    private const int ConvertMargin = 500;
+
     private readonly Searcher _searcher;
     private readonly Random _rng;
     private readonly object _searchLock = new();
@@ -57,12 +66,18 @@ public sealed class BotMoveProvider : IMoveProvider
         if (snapshot.Ply < Profile.BookDepth && TryBookMove(pos) is Move book && legal.Contains(book))
             return book;
 
-        if (Profile.RandomMoveChance > 0 && _rng.NextDouble() < Profile.RandomMoveChance)
-            return legal[_rng.Next(legal.Count)];
+        bool randomMove = Profile.RandomMoveChance > 0 && _rng.NextDouble() < Profile.RandomMoveChance;
 
         SearchLimits limits = BuildLimits(snapshot, legal.Count);
         SearchResult result;
         lock (_searchLock) result = _searcher.Search(pos, limits, cancellationToken);
+        if (result.BestMove.IsNone) return legal[_rng.Next(legal.Count)];
+
+        // A found mate, or a decisive endgame advantage, is played straight: weakened bots otherwise
+        // shuffle won endgames into 50-move draws. Their mistakes stay in the opening and middlegame.
+        bool converting = result.Score >= Searcher.MateBound || result.Score >= ConvertMargin && IsEndgame(pos);
+        if (converting) return result.BestMove;
+        if (randomMove) return legal[_rng.Next(legal.Count)];
         if (result.Lines.Count <= 1 || Profile.Temperature <= 0) return result.BestMove;
 
         // Weakened choice: noisy scores + softmax sampling over the candidate lines.
@@ -174,6 +189,14 @@ public sealed class BotMoveProvider : IMoveProvider
     }
 
     private static TimeSpan Min(TimeSpan a, TimeSpan b) => a < b ? a : b;
+
+    /// <summary>No queens, or at most four other pieces (besides kings and pawns) left on the board.</summary>
+    private static bool IsEndgame(Position pos)
+    {
+        ulong queens = pos.Pieces(PieceType.Queen);
+        ulong minorsAndRooks = pos.Pieces(PieceType.Knight) | pos.Pieces(PieceType.Bishop) | pos.Pieces(PieceType.Rook);
+        return queens == 0 || Bitboard.Count(minorsAndRooks | queens) <= 4;
+    }
 
     private double Gaussian()
     {

@@ -20,7 +20,7 @@ dotnet run -c Release --project tools/Gambit.BotArena -- 0 artifacts/arena.csv  
 
 Monolith ("Max") was left out: at 6 s per move its games are very slow, and it has no number to check.
 
-## Results — 2026-10-02 (first run, 45 minutes, ~84 games per step)
+## Results — 2026-10-02, revision 1 (45 minutes, ~84 games per step)
 
 | Step | Games | Stronger bot scores | Measured gap (±95%) | Labelled gap | Avg plies |
 |---|---|---|---|---|---|
@@ -40,6 +40,25 @@ Chained into a ladder anchored at Gale = 1400 (bot-vs-bot scale, not human Elo):
 Bramble −145, Clover 30, Dash 160, Ember 704, Flint 1135, Gale 1400, Harbor 1831, Iris 2476,
 Jade 2831, Kestrel 3259, Lumen 3406.
 
+## Revision 2: bots convert won endgames (2026-10-02)
+
+`BotMoveProvider` now plays its best move, without random moves or noise, when it has found a mate
+or is at least +500 in an endgame (no queens, or at most four pieces besides kings and pawns).
+Mistakes stay in the opening and middlegame. Ten minutes on the six weakest bots, ~1,000 games per
+step:
+
+| Step | Games | Stronger bot scores | Measured gap (±95%) | Before | Avg plies (before) |
+|---|---|---|---|---|---|
+| Acorn → Bramble | 1018 | 78% (+780 =27 −211) | +219 ± 26 | +93 | 89 (217) |
+| Bramble → Clover | 1018 | 88% (+891 =7 −120) | +344 ± 33 | +175 | 81 (234) |
+| Clover → Dash | 1017 | 84% (+853 =0 −164) | +286 ± 29 | +130 | 82 (244) |
+| Dash → Ember | 1017 | 95% (+970 =0 −47) | +526 ± 51 | +545 | 68 (113) |
+| Ember → Flint | 1017 | 91% (+918 =6 −93) | +393 ± 37 | +431 | 81 (114) |
+
+Draws at the low end fell from about half the games to almost none, games are a third as long,
+and the low steps are now real steps. The middle-ladder cliffs (Dash → Ember especially) remain;
+the stronger bots were not re-measured under revision 2 yet.
+
 ## What it means
 
 * **The middle of the ladder has cliffs.** From Dash (800) to Kestrel (2200) every step measures
@@ -56,12 +75,23 @@ Jade 2831, Kestrel 3259, Lumen 3406.
 
 ## Next steps
 
+Nudging one bot only moves its cliff to the neighbouring step (the middle as a whole is too steep),
+so a systematic approach will be faster than hand-tuning:
+
+* Replace the uniform random move with a *plausible* mistake (a random pick among the candidate
+  lines, or a move losing at most N centipawns). Uniformly random moves are what a stronger bot
+  punishes every time; they make the steps cliff-like.
+* Drive the knobs from one skill number per bot (interpolated depth, nodes, noise, temperature,
+  mistake rate), measure skill → Elo against two or three fixed reference bots with the arena, and
+  pick skills that give even steps.
+
+Hand-tuning, if preferred:
+
 1. Tune the steep steps first (Harbor → Iris, Dash → Ember, Jade → Kestrel, Ember → Flint): make
    neighbours closer, e.g. give the upper bot a little random-move chance or more eval noise, or
    lift the lower bot's depth/node budget. Re-run the arena on just the affected bots
    (`... -- 15 artifacts/arena-tuning.csv harbor,iris`) after each change; aim for even steps of
    ~200–250 bot-Elo with margins under ±100 (≈150 games per pair).
-2. Help the weakest bots convert: e.g. switch off random moves and noise once the bot is a rook
-   or more ahead in an endgame, or always play a found mate. Fewer 200-ply draws.
+2. ~~Help the weakest bots convert won endgames~~ — done in revision 2 (see above).
 3. Once the ladder is even, relabel ratings from the measured ladder anchored at a mid-ladder bot,
    and keep the arena CSV as the record.

@@ -145,10 +145,10 @@ sealed record Row(string Low, string High, bool HighIsWhite, double HighScore, i
 
 static class Strength
 {
-    /// <summary>A short hash of everything that sets a bot's strength.</summary>
+    /// <summary>A short hash of everything that sets a bot's strength (its knobs and the move-choice logic revision).</summary>
     public static string Fingerprint(BotProfile p)
     {
-        string knobs = string.Join('|', p.MaxDepth, p.MaxNodes, p.ThinkTimeMs, p.UsesClock, p.Candidates,
+        string knobs = string.Join('|', BotMoveProvider.Revision, p.MaxDepth, p.MaxNodes, p.ThinkTimeMs, p.UsesClock, p.Candidates,
             p.Temperature.ToString(CultureInfo.InvariantCulture), p.EvalNoise.ToString(CultureInfo.InvariantCulture),
             p.RandomMoveChance.ToString(CultureInfo.InvariantCulture), p.BookDepth);
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(knobs)))[..6].ToLowerInvariant();
