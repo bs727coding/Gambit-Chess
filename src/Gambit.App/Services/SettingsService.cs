@@ -20,6 +20,7 @@ public sealed partial class AppSettings : ObservableObject
     [ObservableProperty] public partial bool HighlightLastMove { get; set; } = true;
     [ObservableProperty] public partial bool AnimateMoves { get; set; } = true;
     [ObservableProperty] public partial bool AutoQueen { get; set; }
+    [ObservableProperty] public partial bool Premoves { get; set; } = true;
     [ObservableProperty] public partial bool ConfirmResign { get; set; } = true;
     [ObservableProperty] public partial bool SoundEnabled { get; set; } = true;
 

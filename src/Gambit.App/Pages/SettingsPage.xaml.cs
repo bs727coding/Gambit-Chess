@@ -30,6 +30,7 @@ public sealed partial class SettingsPage : Page
         LastMoveSwitch.IsOn = s.HighlightLastMove;
         AnimateSwitch.IsOn = s.AnimateMoves;
         QueenSwitch.IsOn = s.AutoQueen;
+        PremoveSwitch.IsOn = s.Premoves;
         ResignSwitch.IsOn = s.ConfirmResign;
         SoundSwitch.IsOn = s.SoundEnabled;
 
@@ -133,6 +134,7 @@ public sealed partial class SettingsPage : Page
         s.HighlightLastMove = LastMoveSwitch.IsOn;
         s.AnimateMoves = AnimateSwitch.IsOn;
         s.AutoQueen = QueenSwitch.IsOn;
+        s.Premoves = PremoveSwitch.IsOn;
         s.ConfirmResign = ResignSwitch.IsOn;
         bool soundWasOn = s.SoundEnabled;
         s.SoundEnabled = SoundSwitch.IsOn;

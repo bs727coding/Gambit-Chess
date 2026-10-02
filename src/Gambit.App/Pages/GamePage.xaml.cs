@@ -176,6 +176,7 @@ public sealed partial class GamePage : Page
         _session.DrawOfferReceived += Session_DrawOfferReceived;
         if (_session is RemoteGameSession remote) remote.RematchChanged += Remote_RematchChanged;
         UpdateRematchButton();
+        Board.ClearPremove();
         Board.SetMarkers([]);
 
         Game game = session.Game;
@@ -238,10 +239,12 @@ public sealed partial class GamePage : Page
         RefreshMoveList();
         RefreshAll();
         if (!_session.Game.IsOver && _setup is { IsOnline: false }) ActiveGameStore.Save(_setup, _session.Game, _session.Clock);
+        if (!e.ByLocalPlayer && Board.HasPremove) DispatcherQueue.TryEnqueue(PlayPremove);
     }
 
     private void Session_GameEnded(object? sender, GameEndedEventArgs e)
     {
+        Board.ClearPremove();
         RecordResult();
         if (_setup?.IsOnline != true) ActiveGameStore.Clear();
         _clockTimer.Stop();
@@ -253,6 +256,7 @@ public sealed partial class GamePage : Page
 
     private void Session_StateReset(object? sender, EventArgs e)
     {
+        Board.ClearPremove();
         _viewPly = -1;
         Game g = _session!.Game;
         Board.SetPosition(g.Position, g.LastMove?.Move ?? Move.None);
@@ -339,6 +343,7 @@ public sealed partial class GamePage : Page
 
         bool forwardOne = ply == current + 1;
         _viewPly = ply == count ? -1 : ply;
+        if (_viewPly >= 0) Board.ClearPremove();
         Position pos = ply == count ? g.Position : g.PositionAt(ply);
         Move last = ply > 0 ? g.Moves[ply - 1].Move : Move.None;
         Board.SetPosition(pos, last, animate: forwardOne);
@@ -379,10 +384,21 @@ public sealed partial class GamePage : Page
         if (_session == null || _session.Game.IsOver || _viewPly >= 0 || _setup == null)
         {
             Board.Interaction = BoardInteraction.None;
+            Board.AllowPremoves = false;
             return;
         }
         Board.Interaction = _setup.IsHotSeat ? BoardInteraction.Both
             : _setup.HumanColor == Color.White ? BoardInteraction.White : BoardInteraction.Black;
+        Board.AllowPremoves = !_setup.IsHotSeat && App.Settings.Current.Premoves;
+    }
+
+    /// <summary>Plays the queued premove if it is legal now that it's our turn; otherwise drops it.</summary>
+    private void PlayPremove()
+    {
+        if (Board.TakePremove() is not (int from, int to) || _session == null || _session.Game.IsOver || _viewPly >= 0) return;
+        if (!_session.IsLocalSide(_session.Game.SideToMove)) return;
+        Move move = Premoves.Resolve(_session.Game.Position, from, to);
+        if (!move.IsNone) _session.TrySubmitMove(move);
     }
 
     private Color BottomColor => Board.Flipped ? Color.Black : Color.White;
@@ -537,6 +553,7 @@ public sealed partial class GamePage : Page
         Board.HighlightLastMove = s.HighlightLastMove;
         Board.AnimateMoves = s.AnimateMoves;
         Board.AutoQueen = s.AutoQueen;
+        UpdateInteraction();
     }
 
     private void RecordResult()

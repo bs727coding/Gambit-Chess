@@ -56,6 +56,7 @@ public sealed partial class ChessBoardControl : UserControl
     private static readonly TimeSpan MoveAnimation = TimeSpan.FromMilliseconds(170);
     private static readonly WColor UserArrowColor = ColorHelper.FromArgb(200, 255, 170, 0);
     private static readonly WColor UserCircleColor = ColorHelper.FromArgb(200, 255, 170, 0);
+    private static readonly WColor PremoveColor = ColorHelper.FromArgb(140, 214, 64, 64);
 
     private readonly Grid _host = new() { Background = new SolidColorBrush(Colors.Transparent) };
     private readonly Grid _board = new() { Background = new SolidColorBrush(Colors.Transparent), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
@@ -94,6 +95,10 @@ public sealed partial class ChessBoardControl : UserControl
     private Move _pendingUserMove;
     private bool _pendingDragged;
     private int _hoverSquare = -1;
+
+    // Queued premove (squares only; the owner turns it into a legal move once it's our turn)
+    private int _premoveFrom = -1;
+    private int _premoveTo = -1;
 
     // Promotion picker state
     private List<Move>? _promotionChoices;
@@ -200,6 +205,7 @@ public sealed partial class ChessBoardControl : UserControl
         }
         else
         {
+            _premoveFrom = _premoveTo = -1;
             ClearSelection();
         }
         SquareClicked?.Invoke(this, sq);
@@ -224,6 +230,40 @@ public sealed partial class ChessBoardControl : UserControl
 
     /// <summary>Allow moving pieces of the side that is not to move (e.g. board editor). Default false.</summary>
     public bool IgnoreTurn { get; set; }
+
+    /// <summary>
+    /// While the other side is to move, the user may queue one move ("premove") for the side(s) in
+    /// <see cref="Interaction"/>. The board only remembers the squares; see <see cref="TakePremove"/>.
+    /// </summary>
+    public bool AllowPremoves
+    {
+        get => _allowPremoves;
+        set
+        {
+            _allowPremoves = value;
+            if (!value) ClearPremove();
+        }
+    }
+
+    private bool _allowPremoves;
+
+    public bool HasPremove => _premoveFrom >= 0;
+
+    /// <summary>Returns and clears the queued premove.</summary>
+    public (int From, int To)? TakePremove()
+    {
+        if (_premoveFrom < 0) return null;
+        (int, int) premove = (_premoveFrom, _premoveTo);
+        ClearPremove();
+        return premove;
+    }
+
+    public void ClearPremove()
+    {
+        if (_premoveFrom < 0) return;
+        _premoveFrom = _premoveTo = -1;
+        DrawHighlights();
+    }
 
     public bool ShowLegalMoves { get; set; } = true;
     public bool HighlightLastMove { get; set; } = true;
@@ -500,6 +540,12 @@ public sealed partial class ChessBoardControl : UserControl
             AddSquareFill(_lastMove.To, hl);
         }
         if (_selected >= 0) AddSquareFill(_selected, hl);
+        if (_premoveFrom >= 0)
+        {
+            var premove = new SolidColorBrush(PremoveColor);
+            AddSquareFill(_premoveFrom, premove);
+            AddSquareFill(_premoveTo, premove);
+        }
 
         if (_position.InCheck)
         {
@@ -545,10 +591,14 @@ public sealed partial class ChessBoardControl : UserControl
         _hintLayer.Children.Clear();
         if (_selected < 0 || !ShowLegalMoves || _sq <= 0) return;
         var brush = new SolidColorBrush(_theme.HintColor);
-        foreach (int to in _legal.Where(m => m.From == _selected).Select(m => m.To).Distinct())
+        bool premove = IsPremovePiece(_selected);
+        IEnumerable<int> targets = premove
+            ? Bitboard.Squares(PremoveTargets(_selected))
+            : _legal.Where(m => m.From == _selected).Select(m => m.To).Distinct();
+        foreach (int to in targets)
         {
             Point c = SquareCenter(to);
-            bool capture = _position.PieceAt(to) != Piece.None || _legal.Any(m => m.From == _selected && m.To == to && m.IsEnPassant);
+            bool capture = _position.PieceAt(to) != Piece.None || !premove && _legal.Any(m => m.From == _selected && m.To == to && m.IsEnPassant);
             Ellipse e;
             if (capture)
             {
@@ -625,9 +675,15 @@ public sealed partial class ChessBoardControl : UserControl
         Piece p = _position.PieceAt(sq);
         if (p == Piece.None) return false;
         Color c = p.Color();
-        if (!IgnoreTurn && c != _position.SideToMove) return false;
+        if (!IgnoreTurn && !AllowPremoves && c != _position.SideToMove) return false;
         return c == Color.White ? Interaction.HasFlag(BoardInteraction.White) : Interaction.HasFlag(BoardInteraction.Black);
     }
+
+    /// <summary>The piece on <paramref name="sq"/> can only be premoved (its side is not to move).</summary>
+    private bool IsPremovePiece(int sq) =>
+        AllowPremoves && !IgnoreTurn && _position.PieceAt(sq) is var p && p != Piece.None && p.Color() != _position.SideToMove;
+
+    private ulong PremoveTargets(int from) => Premoves.Targets(_position, from);
 
     private void OnPointerPressed(object sender, PointerRoutedEventArgs e)
     {
@@ -645,6 +701,15 @@ public sealed partial class ChessBoardControl : UserControl
 
         if (pt.Properties.IsRightButtonPressed)
         {
+            if (_premoveFrom >= 0)
+            {
+                // Right-click cancels a queued premove (and doesn't start an arrow).
+                _premoveFrom = _premoveTo = -1;
+                _selected = -1;
+                RedrawOverlays();
+                e.Handled = true;
+                return;
+            }
             _rightFrom = sq;
             _selected = -1;
             RedrawOverlays();
@@ -683,6 +748,7 @@ public sealed partial class ChessBoardControl : UserControl
         }
         else
         {
+            _premoveFrom = _premoveTo = -1; // clicking elsewhere cancels a premove
             ClearSelection();
         }
 
@@ -791,6 +857,16 @@ public sealed partial class ChessBoardControl : UserControl
     private bool TryCompleteMove(int from, int to, bool dragged)
     {
         if (!CanMovePieceOn(from)) return false;
+        if (IsPremovePiece(from))
+        {
+            if (!Bitboard.Contains(PremoveTargets(from), to)) return false;
+            _premoveFrom = from;
+            _premoveTo = to;
+            _selected = -1;
+            PositionPieces(); // the piece waits on its square until the premove is played
+            RedrawOverlays();
+            return true;
+        }
         var candidates = _legal.Where(m => m.From == from && m.To == to).ToList();
         if (candidates.Count == 0) return false;
 
@@ -838,6 +914,7 @@ public sealed partial class ChessBoardControl : UserControl
         if (e.Key == VirtualKey.Escape)
         {
             if (_promotionChoices != null) CancelPromotion();
+            _premoveFrom = _premoveTo = -1;
             ClearSelection();
             _userMarkers.Clear();
             DrawMarkers();

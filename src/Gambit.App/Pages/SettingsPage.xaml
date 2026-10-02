@@ -147,6 +147,19 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
+                <FontIcon Glyph="&#xE916;" FontSize="18" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="Premoves" />
+                    <TextBlock Text="Queue your next move while your opponent is thinking (right-click cancels)" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                </StackPanel>
+                <ToggleSwitch x:Name="PremoveSwitch" Grid.Column="2" MinWidth="0" Toggled="Switch_Toggled" AutomationProperties.Name="Premoves" />
+            </Grid>
+            <Grid Style="{StaticResource SettingRowStyle}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
                 <FontIcon Glyph="&#xE7C1;" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <TextBlock Text="Confirm before resigning" />
