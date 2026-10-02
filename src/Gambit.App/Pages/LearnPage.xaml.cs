@@ -76,6 +76,15 @@ public sealed partial class LearnPage : Page
             var content = new Grid { ColumnSpacing = 12 };
             content.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             content.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            var badgeText = new TextBlock
+            {
+                Text = result != null ? "✓" : number.ToString(),
+                FontWeight = FontWeights.SemiBold,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            // Only override the color when completed; otherwise inherit the theme's text color.
+            if (result != null) badgeText.Foreground = new SolidColorBrush(Colors.White);
             content.Children.Add(new Border
             {
                 Width = 30,
@@ -83,14 +92,7 @@ public sealed partial class LearnPage : Page
                 CornerRadius = new CornerRadius(15),
                 VerticalAlignment = VerticalAlignment.Top,
                 Background = result != null ? Ui.Brush("#2E7D32") : Ui.NeutralFill(50),
-                Child = new TextBlock
-                {
-                    Text = result != null ? "✓" : number.ToString(),
-                    FontWeight = FontWeights.SemiBold,
-                    Foreground = result != null ? new SolidColorBrush(Colors.White) : null,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center,
-                },
+                Child = badgeText,
             });
             var text = new StackPanel { Spacing = 2 };
             text.Children.Add(new TextBlock { Text = lesson.Title, FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
