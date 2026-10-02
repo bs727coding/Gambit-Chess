@@ -106,13 +106,14 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 
 - [x] Dockerfile + config; deploy to a host with WebSockets (Azure Container Apps / App Service,
       Fly.io or similar — **you** create the account and sign in; Claude prepares scripts + docs)
-- [ ] Production DB (PostgreSQL), TLS/domain, rate limiting, logging/health checks
+- [~] Rate limiting ✔, health check ✔, console logging ✔ — production DB (PostgreSQL), TLS/domain still to do
 - [~] Per-user install with Start menu shortcut (`./build.ps1 install`) ✔, app icon ✔ — MSIX packaging + signing, versioning, auto-update still to do
 - [ ] Online polish: friends list, game history sync, spectating
 
 ## Backlog / stretch
 
-- Stronger engine (NNUE-style eval, multithreaded search), Elo calibration of bots via self-play
+- Stronger engine (NNUE-style eval, multithreaded search); even out the bot ladder with
+  `tools/Gambit.BotArena` (first measurement in docs/BOT-CALIBRATION.md)
 - Opening explorer, coach explanations ("why was this a blunder?"), endgame tablebase (syzygy) probing
 - Accessibility pass (Narrator, keyboard-only play, high contrast), localization
 - Cloud sync of profile, web/mobile client reusing `Gambit.Core`
