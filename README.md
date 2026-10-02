@@ -33,13 +33,16 @@ Requirements: Windows 11 (Arm64 or x64) and the .NET 10 SDK. Visual Studio is no
 
 ```powershell
 ./build.ps1 run       # build (Release) and launch the app
+./build.ps1 install   # install for your user + Start menu shortcut (re-run to update)
 ./build.ps1 test      # run the unit + integration tests
 ./build.ps1 server    # run the online server on port 5080 for LAN play
 ./build.ps1 publish   # self-contained app in ./artifacts/win-arm64
 ```
 
-The published folder runs without installing .NET or the Windows App SDK. Your data (settings,
-profile, puzzle progress, game archive) lives in `%LOCALAPPDATA%\Gambit`.
+`install` copies the self-contained app to `%LOCALAPPDATA%\Programs\Gambit` and adds "Gambit" to
+the Start menu — no admin rights or certificates needed; `./build.ps1 uninstall` removes it. The
+published folder runs without installing .NET or the Windows App SDK. Your data (settings,
+profile, puzzle progress, game archive) lives in `%LOCALAPPDATA%\Gambit` and survives reinstalls.
 
 ## Project layout
 

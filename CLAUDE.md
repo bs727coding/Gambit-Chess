@@ -23,6 +23,7 @@ session short at any moment, so **checkpoint often**).
 * .NET SDK 10.0.4xx (Arm64) at `C:\Program Files\dotnet`. No Visual Studio — everything builds with
   the dotnet CLI (the WinUI XAML compiler runs from the Windows App SDK NuGet package).
 * `./build.ps1` — build everything (Debug)          `./build.ps1 test` — run all tests
+* `./build.ps1 install` / `uninstall` — per-user install + Start menu shortcut (only run when the user asks)
 * `./build.ps1 run` — build (Release) + launch the app  `./build.ps1 publish` — self-contained app in `artifacts/`
 * `./build.ps1 server` — online server on :5080 (all interfaces; may trigger a firewall prompt —
   for local testing bind to 127.0.0.1 with `dotnet run --project src/Gambit.Server -c Release --urls http://127.0.0.1:5080`)

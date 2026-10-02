@@ -8,13 +8,17 @@
     ./build.ps1 publish    # self-contained Release build in ./artifacts/<rid>
     ./build.ps1 perft      # quick move-generator speed check
     ./build.ps1 server     # run the online play server on port 5080 (all network interfaces)
+    ./build.ps1 install    # install for this user (%LOCALAPPDATA%\Programs\Gambit + Start menu shortcut); re-run to update
+    ./build.ps1 uninstall  # remove that install (your profile and games in %LOCALAPPDATA%\Gambit are kept)
 #>
 param(
-    [ValidateSet('build', 'test', 'run', 'publish', 'perft', 'clean', 'server')]
+    [ValidateSet('build', 'test', 'run', 'publish', 'perft', 'clean', 'server', 'install', 'uninstall')]
     [string]$Command = 'build',
     [ValidateSet('Debug', 'Release', '')]
     [string]$Configuration = '',
-    [string]$Runtime = ''
+    [string]$Runtime = '',
+    [string]$InstallDir = '',
+    [switch]$NoShortcut
 )
 
 $ErrorActionPreference = 'Stop'
@@ -37,6 +41,25 @@ $platform = if ($Runtime -eq 'win-arm64') { 'ARM64' } else { 'x64' }
 $solution = Join-Path $root 'Gambit.slnx'
 $app = Join-Path $root 'src\Gambit.App\Gambit.App.csproj'
 $tests = Join-Path $root 'tests\Gambit.Tests\Gambit.Tests.csproj'
+if (-not $InstallDir) { $InstallDir = Join-Path $env:LOCALAPPDATA 'Programs\Gambit' }
+$shortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'Gambit.lnk'
+
+function Publish-App([string]$out) {
+    Restore $app @("-p:Platform=$platform", "-r", $Runtime)
+    Invoke-Dotnet @('publish', $app, '-c', 'Release', "-p:Platform=$platform", '-r', $Runtime, '--self-contained', 'true', '--no-restore', '-o', $out, '-nologo')
+}
+
+# Only ever delete a folder that holds a Gambit install (never an unrelated directory).
+function Assert-GambitFolder([string]$dir) {
+    if ((Test-Path $dir) -and -not (Test-Path (Join-Path $dir 'Gambit.exe'))) {
+        throw "$dir exists but doesn't contain Gambit.exe; refusing to touch it. Pick another -InstallDir."
+    }
+}
+
+function Assert-NotRunningFrom([string]$dir) {
+    $running = Get-Process Gambit -ErrorAction SilentlyContinue | Where-Object { $_.Path -and $_.Path.StartsWith($dir, [StringComparison]::OrdinalIgnoreCase) }
+    if ($running) { throw "Close Gambit first (it is running from $dir)." }
+}
 
 function Invoke-Dotnet([string[]]$arguments) {
     & $dotnet @arguments
@@ -85,9 +108,36 @@ switch ($Command) {
     }
     'publish' {
         $out = Join-Path $root "artifacts\$Runtime"
-        Restore $app @("-p:Platform=$platform", "-r", $Runtime)
-        Invoke-Dotnet @('publish', $app, '-c', 'Release', "-p:Platform=$platform", '-r', $Runtime, '--self-contained', 'true', '--no-restore', '-o', $out, '-nologo')
+        Publish-App $out
         Write-Host "Published to $out"
+    }
+    'install' {
+        # Per-user install: no admin rights, no certificate, no MSIX. Re-running updates it.
+        Assert-GambitFolder $InstallDir
+        Assert-NotRunningFrom $InstallDir
+        $out = Join-Path $root "artifacts\$Runtime"
+        Publish-App $out
+        if (Test-Path $InstallDir) { Remove-Item -LiteralPath $InstallDir -Recurse -Force }
+        Copy-Item -LiteralPath $out -Destination $InstallDir -Recurse
+        $exe = Join-Path $InstallDir 'Gambit.exe'
+        if (-not $NoShortcut) {
+            $shell = New-Object -ComObject WScript.Shell
+            $link = $shell.CreateShortcut($shortcut)
+            $link.TargetPath = $exe
+            $link.WorkingDirectory = $InstallDir
+            $link.IconLocation = "$exe,0"
+            $link.Description = 'Gambit - chess for Windows'
+            $link.Save()
+            Write-Host "Start menu shortcut: $shortcut"
+        }
+        Write-Host "Installed Gambit to $InstallDir"
+    }
+    'uninstall' {
+        Assert-GambitFolder $InstallDir
+        Assert-NotRunningFrom $InstallDir
+        if (Test-Path $InstallDir) { Remove-Item -LiteralPath $InstallDir -Recurse -Force }
+        if (-not $NoShortcut -and (Test-Path $shortcut)) { Remove-Item -LiteralPath $shortcut -Force }
+        Write-Host "Removed $InstallDir (your data in $env:LOCALAPPDATA\Gambit is kept)."
     }
     'server' {
         $server = Join-Path $root 'src\Gambit.Server\Gambit.Server.csproj'

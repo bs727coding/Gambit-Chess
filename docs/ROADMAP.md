@@ -105,7 +105,7 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 - [x] Dockerfile + config; deploy to a host with WebSockets (Azure Container Apps / App Service,
       Fly.io or similar — **you** create the account and sign in; Claude prepares scripts + docs)
 - [ ] Production DB (PostgreSQL), TLS/domain, rate limiting, logging/health checks
-- [ ] MSIX packaging + signing, app icon/assets, versioning, App Installer auto-update
+- [~] Per-user install with Start menu shortcut (`./build.ps1 install`) ✔, app icon ✔ — MSIX packaging + signing, versioning, auto-update still to do
 - [ ] Online polish: friends list, game history sync, spectating
 
 ## Backlog / stretch
