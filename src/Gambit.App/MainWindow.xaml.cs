@@ -49,7 +49,18 @@ public sealed partial class MainWindow : Window
         };
         RootGrid.ActualThemeChanged += (_, _) => UpdateCaptionButtons();
 
+        NavView.ItemInvoked += NavView_ItemInvoked;
         NavView.SelectedItem = NavView.MenuItems[0];
+    }
+
+    /// <summary>Clicking the already-selected item returns to that section's main page (e.g. from a puzzle back to the hub).</summary>
+    private void NavView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
+    {
+        if (args.InvokedItemContainer != NavView.SelectedItem) return;
+        string tag = args.IsSettingsInvoked ? "settings" : args.InvokedItemContainer?.Tag as string ?? "";
+        if (tag == "play" && GamePage.HasActiveGame) return;
+        if (Pages.TryGetValue(tag, out Type? page) && ContentFrame.CurrentSourcePageType != page)
+            ContentFrame.Navigate(page, null, new EntranceNavigationTransitionInfo());
     }
 
     /// <summary>Navigate the content frame (selects the matching nav item when there is one).</summary>

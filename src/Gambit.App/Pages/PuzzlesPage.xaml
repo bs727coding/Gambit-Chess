@@ -7,33 +7,119 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel MaxWidth="{StaticResource PageMaxWidth}" Padding="32,16,32,32" Spacing="8">
             <TextBlock Text="Puzzles" Style="{StaticResource PageTitleStyle}" />
-            <TextBlock Text="Sharpen your tactics with thousands of rated puzzles." Style="{StaticResource SecondaryTextStyle}" />
+            <TextBlock x:Name="Subtitle" Style="{StaticResource SecondaryTextStyle}" />
 
-            <Border Style="{StaticResource CardStyle}" Padding="28" Margin="0,16,0,0">
+            <!-- Rating hero -->
+            <Border Style="{StaticResource CardStyle}" Padding="24" Margin="0,12,0,0">
                 <Grid ColumnSpacing="28">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <Border Width="96" Height="96" CornerRadius="48" Background="#EF6C00" VerticalAlignment="Top">
-                        <FontIcon Glyph="&#xEA86;" FontSize="42" Foreground="White" />
+                    <Border Width="88" Height="88" CornerRadius="44" Background="#EF6C00">
+                        <TextBlock x:Name="RankGlyph" FontFamily="Segoe UI Symbol" FontSize="46" Foreground="White"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,6" />
                     </Border>
-                    <StackPanel Grid.Column="1" Spacing="10">
-                        <TextBlock Text="Coming in the next update" Style="{StaticResource SubtitleTextBlockStyle}" />
-                        <TextBlock Style="{StaticResource SecondaryTextStyle}"
-                                   Text="The puzzle trainer is scheduled for Session 3 of the roadmap. Here is what it will include:" />
-                        <StackPanel Spacing="6" Margin="0,6,0,0">
-                            <TextBlock Text="•  Rated puzzles that adapt to you (Glicko-2 puzzle rating)" TextWrapping="Wrap" />
-                            <TextBlock Text="•  Puzzle Rush — 3 minute, 5 minute and Survival modes" TextWrapping="Wrap" />
-                            <TextBlock Text="•  A daily puzzle and streaks" TextWrapping="Wrap" />
-                            <TextBlock Text="•  Practice by theme: forks, pins, mates, endgames and more" TextWrapping="Wrap" />
-                            <TextBlock Text="•  Ranks to climb, with per-theme statistics" TextWrapping="Wrap" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                        <TextBlock x:Name="RankName" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <TextBlock x:Name="RatingText" Style="{StaticResource TitleLargeTextBlockStyle}" />
+                            <TextBlock Text="puzzle rating" VerticalAlignment="Bottom" Margin="0,0,0,10" Style="{StaticResource SecondaryTextStyle}" />
                         </StackPanel>
-                        <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Margin="0,8,0,0"
-                                   Text="Puzzles come from the open Lichess puzzle database (public domain, CC0)." TextWrapping="Wrap" />
+                        <ProgressBar x:Name="RankProgress" Maximum="1" Width="320" HorizontalAlignment="Left" />
+                        <TextBlock x:Name="RankHint" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     </StackPanel>
+                    <Grid Grid.Column="2" ColumnSpacing="28" RowSpacing="2" VerticalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="Solved" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Grid.Column="1" Text="Success" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Grid.Column="2" Text="Streak (best)" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock x:Name="SolvedText" Grid.Row="1" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <TextBlock x:Name="SuccessText" Grid.Row="1" Grid.Column="1" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <TextBlock x:Name="StreakText" Grid.Row="1" Grid.Column="2" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    </Grid>
                 </Grid>
             </Border>
+
+            <!-- Modes -->
+            <Grid ColumnSpacing="12" Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="1.3*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Style="{StaticResource CardStyle}" Padding="20">
+                    <StackPanel Spacing="10">
+                        <Border Width="44" Height="44" CornerRadius="22" Background="#EF6C00" HorizontalAlignment="Left">
+                            <FontIcon Glyph="&#xEA86;" Foreground="White" FontSize="18" />
+                        </Border>
+                        <TextBlock Text="Rated puzzles" Style="{StaticResource SubtitleTextBlockStyle}" FontSize="18" />
+                        <TextBlock Text="Puzzles picked for your level. Your rating moves with every attempt." Style="{StaticResource SecondaryTextStyle}" />
+                        <Button Content="Start solving" Style="{StaticResource AccentButtonStyle}" Click="Rated_Click" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="1" Style="{StaticResource CardStyle}" Padding="20">
+                    <StackPanel Spacing="10">
+                        <Border Width="44" Height="44" CornerRadius="22" Background="#1565C0" HorizontalAlignment="Left">
+                            <FontIcon Glyph="&#xE787;" Foreground="White" FontSize="18" />
+                        </Border>
+                        <TextBlock Text="Daily puzzle" Style="{StaticResource SubtitleTextBlockStyle}" FontSize="18" />
+                        <TextBlock x:Name="DailyText" Style="{StaticResource SecondaryTextStyle}" />
+                        <Button x:Name="DailyButton" Content="Solve today's puzzle" Click="Daily_Click" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}" Padding="20">
+                    <StackPanel Spacing="10">
+                        <Border Width="44" Height="44" CornerRadius="22" Background="#C62828" HorizontalAlignment="Left">
+                            <FontIcon Glyph="&#xE945;" Foreground="White" FontSize="18" />
+                        </Border>
+                        <TextBlock Text="Puzzle Rush" Style="{StaticResource SubtitleTextBlockStyle}" FontSize="18" />
+                        <TextBlock Text="Race the clock through puzzles that get harder. Three mistakes and it's over." Style="{StaticResource SecondaryTextStyle}" />
+                        <Grid ColumnSpacing="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button HorizontalAlignment="Stretch" Click="Rush3_Click" AutomationProperties.Name="Puzzle Rush 3 minutes">
+                                <StackPanel>
+                                    <TextBlock Text="3 min" HorizontalAlignment="Center" FontWeight="SemiBold" />
+                                    <TextBlock x:Name="Best3" HorizontalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}" />
+                                </StackPanel>
+                            </Button>
+                            <Button Grid.Column="1" HorizontalAlignment="Stretch" Click="Rush5_Click" AutomationProperties.Name="Puzzle Rush 5 minutes">
+                                <StackPanel>
+                                    <TextBlock Text="5 min" HorizontalAlignment="Center" FontWeight="SemiBold" />
+                                    <TextBlock x:Name="Best5" HorizontalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}" />
+                                </StackPanel>
+                            </Button>
+                            <Button Grid.Column="2" HorizontalAlignment="Stretch" Click="Survival_Click" AutomationProperties.Name="Puzzle Survival">
+                                <StackPanel>
+                                    <TextBlock Text="Survival" HorizontalAlignment="Center" FontWeight="SemiBold" />
+                                    <TextBlock x:Name="BestSurvival" HorizontalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <TextBlock Text="Practice by theme" Style="{StaticResource SectionHeaderStyle}" />
+            <VariableSizedWrapGrid x:Name="ThemeGrid" Orientation="Horizontal" ItemWidth="206" ItemHeight="70" />
+
+            <TextBlock x:Name="SourceNote" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Margin="0,16,0,0" TextWrapping="Wrap" />
         </StackPanel>
     </ScrollViewer>
 </Page>

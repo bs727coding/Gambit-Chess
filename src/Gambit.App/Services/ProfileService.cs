@@ -48,6 +48,7 @@ public sealed class PlayerProfile
     public int BestWinStreak { get; set; }
     public Dictionary<string, BotRecord> Bots { get; set; } = [];
     public List<GameRecord> RecentGames { get; set; } = [];
+    public PuzzleProfile Puzzles { get; set; } = new();
 }
 
 /// <summary>Owns the local player profile: results, per-bot records and the PGN archive.</summary>

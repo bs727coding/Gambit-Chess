@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Openings\openings.tsv" LogicalName="Gambit.Core.Openings.openings.tsv" />
+    <EmbeddedResource Include="Puzzles\puzzles.csv" LogicalName="Gambit.Core.Puzzles.puzzles.csv" Condition="Exists('Puzzles\puzzles.csv')" />
   </ItemGroup>
 
   <ItemGroup>

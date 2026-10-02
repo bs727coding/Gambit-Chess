@@ -43,7 +43,7 @@
                             <FontIcon Glyph="&#xEA86;" Foreground="White" FontSize="18" />
                         </Border>
                         <TextBlock Text="Puzzles" Style="{StaticResource SubtitleTextBlockStyle}" FontSize="18" />
-                        <TextBlock Text="Rated tactics, Puzzle Rush and a daily puzzle. Coming soon." Style="{StaticResource SecondaryTextStyle}" />
+                        <TextBlock x:Name="PuzzleCardText" Text="Rated tactics, Puzzle Rush and a daily puzzle." Style="{StaticResource SecondaryTextStyle}" />
                     </StackPanel>
                 </Button>
 

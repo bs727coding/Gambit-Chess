@@ -1,0 +1,25 @@
+id,fen,moves,rating,themes
+73rx6kq,r1bq1rk1/1ppp1ppp/p2b1n2/3N4/P2pP3/3B4/1PPP1PPP/R1BQK2R w KQ - 2 9,d1e2 f6d5,627,opening oneMove advantage
+d4x11ty,r2q2k1/2pr1pbp/1p4p1/nR3b2/p1BP1Q2/B1P2N1P/P4PP1/3K3R w - - 8 24,b5f5 a5c4,632,hangingPiece middlegame oneMove advantage
+hhepxbl,rn5Q/3kb3/3r4/pN5p/P1Pp2qP/1P2P1P1/4R1B1/2K2R2 w - - 1 40,h8b8 a8b8,636,hangingPiece middlegame oneMove crushing
+979q8my,R1b1kb1r/4qppp/1r3n2/3p4/8/1PN2N1P/1P1P1PP1/2nQ1R1K b k - 1 17,b6a6 a8c8,638,hangingPiece middlegame oneMove advantage
+k2bvggf,rnb1kb1r/p3ppp1/1pqp4/2p4p/2PB1P2/NP4P1/P2PP2P/R1QK1BNR w q - 0 13,d4c3 c6h1,652,hangingPiece middlegame oneMove crushing
+95ffpvv,r1bqkr2/p1pp1pbp/1p4p1/3Pp2n/PnP1N3/3BPQ2/1P3PPP/R1B1K1NR w KQq - 1 10,e4c3 b4d3,663,fork hangingPiece opening oneMove advantage
+b024xb1,N7/8/3k4/1P4pr/p7/6K1/2R4P/8 w - - 0 50,c2c5 d6c5,664,hangingPiece endgame oneMove crushing
+iq1qtyh,r1bqk2r/1ppp1ppp/5n2/p1b1p3/1nP1P3/P2B4/1P1PQPPP/RNB1K1NR b KQkq - 0 7,c7c6 a3b4,665,opening oneMove advantage
+mjxari4,6k1/4bp2/2rp2pp/ppr1p3/P1N1P3/1PP2P1P/3R1P1K/3R4 w - - 0 32,d1a1 b5c4,676,middlegame oneMove advantage
+k4464v6,4r3/k1p1pp2/p2q2p1/P4b2/2P4p/2Q4P/5PP1/2R3K1 b - - 5 36,d6d2 c3d2,680,hangingPiece middlegame oneMove crushing
+gc4e9a5,r1bqkbnr/pp3ppp/2Np4/4p3/4P3/2N5/PPP2PPP/R1BQKB1R b KQkq - 0 6,c8d7 c6d8,680,opening oneMove crushing
+dhmlx71,2r1k3/1p1nnp2/p1qp1bp1/2p1p2r/Q1P1P2p/P1NP1P1P/1P4PN/R1B1KBR1 w - - 1 22,c3b1 c6a4,690,hangingPiece middlegame oneMove crushing
+ahr9iu2,8/7k/2K5/8/P3P3/8/7R/4q3 b - - 8 81,e1h4 h2h4,705,hangingPiece endgame oneMove crushing
+tnjno9t,1rb1k2r/p1pp1ppp/p7/2b5/4Pp1q/P5Q1/1P1P2PP/1NB2K1R b k - 0 15,e8e7 g3h4,705,hangingPiece middlegame oneMove crushing
+khevb9m,2krr3/1p2bpp1/p1p1p2p/8/P2P2nP/2NnPNP1/2q1QP2/3RBKR1 b - - 1 24,e7f6 e2c2,718,hangingPiece middlegame oneMove crushing
+jo2nmdz,bB4nr/5k2/8/1p3BK1/2Pp4/P1p4p/5P1P/6R1 b - - 1 35,h8h5 g5h5,723,hangingPiece endgame oneMove crushing
+4r3w7wf,r1k1r3/3q1p2/1p1p1p2/p1p1p2Q/PnP1P2P/1P1P1NP1/4RP1K/3R4 w - - 1 50,h5g5 f6g5,724,middlegame oneMove crushing
+aa5x1eg,rn1qkb1r/2p2ppp/p2pb3/1p1Np3/P7/1BP2N2/1P1P1PPP/R1nQ1K1R w kq - 0 11,d5c7 d8c7,728,hangingPiece middlegame oneMove advantage
+34vdud4,3R4/k7/8/7P/7r/5K2/3p4/8 w - - 4 95,d8d4 h4d4,738,hangingPiece endgame oneMove crushing
+h9x4744,6k1/2p2p1p/8/Pr1P4/q1N3p1/3Pr1P1/PQ6/RKB5 w - - 1 36,c1e3 a4d1 e3c1 d1d3,918,mate mateIn2 fork middlegame short crushing
+f2fw1i0,r1bqkr2/p1pp1pbp/1p1P2p1/4p2n/P1P5/1PN1PQ1P/3K1nP1/R1B3NR b q - 0 14,d8e7 d6e7 e8e7 f3a8,945,middlegame short crushing
+vukf327,1r1qk1nr/p1p1n3/1p2bp2/1N2p1pp/1P1Pp3/3K1N2/P1PB1PPP/1R2QBR1 w k - 0 13,e1e4 e6f5 e4f5 e7f5,1187,pin middlegame short crushing
+7ht46qr,4R3/1Q3pk1/3q1bpp/3P4/3B2P1/p4N1P/2r2PK1/3r4 w - - 3 52,f3e5 c2c7 e5c4 c7b7 c4d6 f6d4,1336,middlegame long advantage
+cb7fmxi,r1bq1r1k/2pp2p1/p1nb1p1p/6NQ/1p2P3/1B6/PB2RPPP/3R2K1 b - - 1 18,c8b7 h5g6 d6h2 g1h2 h6g5 g6h5,1376,mate mateIn3 middlegame long crushing

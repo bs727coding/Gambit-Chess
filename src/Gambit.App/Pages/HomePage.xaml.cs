@@ -29,6 +29,10 @@ public sealed partial class HomePage : Page
             ? $"Start with {next.Name} ({next.RatingText}) — a gentle first opponent."
             : $"Suggested next: {next.Name} ({next.RatingText}).";
 
+        PuzzleProfile pz = p.Puzzles;
+        PuzzleCardText.Text = pz.Attempts == 0
+            ? "Rated tactics, Puzzle Rush and a daily puzzle."
+            : $"Puzzle rating {Math.Round(pz.Rating):0} · {pz.Solved} solved. Keep the streak going!";
         StatGames.Text = p.GamesPlayed.ToString();
         StatRecord.Text = $"{p.Wins} · {p.Losses} · {p.Draws}";
         BotProfile? best = BotRoster.Bots.Where(b => App.Profile.RecordAgainst(b.Id).Wins > 0).LastOrDefault();
