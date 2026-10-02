@@ -13,7 +13,10 @@ namespace Gambit.App.Helpers;
 /// <summary>Parameters for starting a game from the Play page.</summary>
 public sealed record GameSetup(BotProfile? Bot, Color HumanColor, TimeControl TimeControl, bool AllowTakebacks, string? StartFen = null)
 {
-    public bool IsHotSeat => Bot == null;
+    /// <summary>An online game (the session is a RemoteGameSession).</summary>
+    public bool IsOnline { get; init; }
+
+    public bool IsHotSeat => Bot == null && !IsOnline;
 }
 
 public static class Ui

@@ -19,6 +19,13 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Gambit.Core\Gambit.Core.csproj" />
     <ProjectReference Include="..\..\src\Gambit.Engine\Gambit.Engine.csproj" />
+    <ProjectReference Include="..\..\src\Gambit.Server\Gambit.Server.csproj" />
+    <ProjectReference Include="..\..\src\Gambit.Online.Client\Gambit.Online.Client.csproj" />
+    <ProjectReference Include="..\..\src\Gambit.Online.Contracts\Gambit.Online.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
 </Project>

@@ -7,9 +7,10 @@
     ./build.ps1 run        # build and launch the app
     ./build.ps1 publish    # self-contained Release build in ./artifacts/<rid>
     ./build.ps1 perft      # quick move-generator speed check
+    ./build.ps1 server     # run the online play server on port 5080 (all network interfaces)
 #>
 param(
-    [ValidateSet('build', 'test', 'run', 'publish', 'perft', 'clean')]
+    [ValidateSet('build', 'test', 'run', 'publish', 'perft', 'clean', 'server')]
     [string]$Command = 'build',
     [ValidateSet('Debug', 'Release', '')]
     [string]$Configuration = '',
@@ -87,5 +88,11 @@ switch ($Command) {
         Restore $app @("-p:Platform=$platform", "-r", $Runtime)
         Invoke-Dotnet @('publish', $app, '-c', 'Release', "-p:Platform=$platform", '-r', $Runtime, '--self-contained', 'true', '--no-restore', '-o', $out, '-nologo')
         Write-Host "Published to $out"
+    }
+    'server' {
+        $server = Join-Path $root 'src\Gambit.Server\Gambit.Server.csproj'
+        Restore $server
+        Write-Host 'Gambit server on http://0.0.0.0:5080 (Ctrl+C to stop). Friends on your network connect to http://<this-PC-IP>:5080'
+        Invoke-Dotnet @('run', '--project', $server, '-c', 'Release', '--no-restore', '--urls', 'http://0.0.0.0:5080')
     }
 }

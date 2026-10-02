@@ -114,6 +114,9 @@ public interface IGameSession : IDisposable
     /// <summary>A draw offer was declined (or accepted, in which case GameEnded follows).</summary>
     event EventHandler<bool>? DrawOfferAnswered;
 
+    /// <summary>The opponent offers a draw (online games). Answer with <see cref="RespondToDraw"/>.</summary>
+    event EventHandler? DrawOfferReceived;
+
     void Start();
 
     /// <summary>Submit a move for a local side. Returns false if it is not legal or not this side's turn.</summary>
@@ -126,4 +129,7 @@ public interface IGameSession : IDisposable
 
     /// <summary>Take back the last local move (and the opponent's reply in bot games).</summary>
     bool Takeback();
+
+    /// <summary>Accept or decline the opponent's draw offer.</summary>
+    void RespondToDraw(bool accept);
 }

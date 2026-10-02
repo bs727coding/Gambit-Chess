@@ -1,0 +1,282 @@
+using Gambit.Core.Board;
+using Gambit.Core.Games;
+using Gambit.Core.Notation;
+using Gambit.Core.Sessions;
+
+namespace Gambit.Online.Client;
+
+/// <summary>
+/// An online game. Local moves are applied optimistically and sent to the server; the server is
+/// authoritative — any disagreement triggers a resync from the server's move list. Server events
+/// are marshalled to the synchronization context that created the session (the UI thread).
+/// </summary>
+public sealed class RemoteGameSession : IGameSession
+{
+    private readonly OnlineClient _client;
+    private readonly SynchronizationContext? _sync;
+    private readonly Color _me;
+    private bool _finished;
+    private bool _disposed;
+
+    public RemoteGameSession(OnlineClient client, GameStartDto start)
+    {
+        _client = client;
+        _sync = SynchronizationContext.Current;
+        GameId = start.GameId;
+        _me = start.YourColor == "black" ? Color.Black : Color.White;
+        TimeControl = new TimeControl(TimeSpan.FromSeconds(start.TimeControl.InitialSeconds), TimeSpan.FromSeconds(start.TimeControl.IncrementSeconds));
+        Clock = new ChessClock(TimeControl);
+        WhiteDto = start.White;
+        BlackDto = start.Black;
+        White = ToInfo(start.White, Color.White);
+        Black = ToInfo(start.Black, Color.Black);
+        Game = BuildGame(start);
+        ApplyClock(start.Clock);
+
+        _client.MovePlayed += OnMovePlayed;
+        _client.GameOver += OnGameOver;
+        _client.DrawOffered += OnDrawOffered;
+        _client.DrawDeclined += OnDrawDeclined;
+        _client.OpponentConnection += OnOpponentConnection;
+        _client.Resync += OnResync;
+    }
+
+    public string GameId { get; }
+    public TimeControl TimeControl { get; }
+    public PlayerDto WhiteDto { get; }
+    public PlayerDto BlackDto { get; }
+    public Color LocalColor => _me;
+
+    public Game Game { get; private set; }
+    public PlayerInfo White { get; }
+    public PlayerInfo Black { get; }
+    public ChessClock? Clock { get; }
+
+    /// <summary>"Thinking" = waiting for the opponent's move.</summary>
+    public bool IsOpponentThinking => !_finished && !Game.IsOver && Game.SideToMove != _me;
+
+    public bool CanTakeback => false;
+    public bool CanOfferDraw => !_finished && !Game.IsOver && Game.Moves.Count >= 2;
+
+    /// <summary>Rating changes reported by the server when the game ended.</summary>
+    public (int? White, int? Black) RatingChanges { get; private set; }
+
+    public event EventHandler<MovePlayedEventArgs>? MovePlayed;
+    public event EventHandler<GameEndedEventArgs>? GameEnded;
+    public event EventHandler? StateReset;
+    public event EventHandler? ThinkingChanged;
+    public event EventHandler<ChatEventArgs>? ChatReceived;
+    public event EventHandler<bool>? DrawOfferAnswered;
+    public event EventHandler? DrawOfferReceived;
+
+    public bool IsLocalSide(Color side) => side == _me;
+
+    public void Start()
+    {
+        ThinkingChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public bool TrySubmitMove(Move move)
+    {
+        if (_finished || Game.IsOver || Game.SideToMove != _me || !Game.IsLegal(move)) return false;
+        int ply = Game.Moves.Count + 1;
+        GameMove gm = Game.Play(move);
+        MovePlayed?.Invoke(this, new MovePlayedEventArgs(gm, byLocalPlayer: true));
+        ThinkingChanged?.Invoke(this, EventArgs.Empty);
+        _ = SendMoveAsync(ply, move.ToUci());
+        return true;
+    }
+
+    private async Task SendMoveAsync(int ply, string uci)
+    {
+        try
+        {
+            if (!await _client.MakeMoveAsync(GameId, ply, uci)) await _client.RejoinAsync(GameId);
+        }
+        catch (Exception ex)
+        {
+            Post(() => ChatReceived?.Invoke(this, new ChatEventArgs(ServerVoice, $"Connection problem: {ex.Message}")));
+        }
+    }
+
+    public void Resign() => Fire(() => _client.ResignAsync(GameId));
+
+    public void OfferDraw() => Fire(() => _client.OfferDrawAsync(GameId));
+
+    public void RespondToDraw(bool accept) => Fire(() => _client.RespondToDrawAsync(GameId, accept));
+
+    public bool Takeback() => false;
+
+    // ------------------------------------------------------------------ server events
+
+    private void OnMovePlayed(MoveDto dto)
+    {
+        if (dto.GameId != GameId) return;
+        Post(() =>
+        {
+            ApplyClock(dto.Clock);
+            if (dto.Ply == Game.Moves.Count && Game.Moves[^1].Uci == dto.Uci) return; // our own move, confirmed
+            if (dto.Ply != Game.Moves.Count + 1)
+            {
+                _ = _client.RejoinAsync(GameId);
+                return;
+            }
+            Move m = Uci.Parse(Game.Position, dto.Uci);
+            if (m.IsNone)
+            {
+                _ = _client.RejoinAsync(GameId);
+                return;
+            }
+            GameMove gm = Game.Play(m);
+            MovePlayed?.Invoke(this, new MovePlayedEventArgs(gm, byLocalPlayer: false));
+            ThinkingChanged?.Invoke(this, EventArgs.Empty);
+        });
+    }
+
+    private void OnGameOver(GameOverDto dto)
+    {
+        if (dto.GameId != GameId) return;
+        Post(() =>
+        {
+            if (_finished) return;
+            _finished = true;
+            Clock?.Stop();
+            RatingChanges = (dto.WhiteRatingChange, dto.BlackRatingChange);
+            if (!Game.IsOver) ApplyResult(dto);
+            ThinkingChanged?.Invoke(this, EventArgs.Empty);
+            GameEnded?.Invoke(this, new GameEndedEventArgs(Game.Result, Game.Termination, dto.Description));
+        });
+    }
+
+    private void OnDrawOffered(string gameId, string byColor)
+    {
+        if (gameId != GameId) return;
+        bool mine = byColor == (_me == Color.White ? "white" : "black");
+        if (!mine) Post(() => DrawOfferReceived?.Invoke(this, EventArgs.Empty));
+    }
+
+    private void OnDrawDeclined(string gameId)
+    {
+        if (gameId == GameId) Post(() => DrawOfferAnswered?.Invoke(this, false));
+    }
+
+    private void OnOpponentConnection(string gameId, bool connected, int graceSeconds)
+    {
+        if (gameId != GameId) return;
+        Post(() => ChatReceived?.Invoke(this, new ChatEventArgs(ServerVoice, connected
+            ? "Your opponent is connected."
+            : $"Your opponent disconnected. They have {graceSeconds} seconds to come back.")));
+    }
+
+    private void OnResync(GameStartDto dto)
+    {
+        if (dto.GameId != GameId) return;
+        Post(() =>
+        {
+            Game = BuildGame(dto);
+            ApplyClock(dto.Clock);
+            StateReset?.Invoke(this, EventArgs.Empty);
+            ThinkingChanged?.Invoke(this, EventArgs.Empty);
+        });
+    }
+
+    // ------------------------------------------------------------------ helpers
+
+    private static readonly PlayerInfo ServerVoice = new("Server", PlayerKind.Remote) { Id = "server" };
+
+    private PlayerInfo ToInfo(PlayerDto dto, Color side) =>
+        new(dto.Name, side == _me ? PlayerKind.LocalHuman : PlayerKind.Remote, dto.Rating)
+        {
+            Id = dto.Id,
+            Subtitle = dto.Provisional ? $"{dto.Rating}? (provisional)" : dto.Rating.ToString(),
+        };
+
+    private Game BuildGame(GameStartDto start)
+    {
+        var game = new Game(start.StartFen);
+        foreach (string uci in start.Moves)
+        {
+            Move m = Uci.Parse(game.Position, uci);
+            if (m.IsNone || game.IsOver) break;
+            game.Play(m);
+        }
+        game.Tags["Event"] = "Gambit online game";
+        game.Tags["White"] = start.White.Name;
+        game.Tags["Black"] = start.Black.Name;
+        game.Tags["WhiteElo"] = start.White.Rating.ToString();
+        game.Tags["BlackElo"] = start.Black.Rating.ToString();
+        game.Tags["TimeControl"] = $"{start.TimeControl.InitialSeconds}+{start.TimeControl.IncrementSeconds}";
+        return game;
+    }
+
+    private void ApplyClock(ClockDto c)
+    {
+        if (Clock == null) return;
+        // Account for the time the message spent in transit.
+        long latency = Math.Clamp(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - c.ServerTimeMs, 0, 2000);
+        long white = c.WhiteMs - (c.Running == "white" ? latency : 0);
+        long black = c.BlackMs - (c.Running == "black" ? latency : 0);
+        Clock.Stop();
+        Clock.Set(TimeSpan.FromMilliseconds(Math.Max(0, white)), TimeSpan.FromMilliseconds(Math.Max(0, black)));
+        if (c.Running == "white") Clock.Start(Color.White);
+        else if (c.Running == "black") Clock.Start(Color.Black);
+    }
+
+    private void ApplyResult(GameOverDto dto)
+    {
+        Color? winner = dto.Result switch { "1-0" => Color.White, "0-1" => Color.Black, _ => null };
+        switch (dto.Termination)
+        {
+            case nameof(Termination.Resignation) when winner is Color w:
+                Game.Resign(w.Opposite());
+                break;
+            case nameof(Termination.Timeout) or nameof(Termination.TimeoutVsInsufficientMaterial):
+                Game.Timeout(winner?.Opposite() ?? Game.SideToMove);
+                break;
+            case nameof(Termination.Abandoned) when winner is Color w:
+                Game.Abandon(w.Opposite());
+                break;
+            case nameof(Termination.Aborted):
+                Game.Abort();
+                break;
+            default:
+                if (winner is Color win) Game.Resign(win.Opposite());
+                else Game.AgreeDraw();
+                break;
+        }
+    }
+
+    private void Fire(Func<Task> call)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await call();
+            }
+            catch (Exception ex)
+            {
+                Post(() => ChatReceived?.Invoke(this, new ChatEventArgs(ServerVoice, $"Connection problem: {ex.Message}")));
+            }
+        });
+    }
+
+    private void Post(Action action)
+    {
+        if (_disposed) return;
+        if (_sync != null) _sync.Post(_ => { if (!_disposed) action(); }, null);
+        else action();
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _client.MovePlayed -= OnMovePlayed;
+        _client.GameOver -= OnGameOver;
+        _client.DrawOffered -= OnDrawOffered;
+        _client.DrawDeclined -= OnDrawDeclined;
+        _client.OpponentConnection -= OnOpponentConnection;
+        _client.Resync -= OnResync;
+    }
+}

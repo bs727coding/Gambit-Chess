@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Wire protocol shared by the server and the app: DTOs + strongly typed SignalR hub interfaces. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Gambit.Online</RootNamespace>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- SignalR client + RemoteGameSession (IGameSession over the network). Platform-neutral. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Gambit.Online.Client</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Gambit.Core\Gambit.Core.csproj" />
+    <ProjectReference Include="..\Gambit.Online.Contracts\Gambit.Online.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

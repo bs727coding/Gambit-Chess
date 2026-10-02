@@ -7,8 +7,15 @@
     <Project Path="src/Gambit.App/Gambit.App.csproj" />
     <Project Path="src/Gambit.Core/Gambit.Core.csproj" />
     <Project Path="src/Gambit.Engine/Gambit.Engine.csproj" />
+    <Project Path="src/Gambit.Online.Client/Gambit.Online.Client.csproj" />
+    <Project Path="src/Gambit.Online.Contracts/Gambit.Online.Contracts.csproj" />
+    <Project Path="src/Gambit.Server/Gambit.Server.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Gambit.Tests/Gambit.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/Gambit.OnlineBot/Gambit.OnlineBot.csproj" />
+    <Project Path="tools/Gambit.PuzzleGen/Gambit.PuzzleGen.csproj" />
   </Folder>
 </Solution>

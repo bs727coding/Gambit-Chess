@@ -86,7 +86,7 @@
                                 </StackPanel>
                             </Grid>
                         </Button>
-                        <Button Grid.Column="1" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="16" IsEnabled="False">
+                        <Button Grid.Column="1" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="16" Click="Online_Click" AutomationProperties.Name="Play online">
                             <Grid ColumnSpacing="14">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
@@ -95,7 +95,7 @@
                                 <FontIcon Glyph="&#xE774;" FontSize="24" />
                                 <StackPanel Grid.Column="1">
                                     <TextBlock Text="Play online" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                                    <TextBlock Text="Coming soon — matchmaking and friend challenges" Style="{StaticResource SecondaryTextStyle}" />
+                                    <TextBlock Text="Rated matchmaking and private games with friends" Style="{StaticResource SecondaryTextStyle}" />
                                 </StackPanel>
                             </Grid>
                         </Button>

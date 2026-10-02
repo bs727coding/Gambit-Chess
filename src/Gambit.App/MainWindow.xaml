@@ -56,6 +56,11 @@
                         <FontIcon Glyph="&#xE7BE;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
+                <NavigationViewItem Content="Online" Tag="online">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE774;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
                 <NavigationViewItem Content="Analysis" Tag="analysis">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE9D9;" />

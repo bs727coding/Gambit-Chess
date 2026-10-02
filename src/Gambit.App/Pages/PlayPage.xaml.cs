@@ -143,4 +143,6 @@ public sealed partial class PlayPage : Page
     }
 
     private void Resume_Click(object sender, RoutedEventArgs e) => App.Window.Navigate(typeof(GamePage), null, "play");
+
+    private void Online_Click(object sender, RoutedEventArgs e) => App.Window.NavigateTo("online");
 }

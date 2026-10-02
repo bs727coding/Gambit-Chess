@@ -7,6 +7,7 @@ using Gambit.Core.Games;
 using Gambit.Core.Openings;
 using Gambit.Core.Sessions;
 using Gambit.Engine.Bots;
+using Gambit.Online.Client;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -23,7 +24,7 @@ public sealed partial class GamePage : Page
 {
     private static GamePage? _instance;
 
-    private LocalGameSession? _session;
+    private IGameSession? _session;
     private GameSetup? _setup;
     private int _viewPly = -1; // -1 = following the live position
     private bool _recorded;
@@ -65,6 +66,10 @@ public sealed partial class GamePage : Page
         if (e.Parameter is GameSetup setup)
         {
             StartGame(setup);
+        }
+        else if (e.Parameter is RemoteGameSession remote)
+        {
+            if (!ReferenceEquals(remote, _session)) StartOnline(remote);
         }
         else if (_session == null)
         {
@@ -137,16 +142,39 @@ public sealed partial class GamePage : Page
         if (black.Rating is int br) game.Tags["BlackElo"] = br.ToString();
         game.Tags["TimeControl"] = setup.TimeControl.PgnTag;
 
-        _session = new LocalGameSession(game, white, black, whiteBot, blackBot, setup.TimeControl, setup.AllowTakebacks);
+        var session = new LocalGameSession(game, white, black, whiteBot, blackBot, setup.TimeControl, setup.AllowTakebacks);
+        if (session.Clock != null && whiteTime is TimeSpan wt && blackTime is TimeSpan bt) session.Clock.Set(wt, bt);
+        AttachSession(session, setup, playStartSound: resumeMoves == null);
+    }
+
+    /// <summary>Shows an online game (the session talks to the server; this page just renders it).</summary>
+    private void StartOnline(RemoteGameSession remote)
+    {
+        EndSession();
+        var setup = new GameSetup(null, remote.LocalColor, remote.TimeControl, AllowTakebacks: false) { IsOnline = true };
+        AttachSession(remote, setup, playStartSound: remote.Game.Moves.Count == 0);
+    }
+
+    private void AttachSession(IGameSession session, GameSetup setup, bool playStartSound)
+    {
+        _setup = setup;
+        _recorded = false;
+        _viewPly = -1;
+        PostGamePanel.Visibility = Visibility.Collapsed;
+        ChatBubble.Visibility = Visibility.Collapsed;
+        Toast.IsOpen = false;
+
+        _session = session;
         _session.MovePlayed += Session_MovePlayed;
         _session.GameEnded += Session_GameEnded;
         _session.StateReset += Session_StateReset;
         _session.ThinkingChanged += Session_ThinkingChanged;
         _session.ChatReceived += Session_ChatReceived;
         _session.DrawOfferAnswered += Session_DrawOfferAnswered;
-        if (_session.Clock != null && whiteTime is TimeSpan wt && blackTime is TimeSpan bt) _session.Clock.Set(wt, bt);
+        _session.DrawOfferReceived += Session_DrawOfferReceived;
         Board.SetMarkers([]);
 
+        Game game = session.Game;
         Board.Flipped = !setup.IsHotSeat && setup.HumanColor == Color.Black;
         Board.SetPosition(game.Position, game.LastMove?.Move ?? Move.None);
         SetupPlayerBars();
@@ -154,7 +182,7 @@ public sealed partial class GamePage : Page
         RefreshMoveList();
 
         _lowTimeWarned = false;
-        if (resumeMoves == null) SoundService.Play(GameSound.Start);
+        if (playStartSound) SoundService.Play(GameSound.Start);
         _session.Start();
         if (_session.Clock != null) _clockTimer.Start();
         else _clockTimer.Stop();
@@ -170,9 +198,24 @@ public sealed partial class GamePage : Page
         _session.ThinkingChanged -= Session_ThinkingChanged;
         _session.ChatReceived -= Session_ChatReceived;
         _session.DrawOfferAnswered -= Session_DrawOfferAnswered;
+        _session.DrawOfferReceived -= Session_DrawOfferReceived;
         _session.Dispose();
         _session = null;
         _clockTimer.Stop();
+    }
+
+    private async void Session_DrawOfferReceived(object? sender, EventArgs e)
+    {
+        var dialog = new ContentDialog
+        {
+            Title = "Draw offered",
+            Content = $"{OpponentDisplayName()} offers a draw.",
+            PrimaryButtonText = "Accept draw",
+            CloseButtonText = "Decline",
+            DefaultButton = ContentDialogButton.Close,
+        };
+        bool accept = await Dialogs.ShowAsync(dialog, XamlRoot) == ContentDialogResult.Primary;
+        _session?.RespondToDraw(accept);
     }
 
     // ------------------------------------------------------------------ session events
@@ -185,13 +228,13 @@ public sealed partial class GamePage : Page
         Board.SetPosition(_session!.Game.Position, e.Move.Move, animate: true);
         RefreshMoveList();
         RefreshAll();
-        if (!_session.Game.IsOver && _setup != null) ActiveGameStore.Save(_setup, _session.Game, _session.Clock);
+        if (!_session.Game.IsOver && _setup is { IsOnline: false }) ActiveGameStore.Save(_setup, _session.Game, _session.Clock);
     }
 
     private void Session_GameEnded(object? sender, GameEndedEventArgs e)
     {
         RecordResult();
-        ActiveGameStore.Clear();
+        if (_setup?.IsOnline != true) ActiveGameStore.Clear();
         _clockTimer.Stop();
         SoundService.Play(_setup?.IsHotSeat == false && _session?.Game.Winner == _setup.HumanColor ? GameSound.Win : GameSound.End);
         PostGamePanel.Visibility = Visibility.Visible;
@@ -207,7 +250,7 @@ public sealed partial class GamePage : Page
         Board.SetMarkers([]);
         RefreshMoveList();
         RefreshAll();
-        if (_setup != null) ActiveGameStore.Save(_setup, g, _session.Clock);
+        if (_setup is { IsOnline: false }) ActiveGameStore.Save(_setup, g, _session.Clock);
     }
 
     private void Session_ThinkingChanged(object? sender, EventArgs e) => RefreshAll();
@@ -317,7 +360,7 @@ public sealed partial class GamePage : Page
         else
         {
             string monogram = p.Name.Length > 0 ? p.Name[..1].ToUpperInvariant() : "?";
-            bar.SetPlayer(p.Name, null, monogram, side == Color.White ? "#6B7A8F" : "#2F3B4C");
+            bar.SetPlayer(p.Name, p.Rating?.ToString(), monogram, side == Color.White ? "#6B7A8F" : "#2F3B4C");
         }
     }
 
@@ -329,6 +372,13 @@ public sealed partial class GamePage : Page
             OpponentAvatar.Children.Add(Ui.Avatar(bp.Monogram, bp.Color, 56));
             OpponentName.Text = $"{bp.Name} ({bp.RatingText})";
             OpponentTagline.Text = bp.Tagline;
+        }
+        else if (_setup?.IsOnline == true && _session != null)
+        {
+            PlayerInfo opp = _setup.HumanColor == Color.White ? _session.Black : _session.White;
+            OpponentAvatar.Children.Add(Ui.Avatar(opp.Name.Length > 0 ? opp.Name[..1].ToUpperInvariant() : "?", "#0F6CBD", 56));
+            OpponentName.Text = opp.Rating is int r ? $"{opp.Name} ({r})" : opp.Name;
+            OpponentTagline.Text = $"Online · {_setup.TimeControl.DisplayName} · rated";
         }
         else
         {
@@ -409,7 +459,7 @@ public sealed partial class GamePage : Page
         DrawButton.IsEnabled = live && _session!.CanOfferDraw;
         ResignButton.IsEnabled = live && _session!.Game.Moves.Count > 0;
         TakebackButton.Visibility = _setup?.AllowTakebacks == false ? Visibility.Collapsed : Visibility.Visible;
-        HintButton.IsEnabled = live && _viewPly < 0 && !_session!.IsOpponentThinking && _session.IsLocalSide(_session.Game.SideToMove);
+        HintButton.IsEnabled = live && _setup?.IsOnline != true && _viewPly < 0 && !_session!.IsOpponentThinking && _session.IsLocalSide(_session.Game.SideToMove);
 
         int count = _session?.Game.Moves.Count ?? 0;
         int ply = _viewPly < 0 ? count : _viewPly;
@@ -417,7 +467,12 @@ public sealed partial class GamePage : Page
         NextButton.IsEnabled = LastButton.IsEnabled = ply < count;
     }
 
-    private string OpponentDisplayName() => _setup?.Bot?.Name ?? "Your opponent";
+    private string OpponentDisplayName()
+    {
+        if (_setup?.Bot is BotProfile bot) return bot.Name;
+        if (_setup?.IsOnline == true && _session != null) return (_setup.HumanColor == Color.White ? _session.Black : _session.White).Name;
+        return "Your opponent";
+    }
 
     private void ApplySettings()
     {
@@ -450,10 +505,11 @@ public sealed partial class GamePage : Page
             g.Tags["ECO"] = opening.Eco;
             g.Tags["Opening"] = opening.Name;
         }
+        PlayerInfo? onlineOpponent = _setup.IsOnline ? (_setup.HumanColor == Color.White ? _session.Black : _session.White) : null;
         App.Profile.RecordGame(g,
-            opponent: _setup.Bot?.Name ?? "Pass and play",
+            opponent: _setup.Bot?.Name ?? onlineOpponent?.Name ?? "Pass and play",
             botId: _setup.Bot?.Id,
-            opponentRating: _setup.Bot?.Rating,
+            opponentRating: _setup.Bot?.Rating ?? onlineOpponent?.Rating,
             playerColor: _setup.IsHotSeat ? null : _setup.HumanColor,
             timeControl: _setup.TimeControl);
         AchievementService.Instance.OnGameFinished(g, _setup.IsHotSeat ? null : _setup.HumanColor, _setup.Bot, _setup.TimeControl);
@@ -482,13 +538,19 @@ public sealed partial class GamePage : Page
             if (g.Winner == _setup.HumanColor && rec.Wins == 1)
                 content.Children.Add(new TextBlock { Text = $"First win against {bp.Name}! Try the next bot up.", TextWrapping = TextWrapping.Wrap });
         }
+        if (_session is RemoteGameSession remote)
+        {
+            int? change = _setup.HumanColor == Color.White ? remote.RatingChanges.White : remote.RatingChanges.Black;
+            if (change is int d)
+                content.Children.Add(new TextBlock { Text = $"Rating change: {(d >= 0 ? "+" : "")}{d}", Opacity = 0.8 });
+        }
 
         var dialog = new ContentDialog
         {
             Title = title,
             Content = content,
             PrimaryButtonText = "Game review",
-            SecondaryButtonText = "Rematch",
+            SecondaryButtonText = _setup.IsOnline ? "New online game" : "Rematch",
             CloseButtonText = "Close",
             DefaultButton = ContentDialogButton.Primary,
         };
@@ -575,7 +637,8 @@ public sealed partial class GamePage : Page
 
     private void Rematch_Click(object sender, RoutedEventArgs e)
     {
-        if (_setup != null) StartGame(_setup);
+        if (_setup?.IsOnline == true) App.Window.Navigate(typeof(OnlinePage), null, "online");
+        else if (_setup != null) StartGame(_setup);
     }
 
     private void NewGame_Click(object sender, RoutedEventArgs e) => App.Window.NavigateTo("play", PlayPage.ChooseParameter);

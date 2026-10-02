@@ -62,6 +62,11 @@ public sealed class LocalGameSession : IGameSession
     public event EventHandler<ChatEventArgs>? ChatReceived;
     public event EventHandler<bool>? DrawOfferAnswered;
 
+    /// <summary>Bots never offer draws, so this never fires for local games.</summary>
+    public event EventHandler? DrawOfferReceived { add { } remove { } }
+
+    public void RespondToDraw(bool accept) { }
+
     public bool IsLocalSide(Color side) => ProviderFor(side) == null;
 
     public IMoveProvider? ProviderFor(Color side) => side == Color.White ? _whiteBot : _blackBot;

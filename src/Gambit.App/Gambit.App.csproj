@@ -33,6 +33,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Gambit.Core\Gambit.Core.csproj" />
     <ProjectReference Include="..\Gambit.Engine\Gambit.Engine.csproj" />
+    <ProjectReference Include="..\Gambit.Online.Client\Gambit.Online.Client.csproj" />
   </ItemGroup>
 
 </Project>

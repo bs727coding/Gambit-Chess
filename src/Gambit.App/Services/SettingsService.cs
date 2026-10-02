@@ -28,6 +28,13 @@ public sealed partial class AppSettings : ObservableObject
     [ObservableProperty] public partial string LastColor { get; set; } = "white";
     [ObservableProperty] public partial string LastTimeControl { get; set; } = "unlimited";
     [ObservableProperty] public partial bool AllowTakebacks { get; set; } = true;
+
+    // Online play.
+    [ObservableProperty] public partial string OnlineServerUrl { get; set; } = "http://localhost:5080";
+
+    /// <summary>Secret guest-account token (never shown to other players).</summary>
+    [ObservableProperty] public partial string OnlineToken { get; set; } = "";
+    [ObservableProperty] public partial string LastOnlineTimeControl { get; set; } = "3+2";
 }
 
 /// <summary>Loads settings at startup and saves them (debounced) whenever a property changes.</summary>

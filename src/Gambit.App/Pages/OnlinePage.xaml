@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="Gambit.App.Pages.OnlinePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel MaxWidth="{StaticResource PageMaxWidth}" Padding="32,16,32,32" Spacing="12">
+            <StackPanel>
+                <TextBlock Text="Play online" Style="{StaticResource PageTitleStyle}" />
+                <TextBlock Text="Rated games against people, or a private game with a friend using a code." Style="{StaticResource SecondaryTextStyle}" />
+            </StackPanel>
+
+            <!-- Connection -->
+            <Border Style="{StaticResource CardStyle}" Padding="20">
+                <Grid ColumnSpacing="12" RowSpacing="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBox x:Name="ServerBox" Header="Server address" PlaceholderText="http://localhost:5080" />
+                    <Button x:Name="ConnectButton" Grid.Column="1" VerticalAlignment="Bottom" Style="{StaticResource AccentButtonStyle}" MinWidth="120"
+                            Click="Connect_Click" AutomationProperties.Name="Connect" Content="Connect" />
+                    <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="10">
+                        <Ellipse x:Name="StatusDot" Width="10" Height="10" Fill="#8A8A8A" VerticalAlignment="Center" />
+                        <TextBlock x:Name="StatusText" Text="Not connected" VerticalAlignment="Center" />
+                        <TextBlock x:Name="StatsText" Style="{StaticResource SecondaryTextStyle}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Grid x:Name="LobbyGrid" ColumnSpacing="12" IsHitTestVisible="False" Opacity="0.45">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Quick pairing -->
+                <Border Style="{StaticResource CardStyle}" Padding="20">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Quick pairing" Style="{StaticResource SubtitleTextBlockStyle}" FontSize="18" />
+                        <TextBlock Text="Get matched with the next player looking for the same time control." Style="{StaticResource SecondaryTextStyle}" />
+                        <VariableSizedWrapGrid x:Name="SeekGrid" Orientation="Horizontal" ItemWidth="104" ItemHeight="58" />
+                        <StackPanel x:Name="SeekingPanel" Orientation="Horizontal" Spacing="12" Visibility="Collapsed">
+                            <ProgressRing IsActive="True" Width="20" Height="20" />
+                            <TextBlock x:Name="SeekingText" VerticalAlignment="Center" />
+                            <Button Content="Cancel" Click="CancelSeek_Click" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Friends -->
+                <Border Grid.Column="1" Style="{StaticResource CardStyle}" Padding="20">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Play a friend" Style="{StaticResource SubtitleTextBlockStyle}" FontSize="18" />
+                        <TextBlock Text="Create a game and send your friend the code, or enter a code you received." Style="{StaticResource SecondaryTextStyle}" />
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ComboBox x:Name="ChallengeTime" Header="Time" HorizontalAlignment="Stretch" />
+                            <ComboBox x:Name="ChallengeColor" Grid.Column="1" Header="I play" HorizontalAlignment="Stretch" SelectedIndex="0">
+                                <ComboBoxItem Content="Random" />
+                                <ComboBoxItem Content="White" />
+                                <ComboBoxItem Content="Black" />
+                            </ComboBox>
+                            <Button Grid.Column="2" VerticalAlignment="Bottom" Content="Create" Click="CreateChallenge_Click" />
+                        </Grid>
+                        <Border x:Name="CodePanel" Visibility="Collapsed" CornerRadius="6" Padding="12" Background="{ThemeResource SubtleFillColorSecondaryBrush}">
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Your game code" Style="{StaticResource CaptionTextBlockStyle}" />
+                                    <TextBlock x:Name="CodeText" FontSize="28" FontWeight="SemiBold" IsTextSelectionEnabled="True" CharacterSpacing="200" />
+                                    <TextBlock Text="Waiting for your friend to join…" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                </StackPanel>
+                                <Button Grid.Column="1" VerticalAlignment="Center" Click="CopyCode_Click" AutomationProperties.Name="Copy code">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon Glyph="&#xE8C8;" FontSize="13" />
+                                        <TextBlock Text="Copy" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </Border>
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="JoinBox" Header="Join with a code" PlaceholderText="e.g. 3F9A2C" MaxLength="6" CharacterCasing="Upper" />
+                            <Button Grid.Column="1" VerticalAlignment="Bottom" Content="Join" Click="Join_Click" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <InfoBar x:Name="ErrorBar" IsOpen="False" Severity="Error" IsClosable="True" />
+
+            <InfoBar IsOpen="True" IsClosable="False" Severity="Informational" Title="Hosting a server"
+                     Message="Run the Gambit server on any PC (./build.ps1 server) and share its address — friends on your network can connect directly. To play over the internet, deploy the server (Docker image included); see docs/ONLINE.md." />
+        </StackPanel>
+    </ScrollViewer>
+</Page>

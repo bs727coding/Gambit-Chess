@@ -1,0 +1,193 @@
+using Gambit.App.Helpers;
+using Gambit.App.Services;
+using Gambit.Online;
+using Gambit.Online.Client;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Navigation;
+using Windows.ApplicationModel.DataTransfer;
+
+namespace Gambit.App.Pages;
+
+/// <summary>Online lobby: connect to a server, quick pairing by time control, friend challenges.</summary>
+public sealed partial class OnlinePage : Page
+{
+    private static readonly string[] TimeControls = ["1+0", "2+1", "3+0", "3+2", "5+0", "5+3", "10+0", "10+5", "15+10", "30+0"];
+    private OnlineService Online => OnlineService.Instance;
+
+    public OnlinePage()
+    {
+        InitializeComponent();
+        foreach (string tc in TimeControls)
+        {
+            var button = new Button
+            {
+                Content = Label(tc),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                Margin = new Thickness(0, 0, 8, 8),
+            };
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, $"Seek {tc}");
+            button.Click += async (_, _) => await SeekAsync(tc);
+            SeekGrid.Children.Add(button);
+            ChallengeTime.Items.Add(tc);
+        }
+        ChallengeTime.SelectedItem = "10+0";
+    }
+
+    private static object Label(string tc)
+    {
+        TimeControlDto dto = OnlineService.ParseTimeControl(tc);
+        string category = new Core.Games.TimeControl(TimeSpan.FromSeconds(dto.InitialSeconds), TimeSpan.FromSeconds(dto.IncrementSeconds)).Category.ToString();
+        var stack = new StackPanel();
+        stack.Children.Add(new TextBlock { Text = tc.Replace("+", " | "), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center });
+        stack.Children.Add(new TextBlock { Text = category, FontSize = 11, Opacity = 0.7, HorizontalAlignment = HorizontalAlignment.Center });
+        return stack;
+    }
+
+    protected override void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        ServerBox.Text = App.Settings.Current.OnlineServerUrl;
+        Online.StateChanged += OnStateChanged;
+        Online.StatsChanged += OnStatsChanged;
+        Online.GameOpened += OnGameOpened;
+        UpdateState(Online.Client.State);
+        if (Online.Client.Stats is LobbyStatsDto stats) OnStatsChanged(stats);
+    }
+
+    protected override void OnNavigatedFrom(NavigationEventArgs e)
+    {
+        base.OnNavigatedFrom(e);
+        Online.StateChanged -= OnStateChanged;
+        Online.StatsChanged -= OnStatsChanged;
+        Online.GameOpened -= OnGameOpened;
+    }
+
+    private void OnStateChanged(OnlineState state) => UpdateState(state);
+
+    private void OnStatsChanged(LobbyStatsDto s) =>
+        StatsText.Text = $"· {s.PlayersOnline} online · {s.GamesInProgress} game{(s.GamesInProgress == 1 ? "" : "s")} in progress";
+
+    private void OnGameOpened()
+    {
+        SeekingPanel.Visibility = Visibility.Collapsed;
+        CodePanel.Visibility = Visibility.Collapsed;
+    }
+
+    private void UpdateState(OnlineState state)
+    {
+        (string text, string color) = state switch
+        {
+            OnlineState.Connected => ($"Connected as {Online.Client.Me?.Name ?? App.Profile.Profile.Name}" +
+                                      (Online.Client.Me is PlayerDto me ? $" ({me.Rating}{(me.Provisional ? "?" : "")})" : ""), "#2E7D32"),
+            OnlineState.Connecting => ("Connecting…", "#F7C045"),
+            OnlineState.Reconnecting => ("Connection lost — reconnecting…", "#F7C045"),
+            _ => ("Not connected", "#8A8A8A"),
+        };
+        StatusText.Text = text;
+        StatusDot.Fill = new SolidColorBrush(Ui.ParseColor(color));
+        bool connected = state == OnlineState.Connected;
+        LobbyGrid.IsHitTestVisible = connected;
+        LobbyGrid.Opacity = connected ? 1 : 0.45;
+        ConnectButton.Content = connected ? "Disconnect" : "Connect";
+        ConnectButton.IsEnabled = state is OnlineState.Connected or OnlineState.Disconnected;
+        if (!connected) StatsText.Text = "";
+    }
+
+    private async void Connect_Click(object sender, RoutedEventArgs e)
+    {
+        ErrorBar.IsOpen = false;
+        if (Online.IsConnected)
+        {
+            await Online.DisconnectAsync();
+            return;
+        }
+        string url = ServerBox.Text.Trim();
+        if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) || (uri.Scheme != "http" && uri.Scheme != "https"))
+        {
+            ShowError("Enter a server address like http://192.168.1.20:5080 or https://chess.example.com.");
+            return;
+        }
+        try
+        {
+            await Online.ConnectAsync(url);
+        }
+        catch (Exception ex)
+        {
+            ShowError($"Couldn't connect: {ex.Message}");
+        }
+    }
+
+    private async Task SeekAsync(string tc)
+    {
+        try
+        {
+            App.Settings.Current.LastOnlineTimeControl = tc;
+            SeekingText.Text = $"Looking for an opponent ({tc.Replace("+", " | ")})…";
+            SeekingPanel.Visibility = Visibility.Visible;
+            await Online.Client.SeekAsync(OnlineService.ParseTimeControl(tc));
+        }
+        catch (Exception ex)
+        {
+            SeekingPanel.Visibility = Visibility.Collapsed;
+            ShowError(ex.Message);
+        }
+    }
+
+    private async void CancelSeek_Click(object sender, RoutedEventArgs e)
+    {
+        SeekingPanel.Visibility = Visibility.Collapsed;
+        try
+        {
+            await Online.Client.CancelSeekAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex.Message);
+        }
+    }
+
+    private async void CreateChallenge_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            string tc = ChallengeTime.SelectedItem as string ?? "10+0";
+            string color = ChallengeColor.SelectedIndex switch { 1 => "white", 2 => "black", _ => "random" };
+            ChallengeDto ch = await Online.Client.CreateChallengeAsync(OnlineService.ParseTimeControl(tc), color);
+            CodeText.Text = ch.Code;
+            CodePanel.Visibility = Visibility.Visible;
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex.Message);
+        }
+    }
+
+    private void CopyCode_Click(object sender, RoutedEventArgs e)
+    {
+        var package = new DataPackage();
+        package.SetText(CodeText.Text);
+        Clipboard.SetContent(package);
+    }
+
+    private async void Join_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (!await Online.Client.AcceptChallengeAsync(JoinBox.Text.Trim()))
+                ShowError("That code isn't valid (or the game was already taken).");
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex.Message);
+        }
+    }
+
+    private void ShowError(string message)
+    {
+        ErrorBar.Message = message;
+        ErrorBar.IsOpen = true;
+    }
+}

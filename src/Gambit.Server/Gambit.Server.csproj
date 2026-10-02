@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- Online play server: ASP.NET Core + SignalR, authoritative games using Gambit.Core. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Gambit.Server</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Gambit.Core\Gambit.Core.csproj" />
+    <ProjectReference Include="..\Gambit.Online.Contracts\Gambit.Online.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Gambit.Tests" />
+  </ItemGroup>
+
+</Project>
