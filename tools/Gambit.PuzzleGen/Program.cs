@@ -20,10 +20,11 @@ int workers = Math.Max(1, Environment.ProcessorCount - 4);
 Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.BelowNormal;
 
 var puzzles = new ConcurrentDictionary<string, Puzzle>();
+var ids = new HashSet<string>();
 if (File.Exists(output))
 {
     foreach (string line in File.ReadLines(output))
-        if (!line.StartsWith("id,", StringComparison.Ordinal) && Puzzle.FromCsv(line) is Puzzle p) puzzles.TryAdd(StartKey(p), p);
+        if (!line.StartsWith("id,", StringComparison.Ordinal) && Puzzle.FromCsv(line) is Puzzle p) AddPuzzle(p);
 }
 int existing = puzzles.Count;
 Console.WriteLine($"Generating for {minutes} min on {workers} workers (existing: {existing})…");
@@ -42,7 +43,7 @@ Parallel.For(0, workers, new ParallelOptions { MaxDegreeOfParallelism = workers 
     {
         Game game = PlayGame(bots, rng);
         int g = Interlocked.Increment(ref games);
-        foreach (Puzzle p in Mine(game, searcher, rng, deadline)) puzzles.TryAdd(StartKey(p), p);
+        foreach (Puzzle p in Mine(game, searcher, rng, deadline)) AddPuzzle(p);
         if (g % 20 == 0)
             Console.WriteLine($"[{sw.Elapsed:mm\\:ss}] games {g}, puzzles {puzzles.Count - existing} new / {puzzles.Count} total");
     }
@@ -301,6 +302,21 @@ static bool CreatesDiscoveredAttack(Position before, Move m)
         if ((now & ~was) != 0) return true;
     }
     return false;
+}
+
+// Puzzles are unique by start position (after the setup move). Ids hash the FEN, so two puzzles from
+// the same FEN with different setup moves would collide: the newcomer gets an id salted with its
+// setup move, and ids already in the file never change (players' solve history refers to them).
+void AddPuzzle(Puzzle p)
+{
+    lock (ids)
+    {
+        string key = StartKey(p);
+        if (puzzles.ContainsKey(key)) return;
+        if (ids.Contains(p.Id)) p = p with { Id = MakeId(p.Fen + " " + p.Moves[0]) };
+        if (!ids.Add(p.Id)) return;
+        puzzles[key] = p;
+    }
 }
 
 static string StartKey(Puzzle p) => p.StartPosition().Key.ToString("x16");

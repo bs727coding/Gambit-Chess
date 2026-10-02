@@ -47,7 +47,7 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 - [~] Analysis board: free play, MultiPV engine lines, eval bar, FEN/PGN import + export ✔, board editor ✔ — variations still to do
 - [x] Game archive: every finished game saved (PGN); list + reopen in analysis
 - [x] Sounds (generated locally: move, capture, check, castle, promote, game end, low time)
-- [~] Keyboard navigation ✔, Play a Friend (hot-seat) ✔, hints ✔, resume after restart ✔ — premoves still to do
+- [x] Keyboard navigation, Play a Friend (hot-seat), hints, resume after restart, premoves
 
 ## Session 3 — Puzzles
 

@@ -57,15 +57,20 @@ Health check: `GET /health` → `ok`. `GET /` shows players online and games in 
 ## Protocol (Gambit.Online.Contracts)
 
 Client → server: `Hello(name, version)`, `Seek(tc)`, `CancelSeek()`, `CreateChallenge(tc, color)`,
-`AcceptChallenge(code)`, `MakeMove(gameId, ply, uci)`, `Resign`, `OfferDraw`, `RespondToDraw`, `Rejoin`.
+`AcceptChallenge(code)`, `MakeMove(gameId, ply, uci)`, `Resign`, `OfferDraw`, `RespondToDraw`, `Rejoin`,
+`OfferRematch(gameId)`, `DeclineRematch(gameId)`.
 
 Server → client: `Welcome`, `GameStarted`, `MovePlayed`, `GameOver`, `DrawOffered`, `DrawDeclined`,
-`OpponentConnection`, `Resync`, `Notice`.
+`OpponentConnection`, `Resync`, `Notice`, `RematchOffered`, `RematchDeclined(gameId, unavailable)`.
 
 Moves travel as UCI strings with a ply number, so duplicates and out-of-order messages are detected.
 Bump `OnlineProtocol.Version` for incompatible changes (older apps are told to update).
 
+**Rematches:** after a game, either player may call `OfferRematch`; when the other one does too, the
+server starts a new game with colors swapped and the same time control (once per game). Offers are
+withdrawn automatically when a player seeks, starts another game or disconnects.
+
 ## Next steps (roadmap Session 8)
 
-Real accounts (sign-in), PostgreSQL storage, rate limiting, spectating, friends list, rematch offers,
+Real accounts (sign-in), PostgreSQL storage, rate limiting, spectating, friends list,
 chat with moderation, and a public deployment.
