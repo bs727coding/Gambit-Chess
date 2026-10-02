@@ -50,6 +50,7 @@ public sealed class PlayerProfile
     public List<GameRecord> RecentGames { get; set; } = [];
     public PuzzleProfile Puzzles { get; set; } = new();
     public Dictionary<string, LessonResult> Lessons { get; set; } = [];
+    public Dictionary<string, DateTimeOffset> Achievements { get; set; } = [];
 }
 
 /// <summary>Best result for one lesson (key = "course/lesson").</summary>

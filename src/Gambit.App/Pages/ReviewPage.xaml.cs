@@ -54,6 +54,7 @@ public sealed partial class ReviewPage : Page
     private GameReview? _review;
     private int _ply;
     private CancellationTokenSource? _cts;
+    private Color _perspective = Color.White;
 
     public ReviewPage()
     {
@@ -93,6 +94,7 @@ public sealed partial class ReviewPage : Page
         _game = req.Game;
         _review = null;
 
+        _perspective = req.Perspective;
         Board.Flipped = req.Perspective == Color.Black;
         Eval.Flipped = Board.Flipped;
         WhiteName.Text = req.WhiteName;
@@ -148,6 +150,7 @@ public sealed partial class ReviewPage : Page
             .Select(m => (m.Ply, Ui.ParseColor(Styles[m.Class].Hex)))
             .ToList();
         Graph.SetData(_review.EvalCurve, markers);
+        AchievementService.Instance.OnReview(_review, _game, _perspective);
         int ply = _ply;
         _ply = -1;
         ShowPly(ply);

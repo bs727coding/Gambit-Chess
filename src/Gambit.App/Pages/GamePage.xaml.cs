@@ -456,6 +456,7 @@ public sealed partial class GamePage : Page
             opponentRating: _setup.Bot?.Rating,
             playerColor: _setup.IsHotSeat ? null : _setup.HumanColor,
             timeControl: _setup.TimeControl);
+        AchievementService.Instance.OnGameFinished(g, _setup.IsHotSeat ? null : _setup.HumanColor, _setup.Bot, _setup.TimeControl);
     }
 
     // ------------------------------------------------------------------ dialogs + toasts

@@ -320,6 +320,7 @@ public sealed partial class LessonPage : Page
             lessons[_lesson.Key] = new LessonResult { Stars = stars };
         App.Profile.Save();
         SoundService.Play(GameSound.Win);
+        AchievementService.Instance.CheckProfile();
 
         var next = LessonCatalog.Next(_lesson.Key);
         var dialog = new ContentDialog

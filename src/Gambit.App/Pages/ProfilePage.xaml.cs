@@ -42,6 +42,85 @@ public sealed partial class ProfilePage : Page
             History.Children.Add(new TextBlock { Text = "No games yet.", Opacity = 0.7 });
         }
         foreach (GameRecord g in p.RecentGames.Take(30)) History.Children.Add(GameRows.Create(g));
+
+        BuildPuzzles(p.Puzzles);
+        BuildOpenings(p);
+        BuildAchievements();
+    }
+
+    private void BuildPuzzles(PuzzleProfile pz)
+    {
+        var (rank, _, _) = PuzzleService.Rank(pz.Rating);
+        PuzzleRatingText.Text = $"{Math.Round(pz.Rating):0}{(pz.Deviation > 110 ? "?" : "")} · {rank}";
+        PuzzleStatsText.Text = pz.Attempts == 0
+            ? "No puzzles attempted yet."
+            : $"{pz.Solved:N0} solved of {pz.Attempts:N0} ({100.0 * pz.Solved / pz.Attempts:0}%) · best streak {pz.BestStreak}";
+        RushStatsText.Text = $"Rush best: 3 min {pz.BestRush3} · 5 min {pz.BestRush5} · Survival {pz.BestSurvival} · Daily streak {pz.DailyStreak}";
+        PuzzleChart.SetValues(pz.History.TakeLast(150).Select(h => h.Rating).ToList());
+    }
+
+    private void BuildOpenings(PlayerProfile p)
+    {
+        OpeningsList.Children.Clear();
+        var groups = p.RecentGames.Where(g => g.Opening != null && g.PlayerColor != "both")
+            .GroupBy(g => g.Opening!)
+            .OrderByDescending(g => g.Count())
+            .Take(8)
+            .ToList();
+        if (groups.Count == 0)
+        {
+            OpeningsList.Children.Add(new TextBlock { Text = "Play a few games to see which openings you play most.", Opacity = 0.7, Margin = new Thickness(8) });
+            return;
+        }
+        foreach (var grp in groups)
+        {
+            int w = grp.Count(g => g.Outcome == "win"), d = grp.Count(g => g.Outcome == "draw"), l = grp.Count(g => g.Outcome == "loss");
+            var row = new Grid { ColumnSpacing = 12, Padding = new Thickness(8, 6, 8, 6) };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.Children.Add(new TextBlock { Text = grp.Key, FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
+            var stats = new TextBlock { Text = $"{grp.Count()} games · {w}W {d}D {l}L", Opacity = 0.75 };
+            Grid.SetColumn(stats, 1);
+            row.Children.Add(stats);
+            OpeningsList.Children.Add(row);
+        }
+    }
+
+    private void BuildAchievements()
+    {
+        AchievementService svc = AchievementService.Instance;
+        var all = svc.All;
+        AchievementSummary.Text = $"{svc.UnlockedCount} of {all.Count} unlocked";
+        AchievementGrid.Children.Clear();
+        foreach (AchievementDef a in all.OrderByDescending(a => svc.IsUnlocked(a.Id)).ThenBy(a => a.Category))
+        {
+            bool unlocked = svc.IsUnlocked(a.Id);
+            string color = !unlocked ? "#7A7A7A" : a.Tier switch
+            {
+                AchievementTier.Gold => "#D4A017",
+                AchievementTier.Silver => "#8E9AA6",
+                _ => "#B87333",
+            };
+            var grid = new Grid { ColumnSpacing = 12, Padding = new Thickness(12, 8, 12, 8), Margin = new Thickness(0, 0, 8, 8), CornerRadius = new CornerRadius(6), Background = Ui.NeutralFill(18), Opacity = unlocked ? 1 : 0.55 };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.Children.Add(new Border
+            {
+                Width = 40,
+                Height = 40,
+                CornerRadius = new CornerRadius(20),
+                VerticalAlignment = VerticalAlignment.Center,
+                Background = Ui.Brush(color),
+                Child = new FontIcon { Glyph = unlocked ? a.Glyph : "\uE72E", FontSize = 17, Foreground = new SolidColorBrush(Colors.White) },
+            });
+            var text = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+            text.Children.Add(new TextBlock { Text = a.Title, FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
+            text.Children.Add(new TextBlock { Text = a.Description, FontSize = 12, Opacity = 0.75, TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis });
+            Grid.SetColumn(text, 1);
+            grid.Children.Add(text);
+            ToolTipService.SetToolTip(grid, unlocked ? $"Unlocked {App.Profile.Profile.Achievements[a.Id]:MMM d, yyyy}" : $"Locked · {a.Tier} · {a.Category}");
+            AchievementGrid.Children.Add(grid);
+        }
     }
 
     private static Grid BotRow(BotProfile bot, BotRecord rec)

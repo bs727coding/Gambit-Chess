@@ -137,6 +137,7 @@ public sealed class PuzzleService
         p.DailyStreak = solved ? (p.LastDailyDate == yesterday ? p.DailyStreak + 1 : 1) : 0;
         p.LastDailyDate = today;
         App.Profile.Save();
+        AchievementService.Instance.CheckProfile();
     }
 
     public bool RecordRush(PuzzleMode mode, int score)
@@ -159,6 +160,7 @@ public sealed class PuzzleService
                 break;
         }
         App.Profile.Save();
+        AchievementService.Instance.CheckProfile();
         return best;
     }
 
@@ -184,5 +186,6 @@ public sealed class PuzzleService
             if (solved) stat.Solved++;
         }
         App.Profile.Save();
+        AchievementService.Instance.CheckProfile();
     }
 }

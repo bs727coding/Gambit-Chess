@@ -53,6 +53,7 @@ public sealed partial class AnalysisPage : Page
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
+        AchievementService.Instance.Unlock("analyst");
         if (e.Parameter is AnalysisRequest req) Load(req);
         else if (EngineSwitch.IsOn) _engine.Analyze(Board.Position);
     }

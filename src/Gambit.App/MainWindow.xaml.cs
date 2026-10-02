@@ -24,6 +24,8 @@ public sealed partial class MainWindow : Window
     };
 
     private bool _suppressNavigation;
+    private readonly Queue<AchievementDef> _achievementQueue = new();
+    private bool _showingAchievement;
 
     public MainWindow()
     {
@@ -50,6 +52,11 @@ public sealed partial class MainWindow : Window
         RootGrid.ActualThemeChanged += (_, _) => UpdateCaptionButtons();
 
         NavView.ItemInvoked += NavView_ItemInvoked;
+        AchievementService.Instance.Unlocked += def => DispatcherQueue.TryEnqueue(() =>
+        {
+            _achievementQueue.Enqueue(def);
+            if (!_showingAchievement) ShowNextAchievement();
+        });
         NavView.SelectedItem = NavView.MenuItems[0];
     }
 
@@ -115,6 +122,39 @@ public sealed partial class MainWindow : Window
 
         if (Pages.TryGetValue(tag, out Type? page) && ContentFrame.CurrentSourcePageType != page)
             ContentFrame.Navigate(page, null, new EntranceNavigationTransitionInfo());
+    }
+
+    /// <summary>Shows queued achievement notifications one at a time (5 s each).</summary>
+    private void ShowNextAchievement()
+    {
+        if (_achievementQueue.Count == 0)
+        {
+            _showingAchievement = false;
+            AchievementToast.Visibility = Visibility.Collapsed;
+            return;
+        }
+        _showingAchievement = true;
+        AchievementDef def = _achievementQueue.Dequeue();
+        AchievementIcon.Glyph = def.Glyph;
+        AchievementTitle.Text = def.Title;
+        AchievementText.Text = def.Description;
+        AchievementBadge.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Helpers.Ui.ParseColor(def.Tier switch
+        {
+            AchievementTier.Gold => "#D4A017",
+            AchievementTier.Silver => "#8E9AA6",
+            _ => "#B87333",
+        }));
+        AchievementToast.Visibility = Visibility.Visible;
+        SoundService.Play(GameSound.Win);
+        var timer = DispatcherQueue.CreateTimer();
+        timer.Interval = TimeSpan.FromSeconds(5);
+        timer.IsRepeating = false;
+        timer.Tick += (t, _) =>
+        {
+            t.Stop();
+            ShowNextAchievement();
+        };
+        timer.Start();
     }
 
     private void SizeAndCenter()
