@@ -38,8 +38,43 @@
                 </StackPanel>
             </Border>
 
+            <!-- Position editor (replaces the move list while editing) -->
+            <Border x:Name="EditorCard" Grid.Row="1" Style="{StaticResource CardStyle}" Visibility="Collapsed">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="Set up a position" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                    <TextBlock Text="Pick a piece, then click squares to place it (click again to remove). The eraser clears squares." Style="{StaticResource SecondaryTextStyle}" />
+                    <VariableSizedWrapGrid x:Name="Palette" Orientation="Horizontal" ItemWidth="48" ItemHeight="48" MaximumRowsOrColumns="7" />
+                    <ComboBox x:Name="EditSide" Header="Side to move" HorizontalAlignment="Stretch" SelectedIndex="0">
+                        <ComboBoxItem Content="White to move" />
+                        <ComboBoxItem Content="Black to move" />
+                    </ComboBox>
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <CheckBox x:Name="CastleWK" Content="O-O" MinWidth="70" />
+                        <CheckBox x:Name="CastleWQ" Content="O-O-O" MinWidth="80" />
+                        <CheckBox x:Name="CastleBK" Content="…O-O" MinWidth="80" />
+                        <CheckBox x:Name="CastleBQ" Content="…O-O-O" MinWidth="80" />
+                    </StackPanel>
+                    <Grid ColumnSpacing="6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Button Content="Start position" HorizontalAlignment="Stretch" Click="EditStart_Click" />
+                        <Button Grid.Column="1" Content="Clear board" HorizontalAlignment="Stretch" Click="EditClear_Click" />
+                    </Grid>
+                    <Grid ColumnSpacing="6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Button Content="Cancel" HorizontalAlignment="Stretch" Click="EditCancel_Click" />
+                        <Button Grid.Column="1" Content="Done" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Stretch" Click="EditDone_Click" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
             <!-- Moves -->
-            <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="8">
+            <Border x:Name="MovesCard" Grid.Row="1" Style="{StaticResource CardStyle}" Padding="8">
                 <Grid RowSpacing="6">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -95,7 +130,7 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBox x:Name="FenBox" PlaceholderText="Paste a FEN and press Load" FontSize="12" />
+                        <TextBox x:Name="FenBox" PlaceholderText="Paste a FEN and press Load" FontSize="12" AutomationProperties.Name="FEN" />
                         <Button Grid.Column="1" Content="Load" Click="LoadFen_Click" AutomationProperties.Name="Load FEN" />
                     </Grid>
                     <Grid ColumnSpacing="6">
@@ -103,7 +138,14 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
+                        <Button Grid.Column="3" HorizontalAlignment="Stretch" Click="Edit_Click" AutomationProperties.Name="Edit position" ToolTipService.ToolTip="Set up a position">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon Glyph="&#xE70F;" FontSize="13" />
+                                <TextBlock Text="Edit" />
+                            </StackPanel>
+                        </Button>
                         <Button HorizontalAlignment="Stretch" Click="CopyFen_Click" AutomationProperties.Name="Copy FEN">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <FontIcon Glyph="&#xE8C8;" FontSize="13" />

@@ -1,42 +1,55 @@
 # Gambit
 
-A native Windows 11 chess app built for Arm64 (Snapdragon X Elite) with WinUI 3 and .NET 10.
-Play computer opponents from total beginner to full engine strength, analyse positions, and — as
-the roadmap progresses — solve rated puzzles, take interactive lessons, earn achievements and play
-online.
+A native Windows 11 chess app built for Arm64 (Snapdragon X Elite) with WinUI 3 and .NET 10 —
+play bots from total beginner to full engine strength, solve rated puzzles, take interactive
+lessons, review your games, earn achievements, and play online against friends.
 
-## What works today
+## Features
 
-* **Play vs 13 bots** (Acorn ≈250 → Monolith, full strength), with clocks, takebacks, draw offers,
-  resignation, pass-and-play for two people on one PC, and a game-over summary.
-* **Analysis board** with a live multi-line engine, evaluation bar, FEN/PGN paste and copy.
-* **Windows 11 design**: Mica, Fluent controls, light/dark theme, accent colors.
-* **Themes**: 8 board themes and 4 piece sets (three original vector sets + classic glyphs).
-* **Profile**: win/loss record per bot, streaks, and a PGN archive of every finished game.
-* Accessible board: every square is a UI Automation element ("e4, white pawn").
+* **Play vs 13 bots** (Acorn ≈250 → Monolith, full strength) with personalities and opening books;
+  clocks, hints, takebacks, draw offers, resignation, pass-and-play, and resume after restarting.
+* **Game Review** — every position analysed in parallel on all cores: Brilliant/Great/Best …
+  Mistake/Blunder classifications, accuracy for both sides, eval graph, best-move arrows.
+* **Puzzles** — rated (Glicko-2) with ranks, Puzzle Rush (3 min / 5 min / Survival), a daily puzzle
+  with streaks, and practice by theme (mates, forks, pins, discovered attacks, sacrifices…).
+* **Lessons** — 5 courses, 34 interactive lessons: how pieces move (with star-collecting
+  mini-games), checkmate patterns, tactics, openings (Italian, Ruy Lopez, Sicilian, French,
+  Caro-Kann, Queen's Gambit, London, King's Indian) and endgames (opposition, Lucena, Philidor…).
+* **Online play** — quick pairing by time control or private games with a friend code, against a
+  self-hostable server (ASP.NET Core + SignalR, authoritative, rated). See [docs/ONLINE.md](docs/ONLINE.md).
+* **Analysis board** with a multi-line engine, evaluation bar, opening names, FEN/PGN import/export.
+* **Profile & achievements** — ~50 achievements, per-bot records, puzzle rating history, openings
+  you play, and a PGN archive of every game.
+* **Windows 11 design** — Mica, Fluent controls, light/dark theme, accent color, 8 board themes,
+  4 piece sets (three original vector sets), synthesized sound effects.
+* **Accessible board** — every square is a UI Automation element ("e4, white pawn").
 
-See [docs/ROADMAP.md](docs/ROADMAP.md) for what's next (puzzles, lessons, achievements, online play)
-and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how it fits together.
+See [docs/ROADMAP.md](docs/ROADMAP.md) for what's next and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+for how it fits together.
 
 ## Build and run
 
 Requirements: Windows 11 (Arm64 or x64) and the .NET 10 SDK. Visual Studio is not required.
 
 ```powershell
-./build.ps1 run       # build (Release) and launch
-./build.ps1 test      # run the unit tests (perft, notation, rules, engine)
-./build.ps1 publish   # self-contained build in ./artifacts/win-arm64
+./build.ps1 run       # build (Release) and launch the app
+./build.ps1 test      # run the unit + integration tests
+./build.ps1 server    # run the online server on port 5080 for LAN play
+./build.ps1 publish   # self-contained app in ./artifacts/win-arm64
 ```
 
 The published folder runs without installing .NET or the Windows App SDK. Your data (settings,
-profile, game archive) lives in `%LOCALAPPDATA%\Gambit`.
+profile, puzzle progress, game archive) lives in `%LOCALAPPDATA%\Gambit`.
 
 ## Project layout
 
 | Path | What |
 |---|---|
-| `src/Gambit.Core` | Chess rules, notation, games, clocks, ratings, game sessions (platform-neutral) |
-| `src/Gambit.Engine` | Search, evaluation and the bot roster (platform-neutral) |
+| `src/Gambit.Core` | Rules, notation, games, clocks, ratings, sessions, openings, puzzles, lessons (platform-neutral) |
+| `src/Gambit.Engine` | Search, evaluation, bots, game review (platform-neutral) |
 | `src/Gambit.App` | The WinUI 3 desktop app |
-| `tests/Gambit.Tests` | xUnit tests |
-| `tools/` | Dev scripts: screenshots, UI automation, icon generation |
+| `src/Gambit.Online.Contracts` | Online protocol (DTOs + hub interfaces) |
+| `src/Gambit.Online.Client` | SignalR client + `RemoteGameSession` |
+| `src/Gambit.Server` | Online server (Dockerfile at the repo root) |
+| `tests/Gambit.Tests` | xUnit tests (perft, rules, engine, content validation, online end-to-end) |
+| `tools/` | Puzzle generator, online bot, screenshots, UI automation, icon and sound generators |

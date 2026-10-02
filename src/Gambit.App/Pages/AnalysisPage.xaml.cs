@@ -26,6 +26,10 @@ public sealed partial class AnalysisPage : Page
     private readonly AnalysisEngine _engine = new();
     private Game _game = NewGame(null);
     private int _viewPly = -1;
+    private bool _editing;
+    private readonly Piece[] _editBoard = new Piece[64];
+    private Piece _editPiece = Piece.WhiteQueen;
+    private readonly List<Button> _paletteButtons = [];
     private readonly DispatcherTimer _toastTimer = new() { Interval = TimeSpan.FromSeconds(4) };
 
     public AnalysisPage()
@@ -39,6 +43,8 @@ public sealed partial class AnalysisPage : Page
         };
         Board.BoardSizeChanged += (_, size) => Eval.Height = size;
         Board.Interaction = BoardInteraction.Both;
+        Board.SquareClicked += Board_SquareClicked;
+        BuildPalette();
 
         AddAccelerator(VirtualKey.Left, () => StepPly(-1));
         AddAccelerator(VirtualKey.Right, () => StepPly(+1));
@@ -317,6 +323,167 @@ public sealed partial class AnalysisPage : Page
         Toast.IsOpen = true;
         _toastTimer.Stop();
         _toastTimer.Start();
+    }
+
+    // ------------------------------------------------------------------ position editor
+
+    private void BuildPalette()
+    {
+        Palette.Children.Clear();
+        _paletteButtons.Clear();
+        Piece[] pieces =
+        [
+            Piece.WhiteKing, Piece.WhiteQueen, Piece.WhiteRook, Piece.WhiteBishop, Piece.WhiteKnight, Piece.WhitePawn, Piece.None,
+            Piece.BlackKing, Piece.BlackQueen, Piece.BlackRook, Piece.BlackBishop, Piece.BlackKnight, Piece.BlackPawn,
+        ];
+        foreach (Piece p in pieces)
+        {
+            var button = new Button
+            {
+                Width = 44,
+                Height = 44,
+                Padding = new Thickness(4),
+                Tag = p,
+                Content = p == Piece.None ? new FontIcon { Glyph = "\uE75C", FontSize = 18 } : Board.PieceSet.Create(p),
+            };
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, p == Piece.None ? "Eraser" : p.ToString());
+            ToolTipService.SetToolTip(button, p == Piece.None ? "Eraser" : p.ToString());
+            button.Click += (_, _) =>
+            {
+                _editPiece = p;
+                UpdatePaletteSelection();
+            };
+            _paletteButtons.Add(button);
+            Palette.Children.Add(button);
+        }
+        UpdatePaletteSelection();
+    }
+
+    private void UpdatePaletteSelection()
+    {
+        foreach (Button b in _paletteButtons)
+        {
+            bool selected = b.Tag is Piece p && p == _editPiece;
+            b.BorderBrush = selected ? Helpers.Ui.AccentBrush : null;
+            b.BorderThickness = new Thickness(selected ? 2 : 1);
+        }
+    }
+
+    private void Edit_Click(object sender, RoutedEventArgs e)
+    {
+        Position current = Board.Position;
+        for (int sq = 0; sq < 64; sq++) _editBoard[sq] = current.PieceAt(sq);
+        EditSide.SelectedIndex = current.SideToMove == Color.White ? 0 : 1;
+        CastleWK.IsChecked = current.Castling.HasFlag(CastlingRights.WhiteKingSide);
+        CastleWQ.IsChecked = current.Castling.HasFlag(CastlingRights.WhiteQueenSide);
+        CastleBK.IsChecked = current.Castling.HasFlag(CastlingRights.BlackKingSide);
+        CastleBQ.IsChecked = current.Castling.HasFlag(CastlingRights.BlackQueenSide);
+        SetEditing(true);
+    }
+
+    private void SetEditing(bool editing)
+    {
+        _editing = editing;
+        EditorCard.Visibility = editing ? Visibility.Visible : Visibility.Collapsed;
+        MovesCard.Visibility = editing ? Visibility.Collapsed : Visibility.Visible;
+        Board.Interaction = editing ? BoardInteraction.None : BoardInteraction.Both;
+        if (editing)
+        {
+            _engine.Stop();
+            Lines.Children.Clear();
+            EngineInfo.Text = "Paused while editing";
+            BuildPalette();
+            RenderEditor();
+        }
+        else
+        {
+            ShowBoard(animate: false);
+        }
+    }
+
+    private void Board_SquareClicked(object? sender, int sq)
+    {
+        if (!_editing) return;
+        _editBoard[sq] = _editBoard[sq] == _editPiece ? Piece.None : _editPiece;
+        // Pawns can't stand on the first or last rank.
+        if (_editBoard[sq].Type() == PieceType.Pawn && Square.Rank(sq) is 0 or 7) _editBoard[sq] = Piece.None;
+        RenderEditor();
+    }
+
+    private string EditorFen(bool withRights)
+    {
+        var sb = new System.Text.StringBuilder();
+        for (int rank = 7; rank >= 0; rank--)
+        {
+            int empty = 0;
+            for (int file = 0; file < 8; file++)
+            {
+                Piece p = _editBoard[Square.Make(file, rank)];
+                if (p == Piece.None)
+                {
+                    empty++;
+                    continue;
+                }
+                if (empty > 0) sb.Append(empty);
+                empty = 0;
+                sb.Append(p.ToFenChar());
+            }
+            if (empty > 0) sb.Append(empty);
+            if (rank > 0) sb.Append('/');
+        }
+        sb.Append(EditSide.SelectedIndex == 1 ? " b " : " w ");
+        string castling = withRights
+            ? (CastleWK.IsChecked == true ? "K" : "") + (CastleWQ.IsChecked == true ? "Q" : "") + (CastleBK.IsChecked == true ? "k" : "") + (CastleBQ.IsChecked == true ? "q" : "")
+            : "";
+        sb.Append(castling.Length == 0 ? "-" : castling).Append(" - 0 1");
+        return sb.ToString();
+    }
+
+    private void RenderEditor()
+    {
+        try
+        {
+            Board.SetPosition(Position.FromFen(EditorFen(withRights: false)));
+            Board.SetMarkers([]);
+            FenBox.Text = EditorFen(withRights: true);
+        }
+        catch (FenException)
+        {
+            // The editor only produces syntactically valid FEN; ignore transient states.
+        }
+    }
+
+    private void EditStart_Click(object sender, RoutedEventArgs e)
+    {
+        Position start = Position.Start();
+        for (int sq = 0; sq < 64; sq++) _editBoard[sq] = start.PieceAt(sq);
+        EditSide.SelectedIndex = 0;
+        CastleWK.IsChecked = CastleWQ.IsChecked = CastleBK.IsChecked = CastleBQ.IsChecked = true;
+        RenderEditor();
+    }
+
+    private void EditClear_Click(object sender, RoutedEventArgs e)
+    {
+        Array.Clear(_editBoard);
+        CastleWK.IsChecked = CastleWQ.IsChecked = CastleBK.IsChecked = CastleBQ.IsChecked = false;
+        RenderEditor();
+    }
+
+    private void EditCancel_Click(object sender, RoutedEventArgs e) => SetEditing(false);
+
+    private void EditDone_Click(object sender, RoutedEventArgs e)
+    {
+        string fen = EditorFen(withRights: true);
+        if (!Fen.TryParse(fen, out Position? pos, out string? error) || pos == null)
+        {
+            ShowToast("This position isn't legal", error ?? "Check the kings and pawns.", InfoBarSeverity.Warning);
+            return;
+        }
+        _editing = false;
+        EditorCard.Visibility = Visibility.Collapsed;
+        MovesCard.Visibility = Visibility.Visible;
+        Board.Interaction = BoardInteraction.Both;
+        LoadFen(pos.ToFen());
     }
 
     private void ApplySettings()
