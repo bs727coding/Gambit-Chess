@@ -82,7 +82,7 @@
         },
         {
           "kind": "moves",
-          "fen": "r6k/6pp/7N/3Q4/8/8/8/6K1 w - - 0 1",
+          "fen": "4r2k/6pp/7N/3Q4/8/8/8/6K1 w - - 0 1",
           "moves": ["Qg8+", "Rxg8", "Nf7#"],
           "text": "Philidor's legacy: sacrifice your queen to force the rook into the king's way, then mate with the knight.",
           "hint": "Check on g8 — the king can't take because the knight guards g8.",

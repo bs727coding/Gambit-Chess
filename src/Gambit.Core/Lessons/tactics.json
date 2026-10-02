@@ -26,11 +26,11 @@
         },
         {
           "kind": "moves",
-          "fen": "4k3/8/8/2n1b3/8/3P4/8/4K3 w - - 0 1",
+          "fen": "4k3/8/8/2n1b3/8/3PP3/8/4K3 w - - 0 1",
           "moves": ["d4"],
           "text": "Pawns can fork too. Attack both black pieces at once.",
           "hint": "Push the pawn one square.",
-          "success": "The pawn attacks the knight and the bishop — one of them will fall."
+          "success": "The pawn attacks the knight and the bishop, and it's protected: one of them will fall."
         }
       ]
     },
@@ -48,19 +48,19 @@
         },
         {
           "kind": "moves",
-          "fen": "4k3/8/2n5/8/8/8/8/4KB2 w - - 0 1",
+          "fen": "4k3/8/2n5/8/3P4/8/8/4KB2 w - - 0 1",
           "moves": ["Bb5"],
-          "text": "Pin the knight to the king.",
+          "text": "Pin the knight to the king. Your d-pawn will do the rest.",
           "hint": "Line up your bishop with the knight and the king.",
-          "success": "The knight is pinned and can't move."
+          "success": "The knight is pinned and can't move. Next d5 attacks it, and it's lost."
         },
         {
           "kind": "moves",
-          "fen": "4k3/4r3/8/3P4/8/8/8/4R1K1 w - - 0 1",
-          "moves": ["d6"],
-          "text": "Black's rook is pinned to its king. Attack it — it can't run away.",
+          "fen": "6k1/5r2/8/6P1/8/1B6/8/6K1 w - - 0 1",
+          "moves": ["g6"],
+          "text": "Black's rook is pinned to its king by your bishop: it can't leave the diagonal. Attack it.",
           "hint": "A pawn attack is cheapest.",
-          "success": "The pinned rook is lost — attack pinned pieces!"
+          "success": "The pinned rook can't run away. It will fall to the pawn."
         }
       ]
     },
