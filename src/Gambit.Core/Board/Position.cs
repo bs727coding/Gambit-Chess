@@ -283,7 +283,8 @@ public sealed class Position
         if (us == Color.Black) FullmoveNumber++;
         SideToMove = them;
         Key = key ^ Zobrist.SideToMove;
-        Checkers = AttackersTo(KingSquare(them), Occupied) & Pieces(us);
+        ulong theirKing = Pieces(them, PieceType.King);
+        Checkers = theirKing == 0 ? 0 : AttackersTo(Bitboard.Lsb(theirKing), Occupied) & Pieces(us);
     }
 
     public void UnmakeMove()

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="Gambit.App.Pages.LessonPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Gambit.App.Controls">
+
+    <Grid Padding="20,8,20,20" ColumnSpacing="20">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="380" />
+        </Grid.ColumnDefinitions>
+
+        <controls:ChessBoardControl x:Name="Board" MoveRequested="Board_MoveRequested" />
+
+        <StackPanel Grid.Column="1" Spacing="12">
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="6">
+                    <TextBlock x:Name="CourseTitle" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBlock x:Name="LessonTitle" Style="{StaticResource SubtitleTextBlockStyle}" TextWrapping="Wrap" />
+                    <Grid ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ProgressBar x:Name="StepProgress" Maximum="1" VerticalAlignment="Center" />
+                        <TextBlock x:Name="StepCounter" Grid.Column="1" Style="{StaticResource CaptionTextBlockStyle}" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource CardStyle}" Padding="20">
+                <StackPanel Spacing="14">
+                    <TextBlock x:Name="StepText" FontSize="15" TextWrapping="Wrap" LineHeight="22" />
+                    <StackPanel x:Name="Choices" Spacing="8" />
+                    <Border x:Name="FeedbackBox" CornerRadius="6" Padding="12,8" Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <FontIcon x:Name="FeedbackIcon" FontSize="16" Foreground="White" />
+                            <TextBlock x:Name="FeedbackText" Foreground="White" TextWrapping="Wrap" MaxWidth="290" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <Grid ColumnSpacing="6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button x:Name="HintButton" HorizontalAlignment="Stretch" Click="Hint_Click" AutomationProperties.Name="Hint">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE82F;" FontSize="14" />
+                        <TextBlock Text="Hint" />
+                    </StackPanel>
+                </Button>
+                <Button x:Name="RestartButton" Grid.Column="1" HorizontalAlignment="Stretch" Click="Restart_Click" AutomationProperties.Name="Restart step">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE72C;" FontSize="14" />
+                        <TextBlock Text="Restart step" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+            <Button x:Name="ContinueButton" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Stretch" Padding="12,10" Click="Continue_Click" AutomationProperties.Name="Continue">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock x:Name="ContinueText" Text="Continue" FontSize="15" FontWeight="SemiBold" />
+                    <FontIcon Glyph="&#xE72A;" FontSize="14" />
+                </StackPanel>
+            </Button>
+            <HyperlinkButton Content="All lessons" Click="Back_Click" />
+        </StackPanel>
+    </Grid>
+</Page>

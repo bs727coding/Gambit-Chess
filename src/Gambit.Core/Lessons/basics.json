@@ -1,0 +1,316 @@
+{
+  "id": "basics",
+  "title": "Chess basics",
+  "description": "How every piece moves, check and checkmate, and the special rules.",
+  "glyph": "",
+  "color": "#2E7D32",
+  "lessons": [
+    {
+      "id": "welcome",
+      "title": "Welcome to chess",
+      "summary": "The board, the pieces and the goal of the game.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+          "highlights": ["e1", "e8"],
+          "text": "Chess is played on an 8×8 board by two players, White and Black, who take turns moving one piece at a time. The goal is to checkmate the enemy king: attack it so that it has no way to escape."
+        },
+        {
+          "kind": "info",
+          "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+          "highlights": ["a1", "h1", "b1", "g1", "c1", "f1", "d1"],
+          "text": "Each side starts with a king, a queen, two rooks, two bishops, two knights and eight pawns. Columns are called files (a–h) and rows are called ranks (1–8). Every square has a name, like e4."
+        },
+        {
+          "kind": "quiz",
+          "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+          "text": "Which side makes the first move?",
+          "choices": ["White", "Black", "Whoever wins a coin toss"],
+          "answer": 0,
+          "success": "Right — White always moves first."
+        }
+      ]
+    },
+    {
+      "id": "rook",
+      "title": "The rook",
+      "summary": "Straight lines, as far as it likes.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "8/8/8/8/3R4/8/8/8 w - - 0 1",
+          "arrows": ["d4d8", "d4d1", "d4a4", "d4h4"],
+          "text": "The rook moves in a straight line — up, down, left or right — as many squares as it wants, as long as nothing is in the way."
+        },
+        {
+          "kind": "stars",
+          "fen": "8/8/8/8/8/8/8/R7 w - - 0 1",
+          "targets": ["a8", "h8", "h1"],
+          "text": "Move the rook to every star.",
+          "success": "Nice — rooks are great at covering long distances."
+        },
+        {
+          "kind": "stars",
+          "fen": "8/8/2p5/8/8/8/7p/2R5 w - - 0 1",
+          "targets": ["c6", "h2"],
+          "text": "A rook captures by moving onto an enemy piece's square. Capture both black pawns.",
+          "success": "Both pawns captured!"
+        }
+      ]
+    },
+    {
+      "id": "bishop",
+      "title": "The bishop",
+      "summary": "Diagonals only — and always the same color.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "8/8/8/8/3B4/8/8/8 w - - 0 1",
+          "arrows": ["d4h8", "d4a7", "d4g1", "d4a1"],
+          "text": "The bishop moves diagonally, any number of squares. Because it only moves diagonally, a bishop stays on squares of one color for the whole game."
+        },
+        {
+          "kind": "stars",
+          "fen": "8/8/8/8/8/8/8/2B5 w - - 0 1",
+          "targets": ["a3", "d6", "h2"],
+          "text": "Collect the stars with the bishop. Notice they are all on dark squares.",
+          "success": "Well done!"
+        },
+        {
+          "kind": "stars",
+          "fen": "8/8/5p2/8/8/2p5/8/B7 w - - 0 1",
+          "targets": ["c3", "f6"],
+          "text": "Capture both pawns with the bishop.",
+          "success": "Great — the long diagonal belongs to your bishop."
+        }
+      ]
+    },
+    {
+      "id": "queen",
+      "title": "The queen",
+      "summary": "Rook and bishop combined.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "8/8/8/8/3Q4/8/8/8 w - - 0 1",
+          "arrows": ["d4d8", "d4d1", "d4a4", "d4h4", "d4h8", "d4a7", "d4g1", "d4a1"],
+          "text": "The queen moves like a rook and a bishop together: any number of squares in a straight line or diagonally. She is the most powerful piece on the board."
+        },
+        {
+          "kind": "stars",
+          "fen": "8/8/8/8/8/8/8/3Q4 w - - 0 1",
+          "targets": ["d7", "a4", "h4", "f2"],
+          "text": "Visit every star with the queen.",
+          "success": "The queen can reach almost anywhere quickly."
+        }
+      ]
+    },
+    {
+      "id": "king",
+      "title": "The king",
+      "summary": "One step at a time — and the most important piece.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "8/8/8/8/4K3/8/8/8 w - - 0 1",
+          "arrows": ["e4e5", "e4f5", "e4f4", "e4f3", "e4e3", "e4d3", "e4d4", "e4d5"],
+          "text": "The king moves one square in any direction. It is not strong, but it is the most important piece: if your king is checkmated, you lose."
+        },
+        {
+          "kind": "stars",
+          "fen": "8/8/8/8/8/8/8/4K3 w - - 0 1",
+          "targets": ["e3", "g4", "h6"],
+          "text": "Walk the king to every star.",
+          "success": "Slow but steady!"
+        }
+      ]
+    },
+    {
+      "id": "knight",
+      "title": "The knight",
+      "summary": "The L-shaped jumper.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "8/8/8/8/3N4/8/8/8 w - - 0 1",
+          "arrows": ["d4e6", "d4f5", "d4f3", "d4e2", "d4c2", "d4b3", "d4b5", "d4c6"],
+          "text": "The knight moves in an L-shape: two squares in one direction and then one square to the side. It is the only piece that can jump over other pieces."
+        },
+        {
+          "kind": "stars",
+          "fen": "8/8/8/8/8/8/8/1N6 w - - 0 1",
+          "targets": ["c3", "d5", "f6"],
+          "text": "Hop the knight to every star.",
+          "success": "You've got the L-shape!"
+        },
+        {
+          "kind": "stars",
+          "fen": "8/8/8/2ppp3/2pNp3/2ppp3/8/8 w - - 0 1",
+          "targets": ["b5", "e2"],
+          "text": "The knight is surrounded, but it can jump right over the pawns. Reach both stars.",
+          "success": "Nothing can trap a knight that easily."
+        }
+      ]
+    },
+    {
+      "id": "pawn",
+      "title": "The pawn",
+      "summary": "Forward to move, diagonal to capture, and promotion.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "8/8/8/8/8/8/4P3/8 w - - 0 1",
+          "arrows": ["e2e3", "e2e4"],
+          "text": "Pawns move straight forward one square. On its very first move, a pawn may move two squares instead. Pawns can never move backward."
+        },
+        {
+          "kind": "info",
+          "fen": "8/8/8/3p1p2/4P3/8/8/8 w - - 0 1",
+          "arrows": ["e4d5", "e4f5"],
+          "text": "Pawns capture differently from how they move: one square diagonally forward."
+        },
+        {
+          "kind": "stars",
+          "fen": "8/8/8/8/2p5/3p4/4P3/8 w - - 0 1",
+          "targets": ["d3", "c4"],
+          "text": "Capture both black pawns with your pawn.",
+          "success": "Diagonal captures — exactly right."
+        },
+        {
+          "kind": "moves",
+          "fen": "8/4P3/8/8/8/8/k7/7K w - - 0 1",
+          "moves": ["e8=Q"],
+          "text": "When a pawn reaches the last rank it is promoted — usually to a queen. Push the pawn and promote it to a queen.",
+          "hint": "Move the pawn to e8 and choose the queen.",
+          "success": "A brand new queen!"
+        }
+      ]
+    },
+    {
+      "id": "check",
+      "title": "Check and checkmate",
+      "summary": "Attacking the king, and how the game is won.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "4k3/8/8/8/8/8/8/4R1K1 b - - 0 1",
+          "arrows": ["e1e8"],
+          "highlights": ["e8"],
+          "text": "When a king is attacked it is in check. The player in check must escape at once: move the king, block the attack, or capture the attacking piece."
+        },
+        {
+          "kind": "moves",
+          "fen": "4k3/8/8/8/8/8/R7/6K1 w - - 0 1",
+          "moves": ["Ra8+"],
+          "goal": "check",
+          "text": "Give check to the black king with your rook.",
+          "hint": "Put the rook on the same rank or file as the king.",
+          "success": "Check!"
+        },
+        {
+          "kind": "info",
+          "fen": "R5k1/5ppp/8/8/8/8/8/6K1 b - - 0 1",
+          "arrows": ["a8g8"],
+          "highlights": ["g8"],
+          "text": "This is checkmate: the black king is in check and has no legal way out — its own pawns block the escape squares. Checkmate ends the game immediately."
+        },
+        {
+          "kind": "moves",
+          "fen": "6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1",
+          "moves": ["Ra8#"],
+          "goal": "mate",
+          "text": "Your turn: checkmate the black king in one move.",
+          "hint": "Use the rook along the back rank.",
+          "success": "Checkmate — you win!"
+        },
+        {
+          "kind": "quiz",
+          "fen": "R5k1/5p1p/8/8/8/8/8/6K1 b - - 0 1",
+          "text": "Black is in check. Is it checkmate?",
+          "choices": ["Yes, it's checkmate", "No, the king can escape"],
+          "answer": 1,
+          "success": "Correct — the king escapes to g7, so it's only check."
+        }
+      ]
+    },
+    {
+      "id": "castling",
+      "title": "Castling",
+      "summary": "A special move that protects your king.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1",
+          "arrows": ["e1g1", "h1f1"],
+          "text": "Castling is the only move where two pieces move at once: the king moves two squares toward a rook, and that rook jumps to the square on the king's other side. It tucks your king away safely and brings the rook into play."
+        },
+        {
+          "kind": "moves",
+          "fen": "r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1",
+          "moves": ["O-O"],
+          "text": "Castle kingside: move your king two squares toward the h1 rook.",
+          "hint": "Move the king from e1 to g1.",
+          "success": "Your king is safe and your rook is active."
+        },
+        {
+          "kind": "quiz",
+          "fen": "4k3/8/8/8/8/8/5r2/4K2R w K - 0 1",
+          "highlights": ["f1"],
+          "text": "You can't castle out of check, through an attacked square, or into check — nor after the king or that rook has moved. Can White castle kingside here?",
+          "choices": ["Yes", "No"],
+          "answer": 1,
+          "success": "Right — the black rook attacks f1, a square the king would pass through."
+        }
+      ]
+    },
+    {
+      "id": "en-passant",
+      "title": "En passant",
+      "summary": "The pawn capture that surprises everyone.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 1",
+          "arrows": ["e5d6"],
+          "highlights": ["d5"],
+          "text": "If an enemy pawn moves two squares and lands right beside your pawn, you may capture it as if it had moved only one square. This is called en passant (\"in passing\"), and it's only allowed on the very next move."
+        },
+        {
+          "kind": "moves",
+          "fen": "4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 1",
+          "moves": ["exd6"],
+          "text": "Black just played d7–d5. Capture the pawn en passant.",
+          "hint": "Move your e5 pawn diagonally to d6.",
+          "success": "En passant! The d5 pawn is gone."
+        }
+      ]
+    },
+    {
+      "id": "draws",
+      "title": "Stalemate and draws",
+      "summary": "Not every game has a winner.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "7k/5Q2/6K1/8/8/8/8/8 b - - 0 1",
+          "highlights": ["h8"],
+          "text": "If the player to move has no legal moves but is NOT in check, it's stalemate — and the game is a draw. Be careful when you're winning not to leave the enemy king without moves!"
+        },
+        {
+          "kind": "quiz",
+          "fen": "7k/5Q2/6K1/8/8/8/8/8 b - - 0 1",
+          "text": "Black to move. What is the result?",
+          "choices": ["Black is checkmated", "Stalemate — it's a draw", "Black can still move"],
+          "answer": 1,
+          "success": "Exactly — no legal moves and no check means stalemate."
+        },
+        {
+          "kind": "info",
+          "fen": "8/8/8/4k3/8/8/4K3/8 w - - 0 1",
+          "text": "Games are also drawn by agreement, by threefold repetition of the same position, by the 50-move rule (50 moves each without a capture or pawn move), or when neither side has enough pieces left to checkmate — like king against king."
+        }
+      ]
+    }
+  ]
+}

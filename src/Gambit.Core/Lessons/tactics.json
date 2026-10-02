@@ -1,0 +1,111 @@
+{
+  "id": "tactics",
+  "title": "Tactics",
+  "description": "Forks, pins, skewers and discovered attacks — the tricks that win material.",
+  "glyph": "",
+  "color": "#C62828",
+  "lessons": [
+    {
+      "id": "fork",
+      "title": "The fork",
+      "summary": "One piece, two targets.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1",
+          "arrows": ["b5c7", "c7e8", "c7a8"],
+          "text": "A fork is a move that attacks two or more enemy pieces at once. Your opponent can only save one of them. Knights are famous for forks because they attack in so many directions."
+        },
+        {
+          "kind": "moves",
+          "fen": "r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1",
+          "moves": ["Nc7+", "Kd7", "Nxa8"],
+          "text": "Fork the king and rook, then collect the rook.",
+          "hint": "Check from c7.",
+          "success": "A royal fork wins a whole rook."
+        },
+        {
+          "kind": "moves",
+          "fen": "4k3/8/8/2n1b3/8/3P4/8/4K3 w - - 0 1",
+          "moves": ["d4"],
+          "text": "Pawns can fork too. Attack both black pieces at once.",
+          "hint": "Push the pawn one square.",
+          "success": "The pawn attacks the knight and the bishop — one of them will fall."
+        }
+      ]
+    },
+    {
+      "id": "pin",
+      "title": "The pin",
+      "summary": "Freeze a piece in front of a more valuable one.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "4k3/8/2n5/1B6/8/8/8/4K3 b - - 0 1",
+          "arrows": ["b5e8"],
+          "highlights": ["c6"],
+          "text": "A pinned piece cannot move without exposing a more valuable piece behind it. When that piece is the king, moving the pinned piece is illegal — an absolute pin."
+        },
+        {
+          "kind": "moves",
+          "fen": "4k3/8/2n5/8/8/8/8/4KB2 w - - 0 1",
+          "moves": ["Bb5"],
+          "text": "Pin the knight to the king.",
+          "hint": "Line up your bishop with the knight and the king.",
+          "success": "The knight is pinned and can't move."
+        },
+        {
+          "kind": "moves",
+          "fen": "4k3/4r3/8/3P4/8/8/8/4R1K1 w - - 0 1",
+          "moves": ["d6"],
+          "text": "Black's rook is pinned to its king. Attack it — it can't run away.",
+          "hint": "A pawn attack is cheapest.",
+          "success": "The pinned rook is lost — attack pinned pieces!"
+        }
+      ]
+    },
+    {
+      "id": "skewer",
+      "title": "The skewer",
+      "summary": "A pin in reverse.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "4q3/8/8/4k3/8/8/7K/4R3 b - - 0 1",
+          "arrows": ["e1e8"],
+          "text": "A skewer attacks a valuable piece that has a less valuable piece behind it. When the front piece moves out of the way, you capture the one behind."
+        },
+        {
+          "kind": "moves",
+          "fen": "4q3/8/8/4k3/8/8/7K/R7 w - - 0 1",
+          "moves": ["Re1+", "Kd5", "Rxe8"],
+          "text": "Check the king along the e-file and win the queen behind it.",
+          "hint": "Your rook belongs on the e-file.",
+          "success": "Skewered! The queen is yours."
+        }
+      ]
+    },
+    {
+      "id": "discovered",
+      "title": "Discovered attacks",
+      "summary": "Move one piece to unleash another.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "4k3/8/q7/8/8/8/4B3/4R1K1 w - - 0 1",
+          "arrows": ["e1e8", "e2a6"],
+          "highlights": ["e2"],
+          "text": "When a piece moves out of the way, it can uncover an attack by a piece behind it. If the uncovered attack is a check, the moving piece is free to grab almost anything."
+        },
+        {
+          "kind": "moves",
+          "fen": "4k3/8/q7/8/8/8/4B3/4R1K1 w - - 0 1",
+          "moves": ["Bxa6+"],
+          "text": "Win the queen with a discovered check.",
+          "hint": "Move the bishop — the rook does the checking.",
+          "success": "Discovered check wins the queen for free."
+        }
+      ]
+    }
+  ]
+}

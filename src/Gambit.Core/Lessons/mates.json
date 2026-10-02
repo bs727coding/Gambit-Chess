@@ -1,0 +1,159 @@
+{
+  "id": "mates",
+  "title": "Checkmate patterns",
+  "description": "Classic mating patterns every player should recognise instantly.",
+  "glyph": "",
+  "color": "#6A1B9A",
+  "lessons": [
+    {
+      "id": "back-rank",
+      "title": "Back-rank mate",
+      "summary": "When the king's own pawns become a prison.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1",
+          "arrows": ["d1d8"],
+          "highlights": ["f7", "g7", "h7"],
+          "text": "A king tucked behind three pawns is safe from most attacks — but if no piece guards the back rank, a single rook or queen can deliver mate."
+        },
+        {
+          "kind": "moves",
+          "fen": "6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1",
+          "moves": ["Rd8#"],
+          "goal": "mate",
+          "text": "Deliver the back-rank mate.",
+          "hint": "The rook can reach the eighth rank.",
+          "success": "Back-rank mate!"
+        },
+        {
+          "kind": "moves",
+          "fen": "2r3k1/5ppp/8/8/8/8/5PPP/2R3K1 w - - 0 1",
+          "moves": ["Rxc8#"],
+          "goal": "mate",
+          "text": "Black's rook guards the back rank — but only for now. Mate in one.",
+          "hint": "Capture the defender.",
+          "success": "Removing the only defender wins instantly."
+        }
+      ]
+    },
+    {
+      "id": "scholars-mate",
+      "title": "Scholar's mate",
+      "summary": "The four-move trap — and why f7 is a weak square.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4",
+          "arrows": ["h5f7", "c4f7"],
+          "highlights": ["f7"],
+          "text": "At the start of the game, the f7 square is defended only by Black's king. Here White's queen and bishop both aim at it, and Black's last move (…Nf6??) did nothing to help."
+        },
+        {
+          "kind": "moves",
+          "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4",
+          "moves": ["Qxf7#"],
+          "goal": "mate",
+          "text": "Finish the game.",
+          "hint": "Capture on f7 with the queen.",
+          "success": "Scholar's mate! Defend f7 (with …Qe7 or …g6) and this trap fails."
+        }
+      ]
+    },
+    {
+      "id": "smothered",
+      "title": "Smothered mate",
+      "summary": "A knight mates a king trapped by its own pieces.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "6rk/6pp/8/6N1/8/8/8/6K1 w - - 0 1",
+          "arrows": ["g5f7"],
+          "highlights": ["g8", "g7", "h7"],
+          "text": "When a king is completely surrounded by its own pieces, a knight check is mate — nothing can block a knight, and the king has nowhere to go."
+        },
+        {
+          "kind": "moves",
+          "fen": "6rk/6pp/8/6N1/8/8/8/6K1 w - - 0 1",
+          "moves": ["Nf7#"],
+          "goal": "mate",
+          "text": "Smother the king.",
+          "success": "Smothered mate!"
+        },
+        {
+          "kind": "moves",
+          "fen": "r6k/6pp/7N/3Q4/8/8/8/6K1 w - - 0 1",
+          "moves": ["Qg8+", "Rxg8", "Nf7#"],
+          "text": "Philidor's legacy: sacrifice your queen to force the rook into the king's way, then mate with the knight.",
+          "hint": "Check on g8 — the king can't take because the knight guards g8.",
+          "success": "A queen sacrifice and a smothered mate. Beautiful!"
+        }
+      ]
+    },
+    {
+      "id": "arabian",
+      "title": "Arabian mate",
+      "summary": "Rook and knight cornering the king.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "7k/R7/5N2/8/8/8/8/6K1 w - - 0 1",
+          "arrows": ["a7h7"],
+          "highlights": ["g8", "h7"],
+          "text": "A knight on f6 guards both g8 and h7. Add a rook on the seventh rank and the cornered king is lost."
+        },
+        {
+          "kind": "moves",
+          "fen": "7k/R7/5N2/8/8/8/8/6K1 w - - 0 1",
+          "moves": ["Rh7#"],
+          "goal": "mate",
+          "text": "Mate in one.",
+          "success": "The Arabian mate — one of the oldest known patterns."
+        }
+      ]
+    },
+    {
+      "id": "ladder",
+      "title": "Ladder mate",
+      "summary": "Two rooks climbing the board.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "k7/7R/8/8/8/8/6R1/6K1 w - - 0 1",
+          "arrows": ["h7a7", "g2g8"],
+          "text": "Two rooks can push a king to the edge: one rook cuts off a rank, the other gives check on the next. They take turns, like climbing a ladder."
+        },
+        {
+          "kind": "moves",
+          "fen": "k7/7R/8/8/8/8/6R1/6K1 w - - 0 1",
+          "moves": ["Rg8#"],
+          "goal": "mate",
+          "text": "The h7 rook guards the seventh rank. Mate with the other rook.",
+          "success": "Ladder mate!"
+        }
+      ]
+    },
+    {
+      "id": "queen-mate",
+      "title": "Queen and king mate",
+      "summary": "The most important basic checkmate.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "k7/8/1K6/8/8/8/7Q/8 w - - 0 1",
+          "highlights": ["a7", "b7"],
+          "text": "With king and queen against a lone king, drive the enemy king to the edge, bring your own king close, then mate. Here the white king already guards a7 and b7."
+        },
+        {
+          "kind": "moves",
+          "fen": "k7/8/1K6/8/8/8/7Q/8 w - - 0 1",
+          "moves": ["Qh8#"],
+          "goal": "mate",
+          "text": "Mate in one.",
+          "hint": "Check along the eighth rank.",
+          "success": "Checkmate! Watch out for stalemate when you do this in a real game."
+        }
+      ]
+    }
+  ]
+}

@@ -49,6 +49,14 @@ public sealed class PlayerProfile
     public Dictionary<string, BotRecord> Bots { get; set; } = [];
     public List<GameRecord> RecentGames { get; set; } = [];
     public PuzzleProfile Puzzles { get; set; } = new();
+    public Dictionary<string, LessonResult> Lessons { get; set; } = [];
+}
+
+/// <summary>Best result for one lesson (key = "course/lesson").</summary>
+public sealed class LessonResult
+{
+    public int Stars { get; set; }
+    public DateTimeOffset CompletedAt { get; set; } = DateTimeOffset.Now;
 }
 
 /// <summary>Owns the local player profile: results, per-bot records and the PGN archive.</summary>

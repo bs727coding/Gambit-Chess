@@ -1,0 +1,235 @@
+{
+  "id": "openings",
+  "title": "Openings",
+  "description": "Opening principles and the main lines of the most popular openings.",
+  "glyph": "",
+  "color": "#1565C0",
+  "lessons": [
+    {
+      "id": "principles",
+      "title": "Opening principles",
+      "summary": "Center, development, king safety.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+          "highlights": ["d4", "e4", "d5", "e5"],
+          "text": "Three ideas guide every opening: control the center (e4, d4, e5, d5), develop your knights and bishops quickly, and castle to keep your king safe."
+        },
+        {
+          "kind": "moves",
+          "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+          "moves": ["e4"],
+          "text": "Start by taking the center: push your king's pawn two squares.",
+          "success": "1.e4 claims the center and opens lines for the queen and bishop."
+        },
+        {
+          "kind": "info",
+          "fen": "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
+          "arrows": ["f1c4", "b1c3", "e1g1"],
+          "text": "Develop knights before bishops, aim your pieces at the center, and castle early. Avoid moving the same piece twice and don't bring the queen out too soon — it becomes a target."
+        },
+        {
+          "kind": "quiz",
+          "fen": "rnb1kbnr/pppp1ppp/8/4p1q1/4P3/2N5/PPPP1PPP/R1BQKBNR w KQkq - 2 3",
+          "text": "Black brought the queen out on move two. Why is that usually a bad idea?",
+          "choices": ["The queen can be chased around, costing Black time", "Queens can't move on the first move", "It makes castling impossible"],
+          "answer": 0,
+          "success": "Right — White develops while attacking the queen (for example d4 and Nf3), gaining time."
+        }
+      ]
+    },
+    {
+      "id": "italian",
+      "title": "Italian Game",
+      "summary": "1.e4 e5 2.Nf3 Nc6 3.Bc4 — fast development, eyes on f7.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3",
+          "arrows": ["c4f7"],
+          "text": "The Italian Game develops a knight and bishop at once and points the bishop at f7, the weakest square in Black's camp."
+        },
+        {
+          "kind": "moves",
+          "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+          "moves": ["e4", "e5", "Nf3", "Nc6", "Bc4"],
+          "text": "Play the first three moves of the Italian Game as White.",
+          "hint": "e4, then Nf3, then Bc4.",
+          "success": "That's the Italian Game."
+        },
+        {
+          "kind": "moves",
+          "fen": "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4",
+          "moves": ["c3", "Nf6", "d4"],
+          "text": "Black mirrored with 3…Bc5 (the Giuoco Piano). Prepare d4 with c3, then strike in the center.",
+          "hint": "First c3, then d4.",
+          "success": "c3 and d4 build a broad pawn center."
+        },
+        {
+          "kind": "quiz",
+          "fen": "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3",
+          "text": "Why is f7 a natural target for White in the Italian Game?",
+          "choices": ["Only Black's king defends it", "It's where Black's queen stands", "Black must castle through it"],
+          "answer": 0,
+          "success": "Exactly — that's why traps like the Fried Liver attack aim at f7."
+        }
+      ]
+    },
+    {
+      "id": "ruy-lopez",
+      "title": "Ruy Lopez",
+      "summary": "The Spanish Game: pressure on e5 through the c6 knight.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3",
+          "arrows": ["b5c6", "f3e5"],
+          "text": "In the Ruy Lopez, White's bishop attacks the knight that defends e5. It's one of the oldest and deepest openings, played at every level."
+        },
+        {
+          "kind": "moves",
+          "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+          "moves": ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6", "Ba4", "Nf6", "O-O"],
+          "text": "Play the main line as White: develop, pin the pressure on c6, keep the bishop when it's attacked, and castle.",
+          "hint": "e4, Nf3, Bb5, Ba4, then castle.",
+          "success": "The Morphy Defense main line — White has a lasting initiative."
+        },
+        {
+          "kind": "quiz",
+          "fen": "r1bqkbnr/1ppp1ppp/p1n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4",
+          "text": "After 3…a6, White retreats 4.Ba4 instead of taking on c6. What's one reason 4.Bxc6 dxc6 5.Nxe5? doesn't win a pawn?",
+          "choices": ["Black answers …Qd4, hitting the knight and e4", "Bishops can't capture knights", "5.Nxe5 is illegal"],
+          "answer": 0,
+          "success": "Correct — the queen fork regains the pawn with a good game."
+        }
+      ]
+    },
+    {
+      "id": "queens-gambit",
+      "title": "Queen's Gambit",
+      "summary": "1.d4 d5 2.c4 — a 'gambit' that isn't really a sacrifice.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "rnbqkbnr/ppp1pppp/8/3p4/2PP4/8/PP2PPPP/RNBQKBNR b KQkq - 0 2",
+          "arrows": ["c4d5"],
+          "text": "White offers the c-pawn to deflect Black's d5 pawn from the center. If Black takes, White usually wins the pawn back with a strong center."
+        },
+        {
+          "kind": "moves",
+          "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+          "moves": ["d4", "d5", "c4", "e6", "Nc3", "Nf6", "Bg5"],
+          "text": "Play the Queen's Gambit Declined main line as White.",
+          "hint": "d4, c4, Nc3, then pin the knight with Bg5.",
+          "success": "Classic QGD — White pins the f6 knight and builds pressure."
+        }
+      ]
+    },
+    {
+      "id": "london",
+      "title": "London System",
+      "summary": "A reliable setup that works against almost anything.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "rnbqkb1r/pp3ppp/4pn2/2pp4/3P1B2/2P1PN2/PP3PPP/RN1QKB1R b KQkq - 0 5",
+          "highlights": ["d4", "e3", "c3", "f4"],
+          "text": "The London System puts the dark-squared bishop on f4 early, then builds a solid triangle of pawns on c3, d4 and e3. It's easy to learn and very hard to break."
+        },
+        {
+          "kind": "moves",
+          "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+          "moves": ["d4", "d5", "Bf4", "Nf6", "e3", "e6", "Nf3", "c5", "c3"],
+          "text": "Set up the London as White.",
+          "hint": "d4, Bf4, e3, Nf3, c3.",
+          "success": "The London triangle is complete."
+        }
+      ]
+    },
+    {
+      "id": "sicilian",
+      "title": "Sicilian Defense",
+      "summary": "1…c5 — Black's most popular and combative answer to 1.e4.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+          "arrows": ["c5d4"],
+          "text": "Instead of copying 1.e4, Black fights for d4 from the side. The positions become unbalanced, giving both sides chances to win."
+        },
+        {
+          "kind": "moves",
+          "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+          "moves": ["c5", "Nf3", "d6", "d4", "cxd4", "Nxd4", "Nf6", "Nc3", "a6"],
+          "text": "Play the Najdorf Variation as Black.",
+          "hint": "c5, d6, take on d4, develop the knight, then …a6.",
+          "success": "The Najdorf — a favorite of world champions."
+        }
+      ]
+    },
+    {
+      "id": "french",
+      "title": "French Defense",
+      "summary": "1…e6 and 2…d5 — a solid counter-strike.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "rnbqkbnr/ppp2ppp/4p3/3p4/3PP3/8/PPP2PPP/RNBQKBNR w KQkq - 0 3",
+          "arrows": ["d5e4"],
+          "text": "Black prepares …d5 with …e6, challenging White's e4 pawn. The price: Black's light-squared bishop can get stuck behind the e6 pawn."
+        },
+        {
+          "kind": "moves",
+          "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+          "moves": ["e6", "d4", "d5", "Nc3", "Nf6"],
+          "text": "Play the Classical French as Black.",
+          "hint": "e6, d5, then develop the king's knight.",
+          "success": "Black attacks e4 again and keeps a rock-solid position."
+        }
+      ]
+    },
+    {
+      "id": "caro-kann",
+      "title": "Caro-Kann Defense",
+      "summary": "1…c6 — like the French, but the bishop gets out.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "rn1qkbnr/pp2pppp/2p5/5b2/3PN3/8/PPP2PPP/R1BQKBNR w KQkq - 1 5",
+          "highlights": ["f5"],
+          "text": "The Caro-Kann prepares …d5 with …c6. Black usually develops the light-squared bishop before playing …e6 — so it isn't locked in like in the French."
+        },
+        {
+          "kind": "moves",
+          "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+          "moves": ["c6", "d4", "d5", "Nc3", "dxe4", "Nxe4", "Bf5"],
+          "text": "Play the Classical Caro-Kann as Black.",
+          "hint": "c6, d5, take on e4, then develop the bishop to f5.",
+          "success": "The bishop is out — Black is solid and comfortable."
+        }
+      ]
+    },
+    {
+      "id": "kings-indian",
+      "title": "King's Indian Defense",
+      "summary": "Let White build a center, then attack it.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "rnbq1rk1/ppp1ppbp/3p1np1/8/2PPP3/2N2N2/PP3PPP/R1BQKB1R w KQ - 2 6",
+          "arrows": ["g7d4"],
+          "text": "In the King's Indian, Black fianchettoes the bishop on g7 and castles quickly, inviting White to build a big center — then counterattacks it with …e5 or …c5."
+        },
+        {
+          "kind": "moves",
+          "fen": "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1",
+          "moves": ["Nf6", "c4", "g6", "Nc3", "Bg7", "e4", "d6", "Nf3", "O-O"],
+          "text": "Set up the King's Indian as Black.",
+          "hint": "Nf6, g6, Bg7, d6, then castle.",
+          "success": "A fighting setup used by Fischer and Kasparov."
+        }
+      ]
+    }
+  ]
+}

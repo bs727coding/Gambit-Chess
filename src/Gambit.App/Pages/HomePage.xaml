@@ -54,7 +54,7 @@
                             <FontIcon Glyph="&#xE7BE;" Foreground="White" FontSize="18" />
                         </Border>
                         <TextBlock Text="Lessons" Style="{StaticResource SubtitleTextBlockStyle}" FontSize="18" />
-                        <TextBlock Text="Openings, tactics and endgames, step by step. Coming soon." Style="{StaticResource SecondaryTextStyle}" />
+                        <TextBlock Text="Interactive lessons: how pieces move, classic checkmates and tactics." Style="{StaticResource SecondaryTextStyle}" />
                     </StackPanel>
                 </Button>
 

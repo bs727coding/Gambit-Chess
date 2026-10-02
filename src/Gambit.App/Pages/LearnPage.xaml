@@ -6,60 +6,23 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel MaxWidth="{StaticResource PageMaxWidth}" Padding="32,16,32,32" Spacing="8">
-            <TextBlock Text="Learn" Style="{StaticResource PageTitleStyle}" />
-            <TextBlock Text="Interactive lessons from the basics to master-level endgames." Style="{StaticResource SecondaryTextStyle}" />
-
-            <Grid ColumnSpacing="12" RowSpacing="12" Margin="0,16,0,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-
-                <Border Style="{StaticResource CardStyle}" Padding="20">
-                    <StackPanel Spacing="8">
-                        <Border Width="44" Height="44" CornerRadius="22" Background="#2E7D32" HorizontalAlignment="Left">
-                            <FontIcon Glyph="&#xE7BE;" Foreground="White" FontSize="18" />
-                        </Border>
-                        <TextBlock Text="Fundamentals" Style="{StaticResource SubtitleTextBlockStyle}" FontSize="18" />
-                        <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="How the pieces move, check and checkmate, castling, en passant and the classic mating patterns." />
+            <Grid>
+                <StackPanel>
+                    <TextBlock Text="Learn" Style="{StaticResource PageTitleStyle}" />
+                    <TextBlock x:Name="Subtitle" Style="{StaticResource SecondaryTextStyle}" />
+                </StackPanel>
+                <Button x:Name="ContinueButton" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Right" VerticalAlignment="Center"
+                        Padding="16,8" Click="Continue_Click" AutomationProperties.Name="Continue learning">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE768;" FontSize="14" />
+                        <TextBlock x:Name="ContinueText" Text="Continue learning" />
                     </StackPanel>
-                </Border>
-                <Border Grid.Column="1" Style="{StaticResource CardStyle}" Padding="20">
-                    <StackPanel Spacing="8">
-                        <Border Width="44" Height="44" CornerRadius="22" Background="#C62828" HorizontalAlignment="Left">
-                            <FontIcon Glyph="&#xE945;" Foreground="White" FontSize="18" />
-                        </Border>
-                        <TextBlock Text="Tactics" Style="{StaticResource SubtitleTextBlockStyle}" FontSize="18" />
-                        <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="Forks, pins, skewers, discovered attacks, deflection, decoys, overloading and more." />
-                    </StackPanel>
-                </Border>
-                <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="20">
-                    <StackPanel Spacing="8">
-                        <Border Width="44" Height="44" CornerRadius="22" Background="#1565C0" HorizontalAlignment="Left">
-                            <FontIcon Glyph="&#xE8F1;" Foreground="White" FontSize="18" />
-                        </Border>
-                        <TextBlock Text="Openings" Style="{StaticResource SubtitleTextBlockStyle}" FontSize="18" />
-                        <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="Opening principles plus the Italian, Ruy Lopez, Sicilian, French, Caro-Kann, Queen's Gambit, London and more — with a line trainer." />
-                    </StackPanel>
-                </Border>
-                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardStyle}" Padding="20">
-                    <StackPanel Spacing="8">
-                        <Border Width="44" Height="44" CornerRadius="22" Background="#6A1B9A" HorizontalAlignment="Left">
-                            <FontIcon Glyph="&#xE7C1;" Foreground="White" FontSize="18" />
-                        </Border>
-                        <TextBlock Text="Endgames" Style="{StaticResource SubtitleTextBlockStyle}" FontSize="18" />
-                        <TextBlock Style="{StaticResource SecondaryTextStyle}" Text="Basic mates, opposition, the square rule, Lucena and Philidor positions, and rook endgame technique." />
-                    </StackPanel>
-                </Border>
+                </Button>
             </Grid>
-
-            <InfoBar IsOpen="True" IsClosable="False" Severity="Informational" Margin="0,12,0,0"
-                     Title="Lessons are on the way"
-                     Message="The lesson player and courses are scheduled for Sessions 4 and 5 of the roadmap." />
+            <StackPanel x:Name="CourseList" Spacing="16" Margin="0,12,0,0" />
+            <InfoBar IsOpen="True" IsClosable="False" Severity="Informational" Margin="0,8,0,0"
+                     Title="More courses coming"
+                     Message="Opening repertoires (Italian, Ruy Lopez, Sicilian, French, Caro-Kann, Queen's Gambit, London, King's Indian) and endgame technique are next on the roadmap." />
         </StackPanel>
     </ScrollViewer>
 </Page>

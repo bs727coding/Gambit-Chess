@@ -25,13 +25,18 @@ public static class MoveGenerator
         bool noisy = type == GenType.Noisy;
         Color us = pos.SideToMove, them = us.Opposite();
         ulong ours = pos.Pieces(us), theirs = pos.Pieces(them), occ = ours | theirs;
-        int ksq = pos.KingSquare(us);
+        // King-less positions only occur in lesson mini-games ("collect the stars"); the engine never sees them.
+        ulong kingBb = pos.Pieces(us, PieceType.King);
+        bool hasKing = kingBb != 0;
+        int ksq = hasKing ? Bitboard.Lsb(kingBb) : 0;
         ulong checkers = pos.Checkers;
+        // Never offer a move that captures a king (possible only in such mini-game positions).
+        theirs &= ~pos.Pieces(them, PieceType.King);
 
         // ---- King
-        ulong kingTargets = Attacks.King(ksq) & ~ours;
+        ulong kingTargets = hasKing ? Attacks.King(ksq) & ~ours & ~pos.Pieces(them, PieceType.King) : 0;
         if (noisy) kingTargets &= theirs;
-        ulong occWithoutKing = occ ^ (1UL << ksq);
+        ulong occWithoutKing = occ ^ (hasKing ? 1UL << ksq : 0);
         while (kingTargets != 0)
         {
             int to = Bitboard.PopLsb(ref kingTargets);
@@ -45,13 +50,13 @@ public static class MoveGenerator
         ulong evasionMask = checkers == 0
             ? Bitboard.All
             : Attacks.Between(ksq, Bitboard.Lsb(checkers)) | checkers;
-        ulong pinned = pos.PinnedPieces(us);
+        ulong pinned = hasKing ? pos.PinnedPieces(us) : 0;
 
         // ---- Pawns
         n = GeneratePawnMoves(pos, moves, n, noisy, us, theirs, occ, ksq, checkers, evasionMask, pinned);
 
         // ---- Pieces
-        ulong pieceTargets = ~ours & evasionMask;
+        ulong pieceTargets = ~ours & evasionMask & ~pos.Pieces(them, PieceType.King);
         if (noisy) pieceTargets &= theirs;
 
         ulong knights = pos.Pieces(us, PieceType.Knight) & ~pinned; // a pinned knight can never move
@@ -80,7 +85,7 @@ public static class MoveGenerator
         }
 
         // ---- Castling
-        if (!noisy && checkers == 0 && pos.Castling != CastlingRights.None)
+        if (!noisy && hasKing && checkers == 0 && pos.Castling != CastlingRights.None)
         {
             if (us == Color.White)
             {
@@ -160,7 +165,9 @@ public static class MoveGenerator
                 int capSq = ep - up;
                 ulong capBb = Bitboard.Of(capSq);
                 ulong occAfter = (occ ^ Bitboard.Of(from) ^ capBb) | Bitboard.Of(ep);
-                ulong attackers = pos.AttackersTo(ksq, occAfter) & theirs & ~capBb;
+                ulong attackers = Bitboard.Contains(pos.Pieces(us, PieceType.King), ksq)
+                    ? pos.AttackersTo(ksq, occAfter) & pos.Pieces(us.Opposite()) & ~capBb
+                    : 0;
                 if (attackers == 0) moves[n++] = new Move(from, ep, MoveFlag.EnPassant);
             }
         }
