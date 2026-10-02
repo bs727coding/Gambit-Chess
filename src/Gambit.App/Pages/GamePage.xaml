@@ -82,7 +82,11 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
+                <Button x:Name="HintButton" Grid.Column="5" HorizontalAlignment="Stretch" Click="Hint_Click" ToolTipService.ToolTip="Hint: show the engine's suggestion" AutomationProperties.Name="Hint">
+                    <FontIcon Glyph="&#xE82F;" FontSize="14" />
+                </Button>
                 <Button x:Name="FirstButton" HorizontalAlignment="Stretch" Click="First_Click" ToolTipService.ToolTip="First move (Home)" AutomationProperties.Name="First move">
                     <FontIcon Glyph="&#xE892;" FontSize="14" />
                 </Button>
@@ -155,8 +159,8 @@
             </Grid>
         </Grid>
 
-        <InfoBar x:Name="Toast" Grid.ColumnSpan="2" VerticalAlignment="Bottom" HorizontalAlignment="Center" MaxWidth="520"
-                 IsOpen="False" IsClosable="True" Margin="0,0,0,8" />
+        <InfoBar x:Name="Toast" Grid.Column="0" VerticalAlignment="Top" HorizontalAlignment="Center" MaxWidth="520"
+                 IsOpen="False" IsClosable="True" Margin="0,4,0,0" />
 
         <VisualStateManager.VisualStateGroups>
             <VisualStateGroup>

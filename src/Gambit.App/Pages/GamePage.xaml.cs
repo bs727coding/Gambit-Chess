@@ -56,18 +56,34 @@ public sealed partial class GamePage : Page
     }
 
     /// <summary>True while an unfinished game exists (the Play tab returns to it).</summary>
-    public static bool HasActiveGame => _instance?._session is { } s && !s.Game.IsOver;
+    public static bool HasActiveGame =>
+        _instance?._session is { } s ? !s.Game.IsOver : ActiveGameStore.Exists;
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        if (e.Parameter is GameSetup setup) StartGame(setup);
-        else if (_session == null) DispatcherQueue.TryEnqueue(() => App.Window.NavigateTo("play"));
+        if (e.Parameter is GameSetup setup)
+        {
+            StartGame(setup);
+        }
+        else if (_session == null)
+        {
+            if (ActiveGameStore.Load() is SavedGame saved) Resume(saved);
+            else DispatcherQueue.TryEnqueue(() => App.Window.NavigateTo("play"));
+        }
     }
 
     // ------------------------------------------------------------------ game lifecycle
 
-    private void StartGame(GameSetup setup)
+    private void Resume(SavedGame saved)
+    {
+        TimeSpan? white = saved.WhiteMs is double w ? TimeSpan.FromMilliseconds(w) : null;
+        TimeSpan? black = saved.BlackMs is double b ? TimeSpan.FromMilliseconds(b) : null;
+        StartGame(saved.ToSetup(), saved.Moves, white, black);
+        ShowToast("Welcome back", "Your unfinished game has been restored.", InfoBarSeverity.Informational);
+    }
+
+    private void StartGame(GameSetup setup, IReadOnlyList<string>? resumeMoves = null, TimeSpan? whiteTime = null, TimeSpan? blackTime = null)
     {
         EndSession();
         _setup = setup;
@@ -77,7 +93,14 @@ public sealed partial class GamePage : Page
         ChatBubble.Visibility = Visibility.Collapsed;
         Toast.IsOpen = false;
 
+        if (resumeMoves == null) ActiveGameStore.Clear();
         var game = new Game(setup.StartFen);
+        foreach (string uci in resumeMoves ?? [])
+        {
+            Move m = Core.Notation.Uci.Parse(game.Position, uci);
+            if (m.IsNone || game.IsOver) break;
+            game.Play(m);
+        }
         var human = new PlayerInfo(App.Profile.Profile.Name, PlayerKind.LocalHuman) { Id = "me" };
         IMoveProvider? whiteBot = null, blackBot = null;
         PlayerInfo white, black;
@@ -121,15 +144,17 @@ public sealed partial class GamePage : Page
         _session.ThinkingChanged += Session_ThinkingChanged;
         _session.ChatReceived += Session_ChatReceived;
         _session.DrawOfferAnswered += Session_DrawOfferAnswered;
+        if (_session.Clock != null && whiteTime is TimeSpan wt && blackTime is TimeSpan bt) _session.Clock.Set(wt, bt);
+        Board.SetMarkers([]);
 
         Board.Flipped = !setup.IsHotSeat && setup.HumanColor == Color.Black;
-        Board.SetPosition(game.Position);
+        Board.SetPosition(game.Position, game.LastMove?.Move ?? Move.None);
         SetupPlayerBars();
         SetupOpponentCard();
         RefreshMoveList();
 
         _lowTimeWarned = false;
-        SoundService.Play(GameSound.Start);
+        if (resumeMoves == null) SoundService.Play(GameSound.Start);
         _session.Start();
         if (_session.Clock != null) _clockTimer.Start();
         else _clockTimer.Stop();
@@ -156,14 +181,17 @@ public sealed partial class GamePage : Page
     {
         _viewPly = -1;
         SoundService.PlayFor(e.Move);
+        Board.SetMarkers([]);
         Board.SetPosition(_session!.Game.Position, e.Move.Move, animate: true);
         RefreshMoveList();
         RefreshAll();
+        if (!_session.Game.IsOver && _setup != null) ActiveGameStore.Save(_setup, _session.Game, _session.Clock);
     }
 
     private void Session_GameEnded(object? sender, GameEndedEventArgs e)
     {
         RecordResult();
+        ActiveGameStore.Clear();
         _clockTimer.Stop();
         SoundService.Play(_setup?.IsHotSeat == false && _session?.Game.Winner == _setup.HumanColor ? GameSound.Win : GameSound.End);
         PostGamePanel.Visibility = Visibility.Visible;
@@ -176,8 +204,10 @@ public sealed partial class GamePage : Page
         _viewPly = -1;
         Game g = _session!.Game;
         Board.SetPosition(g.Position, g.LastMove?.Move ?? Move.None);
+        Board.SetMarkers([]);
         RefreshMoveList();
         RefreshAll();
+        if (_setup != null) ActiveGameStore.Save(_setup, g, _session.Clock);
     }
 
     private void Session_ThinkingChanged(object? sender, EventArgs e) => RefreshAll();
@@ -379,6 +409,7 @@ public sealed partial class GamePage : Page
         DrawButton.IsEnabled = live && _session!.CanOfferDraw;
         ResignButton.IsEnabled = live && _session!.Game.Moves.Count > 0;
         TakebackButton.Visibility = _setup?.AllowTakebacks == false ? Visibility.Collapsed : Visibility.Visible;
+        HintButton.IsEnabled = live && _viewPly < 0 && !_session!.IsOpponentThinking && _session.IsLocalSide(_session.Game.SideToMove);
 
         int count = _session?.Game.Moves.Count ?? 0;
         int ply = _viewPly < 0 ? count : _viewPly;
@@ -519,6 +550,26 @@ public sealed partial class GamePage : Page
             if (await Dialogs.ShowAsync(confirm, XamlRoot) != ContentDialogResult.Primary) return;
         }
         _session?.Resign();
+    }
+
+    private async void Hint_Click(object sender, RoutedEventArgs e)
+    {
+        if (_session == null || _session.Game.IsOver || _viewPly >= 0 || !_session.IsLocalSide(_session.Game.SideToMove)) return;
+        Position pos = _session.Game.Position.Clone();
+        ulong key = pos.Key;
+        HintButton.IsEnabled = false;
+        try
+        {
+            var result = await Task.Run(() => new Engine.Search.Searcher(16).Search(pos,
+                new Engine.Search.SearchLimits { MaxDepth = 14, SoftTime = TimeSpan.FromMilliseconds(500), HardTime = TimeSpan.FromMilliseconds(900) }));
+            if (_session == null || _session.Game.Position.Key != key || result.BestMove.IsNone) return;
+            var green = Ui.ParseColor("#81B64C", 220);
+            Board.SetMarkers([BoardMarker.Square(result.BestMove.From, green), BoardMarker.Arrow(result.BestMove.From, result.BestMove.To, green)]);
+        }
+        finally
+        {
+            HintButton.IsEnabled = true;
+        }
     }
 
     private void Rematch_Click(object sender, RoutedEventArgs e)
