@@ -1,0 +1,14 @@
+<Project>
+  <!-- Shared settings for every project in the repo. -->
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Authors>Gambit contributors</Authors>
+    <Product>Gambit</Product>
+    <Version>0.1.0</Version>
+    <!-- Deterministic, reproducible builds. -->
+    <Deterministic>true</Deterministic>
+    <TieredPGO>true</TieredPGO>
+  </PropertyGroup>
+</Project>

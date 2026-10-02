@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Gambit.Core/Gambit.Core.csproj" />
+    <Project Path="src/Gambit.Engine/Gambit.Engine.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Gambit.Tests/Gambit.Tests.csproj" />
+  </Folder>
+</Solution>
