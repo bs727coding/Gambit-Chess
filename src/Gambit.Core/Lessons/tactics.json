@@ -1,7 +1,7 @@
 {
   "id": "tactics",
   "title": "Tactics",
-  "description": "Forks, pins, skewers, discovered and double checks, overloaded and trapped pieces — the tricks that win material.",
+  "description": "Forks, pins, skewers, discovered and double checks, decoys, overloaded and trapped pieces: the tricks that win material.",
   "glyph": "",
   "color": "#C62828",
   "lessons": [
@@ -191,6 +191,27 @@
           "text": "Trap the bishop, then win it.",
           "hint": "Block its diagonal with a pawn that's defended.",
           "success": "The bishop is trapped — the best it can do is give itself up for a pawn."
+        }
+      ]
+    },
+    {
+      "id": "decoy",
+      "title": "The decoy",
+      "summary": "Lure the king onto the wrong square.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "4k3/ppp1pp1p/7q/4N3/8/8/PPP2PPP/3R2K1 w - - 0 1",
+          "arrows": ["e5f7", "f7d8", "f7h6"],
+          "text": "A decoy lures an enemy piece, often the king, onto a square where it can be attacked. From f7 White's knight would hit both d8 and h6. The queen is already on h6; now the king just has to be persuaded to come to d8."
+        },
+        {
+          "kind": "moves",
+          "fen": "4k3/ppp1pp1p/7q/4N3/8/8/PPP2PPP/3R2K1 w - - 0 1",
+          "moves": ["Rd8+", "Kxd8", "Nxf7+", "Ke8", "Nxh6"],
+          "text": "Sacrifice to bring the king to d8, then fork it with the queen.",
+          "hint": "Give up the rook with check on d8.",
+          "success": "The rook was bait: the king took it, and the knight fork won the queen."
         }
       ]
     }

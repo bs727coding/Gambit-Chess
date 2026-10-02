@@ -230,6 +230,64 @@
           "success": "A fighting setup used by Fischer and Kasparov."
         }
       ]
+    },
+    {
+      "id": "scotch",
+      "title": "Scotch Game",
+      "summary": "1.e4 e5 2.Nf3 Nc6 3.d4: open the center at once.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "r1bqkbnr/pppp1ppp/2n5/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3",
+          "arrows": ["d4e5"],
+          "text": "The Scotch Game strikes in the center on move three. White swaps the d-pawn for Black's e-pawn and gets free, active piece play. Garry Kasparov made it popular again at the top level."
+        },
+        {
+          "kind": "moves",
+          "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+          "moves": ["e4", "e5", "Nf3", "Nc6", "d4", "exd4", "Nxd4"],
+          "text": "Play the Scotch as White: open the center on move three and take back with the knight.",
+          "hint": "e4, Nf3, then d4, and recapture with the knight.",
+          "success": "That's the Scotch: an open center and a knight on d4."
+        },
+        {
+          "kind": "moves",
+          "fen": "r1bqkb1r/pppp1ppp/2n2n2/8/3NP3/8/PPP2PPP/RNBQKB1R w KQkq - 1 5",
+          "moves": ["Nxc6", "bxc6", "e5"],
+          "text": "Black attacks e4 with 4...Nf6. Trade on c6, then kick the knight with your e-pawn.",
+          "hint": "Nxc6 first, then push e5.",
+          "success": "The Mieses Variation: White gains space and Black's knight has to move again."
+        }
+      ]
+    },
+    {
+      "id": "english",
+      "title": "English Opening",
+      "summary": "1.c4: control the center from the side.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "rnbqkbnr/pppppppp/8/8/2P5/8/PP1PPPPP/RNBQKBNR b KQkq - 0 1",
+          "arrows": ["c4d5"],
+          "text": "The English Opening, 1.c4, fights for d5 from the side instead of planting a pawn in the middle. White usually fianchettoes the king's bishop on g2, where it rakes the long diagonal toward Black's queenside."
+        },
+        {
+          "kind": "moves",
+          "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+          "moves": ["c4", "e5", "Nc3", "Nf6", "Nf3", "Nc6", "g3", "d5", "cxd5", "Nxd5", "Bg2"],
+          "text": "Play the Four Knights English: develop both knights, fianchetto, and answer ...d5 by trading on d5.",
+          "hint": "c4, Nc3, Nf3, g3; then take on d5 and bring the bishop to g2.",
+          "success": "A reversed Sicilian with an extra tempo for White, and the g2 bishop eyes d5."
+        },
+        {
+          "kind": "quiz",
+          "fen": "r1bqkb1r/ppp2ppp/2n5/3np3/8/2N2NP1/PP1PPPBP/R1BQK2R b KQkq - 1 6",
+          "text": "Why does the bishop belong on g2 in the English?",
+          "choices": ["It pressures d5 and the long diagonal", "It guards the h-pawn", "It prepares castling queenside"],
+          "answer": 0,
+          "success": "Right. From g2 it hits d5, the c6 knight and b7 all at once."
+        }
+      ]
     }
   ]
 }
