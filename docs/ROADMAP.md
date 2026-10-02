@@ -74,9 +74,9 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 
 ## Session 5 — Lessons II: openings + endgames
 
-- [~] **Opening principles** + opening courses with main lines, ideas and traps: Italian, Ruy Lopez,
-      Scotch, Sicilian, French, Caro-Kann, Queen's Gambit, London, King's Indian, English ✔ — drilled
-      with a "play the line" trainer; sub-lines (Alapin, QGA, Slav) still to write
+- [x] **Opening principles** + opening courses with main lines, ideas and traps: Italian, Ruy Lopez,
+      Scotch, Sicilian (incl. Alapin), French, Caro-Kann, Queen's Gambit (QGD, QGA, Slav), London,
+      King's Indian, English ✔ — drilled with a "play the line" trainer
 - [~] **Endgames**: K+Q, K+R and two-bishop mates, opposition, key squares, square rule, Lucena,
       Philidor, wrong bishop (rook-pawn draws), rooks behind passed pawns ✔ — B+N mate and
       triangulation still to write
