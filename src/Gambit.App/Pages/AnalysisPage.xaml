@@ -32,7 +32,7 @@
                             <TextBlock Text="Engine" Style="{StaticResource BodyStrongTextBlockStyle}" />
                             <TextBlock x:Name="EngineInfo" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         </StackPanel>
-                        <ToggleSwitch x:Name="EngineSwitch" HorizontalAlignment="Right" MinWidth="0" OnContent="" OffContent="" IsOn="True" Toggled="EngineSwitch_Toggled" />
+                        <ToggleSwitch x:Name="EngineSwitch" AutomationProperties.Name="Engine" HorizontalAlignment="Right" MinWidth="0" OnContent="" OffContent="" IsOn="True" Toggled="EngineSwitch_Toggled" />
                     </Grid>
                     <StackPanel x:Name="Lines" Spacing="6" />
                 </StackPanel>
@@ -93,7 +93,7 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBox x:Name="FenBox" PlaceholderText="Paste a FEN and press Load" FontSize="12" />
-                        <Button Grid.Column="1" Content="Load" Click="LoadFen_Click" />
+                        <Button Grid.Column="1" Content="Load" Click="LoadFen_Click" AutomationProperties.Name="Load FEN" />
                     </Grid>
                     <Grid ColumnSpacing="6">
                         <Grid.ColumnDefinitions>
@@ -101,13 +101,13 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <Button HorizontalAlignment="Stretch" Click="CopyFen_Click">
+                        <Button HorizontalAlignment="Stretch" Click="CopyFen_Click" AutomationProperties.Name="Copy FEN">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <FontIcon Glyph="&#xE8C8;" FontSize="13" />
                                 <TextBlock Text="FEN" />
                             </StackPanel>
                         </Button>
-                        <Button Grid.Column="1" HorizontalAlignment="Stretch" Click="CopyPgn_Click">
+                        <Button Grid.Column="1" HorizontalAlignment="Stretch" Click="CopyPgn_Click" AutomationProperties.Name="Copy PGN">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <FontIcon Glyph="&#xE8C8;" FontSize="13" />
                                 <TextBlock Text="PGN" />

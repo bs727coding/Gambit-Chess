@@ -20,34 +20,34 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 
 **Goal:** a real, playable native app. You can launch it, pick a bot, and play a full game.
 
-- [ ] Toolchain (.NET 10 SDK Arm64), repo, solution, `build.ps1`, docs (`CLAUDE.md`, roadmap, progress, architecture)
-- [ ] `Gambit.Core` — bitboards + magic sliders, legal move generation, make/unmake, Zobrist hashing
-- [ ] `Gambit.Core` — FEN, SAN (parse + format), UCI, PGN (read/write), `Game` with result detection
+- [x] Toolchain (.NET 10 SDK Arm64), repo, solution, `build.ps1`, docs (`CLAUDE.md`, roadmap, progress, architecture)
+- [x] `Gambit.Core` — bitboards + magic sliders, legal move generation, make/unmake, Zobrist hashing
+- [x] `Gambit.Core` — FEN, SAN (parse + format), UCI, PGN (read/write), `Game` with result detection
       (mate, stalemate, insufficient material, threefold, 50-move), Glicko-2 rating math
-- [ ] `Gambit.Tests` — perft suite (6 standard positions), FEN/SAN/PGN round-trips, draw rules
-- [ ] `Gambit.Engine` — PeSTO-style tapered eval, iterative deepening PVS, TT, quiescence, null-move,
+- [x] `Gambit.Tests` — perft suite (6 standard positions), FEN/SAN/PGN round-trips, draw rules
+- [x] `Gambit.Engine` — PeSTO-style tapered eval, iterative deepening PVS, TT, quiescence, null-move,
       LMR, killers/history, time + node limits, MultiPV, cancellation
-- [ ] Bot roster v1 — ~10 named bots (≈250 → 2400+) using depth/node limits, eval noise, MultiPV
+- [x] Bot roster v1 — ~10 named bots (≈250 → 2400+) using depth/node limits, eval noise, MultiPV
       softmax selection and blunder probability
-- [ ] `Gambit.App` (WinUI 3, unpackaged, self-contained, Arm64) — Mica, custom title bar, NavigationView
+- [x] `Gambit.App` (WinUI 3, unpackaged, self-contained, Arm64) — Mica, custom title bar, NavigationView
       shell with Home / Play / Puzzles / Learn / Analysis / Profile / Settings (future pages are placeholders)
-- [ ] Board control — click + drag moves, legal-move dots, last move / check / selection highlights,
+- [x] Board control — click + drag moves, legal-move dots, last move / check / selection highlights,
       promotion picker, flip, coordinates, move animation, vector piece set
-- [ ] Play vs Bot — bot picker, color choice, SAN move list, resign, takeback, new game, game-over dialog
-- [ ] `IGameSession` abstraction (local now, remote later) — see `docs/ARCHITECTURE.md`
-- [ ] Settings — app theme (system/light/dark), board theme, piece style, show legal moves, sounds toggle
+- [x] Play vs Bot — bot picker, color choice, SAN move list, resign, takeback, new game, game-over dialog
+- [x] `IGameSession` abstraction (local now, remote later) — see `docs/ARCHITECTURE.md`
+- [x] Settings — app theme (system/light/dark), board theme, piece style, show legal moves (sounds → Session 2)
 
 ## Session 2 — Play experience & analysis
 
-- [ ] Time controls (bullet/blitz/rapid/classical/unlimited) with clocks + flagging
+- [x] Time controls (bullet/blitz/rapid/classical/unlimited) with clocks + flagging
 - [ ] Bot personalities: opening book per bot, avatars, short "chat" lines, play styles
 - [ ] Opening book (curated SAN lines → hash table), opening name detection (ECO subset)
 - [ ] Game review: engine pass over finished games; move classes (Brilliant, Great, Best, Excellent,
       Good, Book, Inaccuracy, Mistake, Miss, Blunder); accuracy %; eval graph; key moments
-- [ ] Analysis board: free play, MultiPV engine lines, eval bar, FEN/PGN import + export, board editor
-- [ ] Game archive: every finished game saved; list + reopen in analysis/review
+- [~] Analysis board: free play, MultiPV engine lines, eval bar, FEN/PGN import + export ✔ — board editor + variations still to do
+- [x] Game archive: every finished game saved (PGN); list + reopen in analysis
 - [ ] Sounds (generated locally: move, capture, check, castle, promote, game end, low time)
-- [ ] Hints (bot games), premoves, keyboard navigation of the move list, Play a Friend (hot-seat)
+- [~] Keyboard navigation of the move list ✔, Play a Friend (hot-seat) ✔ — hints + premoves still to do
 
 ## Session 3 — Puzzles
 

@@ -1,5 +1,10 @@
 <Solution>
+  <Configurations>
+    <Platform Name="ARM64" />
+    <Platform Name="x64" />
+  </Configurations>
   <Folder Name="/src/">
+    <Project Path="src/Gambit.App/Gambit.App.csproj" />
     <Project Path="src/Gambit.Core/Gambit.Core.csproj" />
     <Project Path="src/Gambit.Engine/Gambit.Engine.csproj" />
   </Folder>

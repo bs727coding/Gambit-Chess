@@ -73,7 +73,7 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="16" Click="HotSeat_Click">
+                        <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="16" Click="HotSeat_Click" AutomationProperties.Name="Pass and play">
                             <Grid ColumnSpacing="14">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
@@ -131,19 +131,19 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <ToggleButton x:Name="WhiteToggle" HorizontalAlignment="Stretch" Click="ColorToggle_Click" Tag="white">
+                        <ToggleButton x:Name="WhiteToggle" AutomationProperties.Name="Play as White" HorizontalAlignment="Stretch" Click="ColorToggle_Click" Tag="white">
                             <StackPanel Spacing="2">
                                 <TextBlock Text="&#x2654;" FontFamily="Segoe UI Symbol" FontSize="22" HorizontalAlignment="Center" />
                                 <TextBlock Text="White" HorizontalAlignment="Center" />
                             </StackPanel>
                         </ToggleButton>
-                        <ToggleButton x:Name="RandomToggle" Grid.Column="1" HorizontalAlignment="Stretch" Click="ColorToggle_Click" Tag="random">
+                        <ToggleButton x:Name="RandomToggle" AutomationProperties.Name="Random color" Grid.Column="1" HorizontalAlignment="Stretch" Click="ColorToggle_Click" Tag="random">
                             <StackPanel Spacing="2">
                                 <FontIcon Glyph="&#xE8B1;" FontSize="20" Margin="0,3,0,3" />
                                 <TextBlock Text="Random" HorizontalAlignment="Center" />
                             </StackPanel>
                         </ToggleButton>
-                        <ToggleButton x:Name="BlackToggle" Grid.Column="2" HorizontalAlignment="Stretch" Click="ColorToggle_Click" Tag="black">
+                        <ToggleButton x:Name="BlackToggle" AutomationProperties.Name="Play as Black" Grid.Column="2" HorizontalAlignment="Stretch" Click="ColorToggle_Click" Tag="black">
                             <StackPanel Spacing="2">
                                 <TextBlock Text="&#x265A;" FontFamily="Segoe UI Symbol" FontSize="22" HorizontalAlignment="Center" />
                                 <TextBlock Text="Black" HorizontalAlignment="Center" />

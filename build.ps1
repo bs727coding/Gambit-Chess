@@ -11,12 +11,14 @@
 param(
     [ValidateSet('build', 'test', 'run', 'publish', 'perft', 'clean')]
     [string]$Command = 'build',
-    [ValidateSet('Debug', 'Release')]
-    [string]$Configuration = 'Debug',
+    [ValidateSet('Debug', 'Release', '')]
+    [string]$Configuration = '',
     [string]$Runtime = ''
 )
 
 $ErrorActionPreference = 'Stop'
+# 'run' and 'publish' default to Release (the engine is ~4x faster optimized); 'build'/'test' to Debug.
+if (-not $Configuration) { $Configuration = if ($Command -in 'run', 'publish') { 'Release' } else { 'Debug' } }
 $root = $PSScriptRoot
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
 $env:DOTNET_NOLOGO = '1'

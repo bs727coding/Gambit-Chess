@@ -245,11 +245,12 @@ public static class Evaluator
         int mg = 0, eg = 0;
         ulong occ = pos.Occupied;
 
-        // Material + piece-square tables.
-        for (int sq = 0; sq < 64; sq++)
+        // Material + piece-square tables (iterate occupied squares only).
+        ulong occupiedSquares = occ;
+        while (occupiedSquares != 0)
         {
+            int sq = Bitboard.PopLsb(ref occupiedSquares);
             Piece p = pos.PieceAt(sq);
-            if (p == Piece.None) continue;
             int idx = ((int)p << 6) | sq;
             if (p.Color() == Color.White)
             {
