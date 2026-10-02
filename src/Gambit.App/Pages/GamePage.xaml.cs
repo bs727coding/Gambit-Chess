@@ -455,15 +455,15 @@ public sealed partial class GamePage : Page
         {
             Title = title,
             Content = content,
-            PrimaryButtonText = "Rematch",
-            SecondaryButtonText = _setup.IsHotSeat ? "" : "New opponent",
-            CloseButtonText = "View board",
+            PrimaryButtonText = "Game review",
+            SecondaryButtonText = "Rematch",
+            CloseButtonText = "Close",
             DefaultButton = ContentDialogButton.Primary,
         };
 
         ContentDialogResult result = await Dialogs.ShowAsync(dialog, XamlRoot);
-        if (result == ContentDialogResult.Primary) Rematch_Click(this, new RoutedEventArgs());
-        else if (result == ContentDialogResult.Secondary) NewGame_Click(this, new RoutedEventArgs());
+        if (result == ContentDialogResult.Primary) Review_Click(this, new RoutedEventArgs());
+        else if (result == ContentDialogResult.Secondary) Rematch_Click(this, new RoutedEventArgs());
     }
 
     private void ShowToast(string title, string message, InfoBarSeverity severity)
@@ -527,6 +527,13 @@ public sealed partial class GamePage : Page
     }
 
     private void NewGame_Click(object sender, RoutedEventArgs e) => App.Window.NavigateTo("play", PlayPage.ChooseParameter);
+
+    private void Review_Click(object sender, RoutedEventArgs e)
+    {
+        if (_session == null || _setup == null || _session.Game.Moves.Count == 0) return;
+        var request = new ReviewRequest(_session.Game, _session.White.Name, _session.Black.Name, _setup.IsHotSeat ? Color.White : _setup.HumanColor);
+        App.Window.Navigate(typeof(ReviewPage), request);
+    }
 
     private void AddAccelerator(VirtualKey key, Action action)
     {

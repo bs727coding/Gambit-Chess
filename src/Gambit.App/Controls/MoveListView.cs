@@ -1,24 +1,31 @@
 using Gambit.App.Helpers;
 using Gambit.Core.Games;
+using Microsoft.UI;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using WColor = Windows.UI.Color;
 
 namespace Gambit.App.Controls;
 
-/// <summary>Two-column SAN move list. Click a move to view that position.</summary>
+/// <summary>A small colored badge drawn next to a move (game review classifications).</summary>
+public readonly record struct MoveBadge(string Symbol, WColor Color, string Description);
+
+/// <summary>Two-column SAN move list with optional per-move badges. Click a move to view that position.</summary>
 public sealed partial class MoveListView : UserControl
 {
     private readonly StackPanel _rows = new() { Spacing = 2 };
     private readonly ScrollViewer _scroll;
-    private readonly List<Border> _cells = [];
+    private readonly Dictionary<int, (Border Cell, TextBlock Text)> _cells = [];
     private readonly TextBlock _empty = new()
     {
         Text = "Moves will appear here.",
         Margin = new Thickness(8),
         Opacity = 0.6,
     };
+    private IReadOnlyDictionary<int, MoveBadge>? _badges;
+    private IReadOnlyList<GameMove> _moves = [];
     private int _current = -1;
 
     public MoveListView()
@@ -38,8 +45,16 @@ public sealed partial class MoveListView : UserControl
     /// <summary>Raised with the ply to show (1 = position after White's first move).</summary>
     public event EventHandler<int>? PlySelected;
 
+    /// <summary>Per-ply badges (null = none). Takes effect on the next <see cref="SetMoves"/>.</summary>
+    public void SetBadges(IReadOnlyDictionary<int, MoveBadge>? badges)
+    {
+        _badges = badges;
+        SetMoves(_moves, _current);
+    }
+
     public void SetMoves(IReadOnlyList<GameMove> moves, int currentPly)
     {
+        _moves = moves;
         _rows.Children.Clear();
         _cells.Clear();
         _empty.Visibility = moves.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -60,21 +75,22 @@ public sealed partial class MoveListView : UserControl
 
         _current = -1;
         Highlight(currentPly);
-        ScrollToEnd();
+        if (currentPly >= moves.Count) ScrollToEnd();
     }
 
     public void Highlight(int ply)
     {
-        _current = ply;
-        foreach (Border b in _cells)
+        if (_cells.TryGetValue(_current, out var old))
         {
-            bool on = b.Tag is int p && p == ply;
-            b.Background = on ? Ui.AccentBrush : null;
-            if (b.Child is TextBlock t)
-            {
-                if (on) t.Foreground = new SolidColorBrush(Microsoft.UI.Colors.White);
-                else t.ClearValue(TextBlock.ForegroundProperty);
-            }
+            old.Cell.Background = null;
+            old.Text.ClearValue(TextBlock.ForegroundProperty);
+        }
+        _current = ply;
+        if (_cells.TryGetValue(ply, out var now))
+        {
+            now.Cell.Background = Ui.AccentBrush;
+            now.Text.Foreground = new SolidColorBrush(Colors.White);
+            now.Cell.StartBringIntoView(new BringIntoViewOptions { AnimationDesired = false, VerticalAlignmentRatio = 0.5 });
         }
     }
 
@@ -104,26 +120,51 @@ public sealed partial class MoveListView : UserControl
     private void AddCell(Grid row, int column, GameMove move)
     {
         var text = new TextBlock { Text = move.San, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
+        var content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        if (_badges != null && _badges.TryGetValue(move.Ply, out MoveBadge badge))
+        {
+            var dot = new Border
+            {
+                Width = 18,
+                Height = 18,
+                CornerRadius = new CornerRadius(9),
+                Background = new SolidColorBrush(badge.Color),
+                VerticalAlignment = VerticalAlignment.Center,
+                Child = new TextBlock
+                {
+                    Text = badge.Symbol,
+                    FontSize = badge.Symbol.Length > 1 ? 9 : 11,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = new SolidColorBrush(Colors.White),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                },
+            };
+            ToolTipService.SetToolTip(dot, badge.Description);
+            content.Children.Add(dot);
+        }
+        content.Children.Add(text);
+
         var cell = new Border
         {
-            Child = text,
+            Child = content,
             Padding = new Thickness(8, 4, 8, 4),
             CornerRadius = new CornerRadius(4),
-            Tag = move.Ply,
             HorizontalAlignment = HorizontalAlignment.Left,
         };
+        int ply = move.Ply;
         cell.PointerEntered += (_, _) =>
         {
-            if ((int)cell.Tag != _current) cell.Background = Ui.NeutralFill(40);
+            if (ply != _current) cell.Background = Ui.NeutralFill(40);
         };
         cell.PointerExited += (_, _) =>
         {
-            if ((int)cell.Tag != _current) cell.Background = null;
+            if (ply != _current) cell.Background = null;
         };
-        cell.Tapped += (_, _) => PlySelected?.Invoke(this, move.Ply);
+        cell.Tapped += (_, _) => PlySelected?.Invoke(this, ply);
         Grid.SetColumn(cell, column);
         row.Children.Add(cell);
-        _cells.Add(cell);
+        _cells[ply] = (cell, text);
     }
 
     private static void AddPlaceholder(Grid row, int column)

@@ -61,12 +61,35 @@ public static class GameRows
 
         if (File.Exists(g.PgnFile))
         {
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            var review = new Button
+            {
+                Content = new FontIcon { Glyph = "\uE9F9", FontSize = 14 },
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            ToolTipService.SetToolTip(review, "Game review");
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(review, "Game review");
+            review.Click += (_, _) =>
+            {
+                try
+                {
+                    if (ReviewRequest.FromPgnFile(g.PgnFile, g.PlayerColor) is ReviewRequest req) App.Window.Navigate(typeof(ReviewPage), req);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn($"Opening review failed: {ex.Message}");
+                }
+            };
+            Grid.SetColumn(review, 4);
+            grid.Children.Add(review);
+
             var open = new Button
             {
                 Content = new FontIcon { Glyph = "", FontSize = 14 },
                 VerticalAlignment = VerticalAlignment.Center,
             };
             ToolTipService.SetToolTip(open, "Open in analysis board");
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(open, "Open in analysis board");
             open.Click += (_, _) => App.Window.Navigate(typeof(AnalysisPage), new AnalysisRequest(PgnFile: g.PgnFile), "analysis");
             Grid.SetColumn(open, 3);
             grid.Children.Add(open);
