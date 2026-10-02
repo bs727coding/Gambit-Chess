@@ -31,6 +31,7 @@ public sealed partial class SettingsPage : Page
         AnimateSwitch.IsOn = s.AnimateMoves;
         QueenSwitch.IsOn = s.AutoQueen;
         ResignSwitch.IsOn = s.ConfirmResign;
+        SoundSwitch.IsOn = s.SoundEnabled;
 
         AboutTitle.Text = $"{AppInfo.DisplayName} {AppInfo.Version}";
         AboutDetails.Text = $"Native {AppInfo.Architecture} build · .NET {Environment.Version} · Windows App SDK · Engine: Gambit search (PVS, PeSTO evaluation)";
@@ -133,6 +134,9 @@ public sealed partial class SettingsPage : Page
         s.AnimateMoves = AnimateSwitch.IsOn;
         s.AutoQueen = QueenSwitch.IsOn;
         s.ConfirmResign = ResignSwitch.IsOn;
+        bool soundWasOn = s.SoundEnabled;
+        s.SoundEnabled = SoundSwitch.IsOn;
+        if (!soundWasOn && s.SoundEnabled) SoundService.Play(GameSound.Move);
         ApplyPreview();
     }
 

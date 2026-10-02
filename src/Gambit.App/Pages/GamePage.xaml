@@ -63,9 +63,12 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
                     <Grid Padding="8,4,8,0">
-                        <TextBlock Text="Moves" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <StackPanel Margin="0,0,120,0">
+                            <TextBlock Text="Moves" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock x:Name="OpeningText" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
                         <TextBlock x:Name="StatusText" HorizontalAlignment="Right" Style="{StaticResource CaptionTextBlockStyle}"
-                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Top" Margin="0,3,0,0" />
                     </Grid>
                     <controls:MoveListView x:Name="MoveList" Grid.Row="1" PlySelected="MoveList_PlySelected" />
                 </Grid>

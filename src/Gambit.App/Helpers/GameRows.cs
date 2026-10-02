@@ -34,7 +34,7 @@ public static class GameRows
         text.Children.Add(new TextBlock { Text = $"vs {g.Opponent}{rating}", FontWeight = FontWeights.SemiBold });
         text.Children.Add(new TextBlock
         {
-            Text = $"{g.Termination} · {g.Moves} moves · {g.TimeControl} · {Ui.RelativeTime(g.PlayedAt)}",
+            Text = $"{g.Termination} · {g.Moves} moves · {g.TimeControl}{(g.Opening is string o ? " · " + o : "")} · {Ui.RelativeTime(g.PlayedAt)}",
             Opacity = 0.7,
             FontSize = 12,
             TextTrimming = TextTrimming.CharacterEllipsis,

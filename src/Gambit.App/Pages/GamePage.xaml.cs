@@ -4,6 +4,7 @@ using Gambit.App.Services;
 using Gambit.App.Theming;
 using Gambit.Core.Board;
 using Gambit.Core.Games;
+using Gambit.Core.Openings;
 using Gambit.Core.Sessions;
 using Gambit.Engine.Bots;
 using Microsoft.UI.Xaml;
@@ -26,6 +27,7 @@ public sealed partial class GamePage : Page
     private GameSetup? _setup;
     private int _viewPly = -1; // -1 = following the live position
     private bool _recorded;
+    private bool _lowTimeWarned;
     private string _appliedTheme = "";
     private string _appliedPieces = "";
     private readonly DispatcherTimer _clockTimer = new() { Interval = TimeSpan.FromMilliseconds(100) };
@@ -126,6 +128,8 @@ public sealed partial class GamePage : Page
         SetupOpponentCard();
         RefreshMoveList();
 
+        _lowTimeWarned = false;
+        SoundService.Play(GameSound.Start);
         _session.Start();
         if (_session.Clock != null) _clockTimer.Start();
         else _clockTimer.Stop();
@@ -151,6 +155,7 @@ public sealed partial class GamePage : Page
     private void Session_MovePlayed(object? sender, MovePlayedEventArgs e)
     {
         _viewPly = -1;
+        SoundService.PlayFor(e.Move);
         Board.SetPosition(_session!.Game.Position, e.Move.Move, animate: true);
         RefreshMoveList();
         RefreshAll();
@@ -160,6 +165,7 @@ public sealed partial class GamePage : Page
     {
         RecordResult();
         _clockTimer.Stop();
+        SoundService.Play(_setup?.IsHotSeat == false && _session?.Game.Winner == _setup.HumanColor ? GameSound.Win : GameSound.End);
         PostGamePanel.Visibility = Visibility.Visible;
         RefreshAll();
         _ = ShowGameOverDialogAsync(e);
@@ -232,6 +238,15 @@ public sealed partial class GamePage : Page
         UpdateThinking();
         UpdateStatus();
         UpdateButtons();
+        UpdateOpening();
+    }
+
+    private void UpdateOpening()
+    {
+        if (_session == null) return;
+        Game g = _session.Game;
+        Opening? o = OpeningBook.IdentifyAt(g, _viewPly < 0 ? g.Moves.Count : _viewPly);
+        OpeningText.Text = o == null ? "" : $"{o.Eco} · {o.Name}";
     }
 
     private void RefreshMoveList()
@@ -297,8 +312,8 @@ public sealed partial class GamePage : Page
     {
         Position pos = Board.Position;
         int[] start = [0, 8, 2, 2, 2, 1, 0];
-        var byWhite = new List<PieceType>();
-        var byBlack = new List<PieceType>();
+        var byWhite = new List<Piece>();
+        var byBlack = new List<Piece>();
         int whiteMaterial = 0, blackMaterial = 0;
         for (int t = 1; t <= 5; t++)
         {
@@ -306,13 +321,13 @@ public sealed partial class GamePage : Page
             int w = pos.Count(Color.White, type), b = pos.Count(Color.Black, type);
             whiteMaterial += w * type.NominalValue();
             blackMaterial += b * type.NominalValue();
-            for (int i = b; i < start[t]; i++) byWhite.Add(type);
-            for (int i = w; i < start[t]; i++) byBlack.Add(type);
+            for (int i = b; i < start[t]; i++) byWhite.Add(type.Of(Color.Black));
+            for (int i = w; i < start[t]; i++) byBlack.Add(type.Of(Color.White));
         }
         PlayerBar whiteBar = BottomColor == Color.White ? BottomBar : TopBar;
         PlayerBar blackBar = BottomColor == Color.White ? TopBar : BottomBar;
-        whiteBar.SetCaptured(byWhite, whiteMaterial - blackMaterial);
-        blackBar.SetCaptured(byBlack, blackMaterial - whiteMaterial);
+        whiteBar.SetCaptured(byWhite, whiteMaterial - blackMaterial, Board.PieceSet);
+        blackBar.SetCaptured(byBlack, blackMaterial - whiteMaterial, Board.PieceSet);
     }
 
     private void UpdateClocks()
@@ -325,6 +340,11 @@ public sealed partial class GamePage : Page
             return;
         }
         Color bottom = BottomColor;
+        if (!_lowTimeWarned && _setup is { IsHotSeat: false } && clock.Running == _setup.HumanColor && clock.Remaining(_setup.HumanColor) < TimeSpan.FromSeconds(10))
+        {
+            _lowTimeWarned = true;
+            SoundService.Play(GameSound.LowTime);
+        }
         BottomBar.SetClock(clock.Remaining(bottom), clock.Running == bottom);
         TopBar.SetClock(clock.Remaining(bottom.Opposite()), clock.Running == bottom.Opposite());
     }
@@ -394,6 +414,11 @@ public sealed partial class GamePage : Page
         _recorded = true;
         Game g = _session.Game;
         if (g.Moves.Count == 0) return;
+        if (OpeningBook.Identify(g) is Opening opening)
+        {
+            g.Tags["ECO"] = opening.Eco;
+            g.Tags["Opening"] = opening.Name;
+        }
         App.Profile.RecordGame(g,
             opponent: _setup.Bot?.Name ?? "Pass and play",
             botId: _setup.Bot?.Id,

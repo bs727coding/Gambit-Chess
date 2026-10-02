@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Gambit.Core.Board;
 using Gambit.Core.Games;
+using Gambit.Core.Openings;
 using Gambit.Core.Sessions;
 using Gambit.Engine.Search;
 
@@ -52,6 +53,9 @@ public sealed class BotMoveProvider : IMoveProvider
         List<Move> legal = MoveGenerator.LegalMoves(pos);
         if (legal.Count == 0) return Move.None;
         if (legal.Count == 1) return legal[0];
+
+        if (snapshot.Ply < Profile.BookDepth && TryBookMove(pos) is Move book && legal.Contains(book))
+            return book;
 
         if (Profile.RandomMoveChance > 0 && _rng.NextDouble() < Profile.RandomMoveChance)
             return legal[_rng.Next(legal.Count)];
@@ -113,6 +117,25 @@ public sealed class BotMoveProvider : IMoveProvider
             _ => [],
         };
         return pool.Count == 0 ? null : pool[_rng.Next(pool.Count)];
+    }
+
+    /// <summary>
+    /// A weighted-random opening-book move, or null when out of book. Stronger bots square the
+    /// popularity weights so they stick to main lines; weaker bots sample more widely.
+    /// </summary>
+    private Move? TryBookMove(Position pos)
+    {
+        var moves = OpeningBook.MovesFor(pos);
+        if (moves.Count == 0) return null;
+        double exponent = Profile.Rating >= 1400 ? 2.0 : 1.0;
+        double total = moves.Sum(m => Math.Pow(m.Weight, exponent));
+        double pick = _rng.NextDouble() * total;
+        foreach (var (move, weight) in moves)
+        {
+            pick -= Math.Pow(weight, exponent);
+            if (pick <= 0) return move;
+        }
+        return moves[^1].Move;
     }
 
     /// <summary>Clears learned search state (call between games).</summary>

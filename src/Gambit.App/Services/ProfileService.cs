@@ -23,6 +23,7 @@ public sealed class GameRecord
     public string Termination { get; set; } = "";
     public int Moves { get; set; }
     public string TimeControl { get; set; } = "-";
+    public string? Opening { get; set; }
     public string PgnFile { get; set; } = "";
 }
 
@@ -78,6 +79,7 @@ public sealed class ProfileService
             Termination = game.ResultDescription,
             Moves = (game.Moves.Count + 1) / 2,
             TimeControl = timeControl.DisplayName,
+            Opening = game.Tags.GetValueOrDefault("Opening"),
         };
 
         try

@@ -17,6 +17,7 @@
     <EnableDefaultPageItems>true</EnableDefaultPageItems>
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
     <ApplicationIcon>Assets\Gambit.ico</ApplicationIcon>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

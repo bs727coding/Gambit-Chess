@@ -4,6 +4,7 @@ using Gambit.App.Theming;
 using Gambit.Core.Board;
 using Gambit.Core.Games;
 using Gambit.Core.Notation;
+using Gambit.Core.Openings;
 using Gambit.Engine.Search;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
@@ -113,7 +114,7 @@ public sealed partial class AnalysisPage : Page
             _viewPly = -1;
         }
         if (_game.IsOver || !_game.IsLegal(e.Move)) return;
-        _game.Play(e.Move);
+        SoundService.PlayFor(_game.Play(e.Move));
         Refresh(animate: true);
     }
 
@@ -150,6 +151,8 @@ public sealed partial class AnalysisPage : Page
         Move last = ply > 0 ? _game.Moves[ply - 1].Move : Move.None;
         Board.SetPosition(pos, last, animate);
         FenBox.Text = pos.ToFen();
+        Opening? opening = _game.StartsFromStandardPosition ? OpeningBook.IdentifyAt(_game, ply) : OpeningBook.ForPosition(pos);
+        OpeningText.Text = opening == null ? "" : $"{opening.Eco} · {opening.Name}";
 
         var probe = new Game(pos.ToFen()) { AutoDrawRules = false };
         StatusText.Text = probe.IsOver ? probe.ResultDescription : $"{pos.SideToMove.Name()} to move";

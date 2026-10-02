@@ -52,6 +52,9 @@ public sealed record BotProfile
     /// <summary>Probability of playing a uniformly random legal move.</summary>
     public double RandomMoveChance { get; init; }
 
+    /// <summary>How many plies the bot follows the opening book (0 = never).</summary>
+    public int BookDepth { get; init; } = 12;
+
     // ---- feel
     public int MinMoveDelayMs { get; init; } = 350;
     public int MaxMoveDelayMs { get; init; } = 1100;

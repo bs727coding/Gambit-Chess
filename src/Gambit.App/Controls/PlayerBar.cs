@@ -1,4 +1,5 @@
 using Gambit.App.Helpers;
+using Gambit.App.Theming;
 using Gambit.Core.Board;
 using Microsoft.UI;
 using Microsoft.UI.Text;
@@ -15,7 +16,7 @@ public sealed partial class PlayerBar : UserControl
     private readonly TextBlock _name = new() { FontWeight = FontWeights.SemiBold, FontSize = 15, TextTrimming = TextTrimming.CharacterEllipsis };
     private readonly TextBlock _rating = new() { Opacity = 0.7, FontSize = 13, Margin = new Thickness(6, 0, 0, 0), VerticalAlignment = VerticalAlignment.Bottom };
     private readonly ProgressRing _thinking = new() { Width = 14, Height = 14, IsActive = false, Visibility = Visibility.Collapsed, Margin = new Thickness(8, 0, 0, 0) };
-    private readonly TextBlock _captured = new() { FontFamily = new FontFamily("Segoe UI Symbol"), FontSize = 15, Opacity = 0.75, CharacterSpacing = -120 };
+    private readonly StackPanel _captured = new() { Orientation = Orientation.Horizontal, Spacing = -7, VerticalAlignment = VerticalAlignment.Center };
     private readonly TextBlock _advantage = new() { FontSize = 13, Opacity = 0.75, Margin = new Thickness(6, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
     private readonly Border _clock = new() { CornerRadius = new CornerRadius(6), Padding = new Thickness(14, 4, 14, 4), MinWidth = 104, Visibility = Visibility.Collapsed };
     private readonly TextBlock _clockText = new() { FontSize = 24, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Right };
@@ -66,10 +67,20 @@ public sealed partial class PlayerBar : UserControl
         _thinking.Visibility = thinking ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    /// <summary>Pieces this player has captured (glyphs) and their material lead.</summary>
-    public void SetCaptured(IEnumerable<PieceType> captured, int advantage)
+    /// <summary>Pieces this player has captured (drawn with the current piece set) and their material lead.</summary>
+    public void SetCaptured(IEnumerable<Piece> captured, int advantage, PieceSet set)
     {
-        _captured.Text = string.Concat(captured.OrderBy(t => t).Select(Ui.Glyph));
+        _captured.Children.Clear();
+        PieceType? previous = null;
+        foreach (Piece p in captured.OrderBy(p => p.Type()))
+        {
+            FrameworkElement v = set.Create(p);
+            v.Width = v.Height = 20;
+            // Small gap between groups of different piece types, overlap within a group.
+            if (previous is PieceType t && t != p.Type()) v.Margin = new Thickness(9, 0, 0, 0);
+            previous = p.Type();
+            _captured.Children.Add(v);
+        }
         _advantage.Text = advantage > 0 ? $"+{advantage}" : "";
     }
 

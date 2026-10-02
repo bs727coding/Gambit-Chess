@@ -10,6 +10,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Openings\openings.tsv" LogicalName="Gambit.Core.Openings.openings.tsv" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="Gambit.Engine" />
     <InternalsVisibleTo Include="Gambit.Tests" />
   </ItemGroup>

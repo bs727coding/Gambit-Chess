@@ -14,7 +14,7 @@ public static class BotRoster
     [
         new()
         {
-            Id = "acorn", Name = "Acorn", Rating = 250, Monogram = "A", Color = "#7CB342",
+            Id = "acorn", BookDepth = 0, Name = "Acorn", Rating = 250, Monogram = "A", Color = "#7CB342",
             Tagline = "Just learned how the horsey moves.",
             Bio = "Acorn is brand new to chess and mostly moves whatever looks fun. A perfect first opponent.",
             MaxDepth = 1, Candidates = AllMoves, Temperature = 350, EvalNoise = 220, RandomMoveChance = 0.35,
@@ -24,7 +24,7 @@ public static class BotRoster
         },
         new()
         {
-            Id = "bramble", Name = "Bramble", Rating = 400, Monogram = "B", Color = "#26A69A",
+            Id = "bramble", BookDepth = 2, Name = "Bramble", Rating = 400, Monogram = "B", Color = "#26A69A",
             Tagline = "Knows the rules. Mostly.",
             Bio = "Bramble grabs anything that isn't nailed down — and sometimes things that are.",
             MaxDepth = 1, Candidates = AllMoves, Temperature = 230, EvalNoise = 160, RandomMoveChance = 0.22,
@@ -34,7 +34,7 @@ public static class BotRoster
         },
         new()
         {
-            Id = "clover", Name = "Clover", Rating = 600, Monogram = "C", Color = "#29B6F6",
+            Id = "clover", BookDepth = 4, Name = "Clover", Rating = 600, Monogram = "C", Color = "#29B6F6",
             Tagline = "Lucky, cheerful, a bit careless.",
             Bio = "Clover spots one-move threats but forgets to check what the opponent can do next.",
             MaxDepth = 2, Candidates = AllMoves, Temperature = 150, EvalNoise = 110, RandomMoveChance = 0.13,
@@ -44,7 +44,7 @@ public static class BotRoster
         },
         new()
         {
-            Id = "dash", Name = "Dash", Rating = 800, Monogram = "D", Color = "#FFA726",
+            Id = "dash", BookDepth = 4, Name = "Dash", Rating = 800, Monogram = "D", Color = "#FFA726",
             Tagline = "Plays fast. Thinks later.",
             Bio = "Dash loves quick attacks and early queen adventures. Punish the rush!",
             Style = BotStyle.Aggressive,
@@ -55,7 +55,7 @@ public static class BotRoster
         },
         new()
         {
-            Id = "ember", Name = "Ember", Rating = 1000, Monogram = "E", Color = "#EF5350",
+            Id = "ember", BookDepth = 6, Name = "Ember", Rating = 1000, Monogram = "E", Color = "#EF5350",
             Tagline = "Sparks fly when Ember attacks.",
             Bio = "Ember knows the basic tactics and loves a direct attack on the king.",
             Style = BotStyle.Aggressive,
@@ -66,7 +66,7 @@ public static class BotRoster
         },
         new()
         {
-            Id = "flint", Name = "Flint", Rating = 1200, Monogram = "F", Color = "#8D6E63",
+            Id = "flint", BookDepth = 8, Name = "Flint", Rating = 1200, Monogram = "F", Color = "#8D6E63",
             Tagline = "Hard to crack.",
             Bio = "Flint plays solid, sensible chess and waits for you to over-extend.",
             Style = BotStyle.Solid,
@@ -77,7 +77,7 @@ public static class BotRoster
         },
         new()
         {
-            Id = "gale", Name = "Gale", Rating = 1400, Monogram = "G", Color = "#5C6BC0",
+            Id = "gale", BookDepth = 8, Name = "Gale", Rating = 1400, Monogram = "G", Color = "#5C6BC0",
             Tagline = "A storm of tactics.",
             Bio = "Gale calculates a few moves ahead and punishes loose pieces.",
             Style = BotStyle.Tricky,
@@ -88,7 +88,7 @@ public static class BotRoster
         },
         new()
         {
-            Id = "harbor", Name = "Harbor", Rating = 1600, Monogram = "H", Color = "#00897B",
+            Id = "harbor", BookDepth = 10, Name = "Harbor", Rating = 1600, Monogram = "H", Color = "#00897B",
             Tagline = "Steady positional play.",
             Bio = "Harbor understands structure, good pieces and when to trade. A real club player.",
             Style = BotStyle.Solid,
@@ -99,7 +99,7 @@ public static class BotRoster
         },
         new()
         {
-            Id = "iris", Name = "Iris", Rating = 1800, Monogram = "I", Color = "#AB47BC",
+            Id = "iris", BookDepth = 12, Name = "Iris", Rating = 1800, Monogram = "I", Color = "#AB47BC",
             Tagline = "Sees more than you think.",
             Bio = "Iris rarely blunders and finds clever tactical shots. Bring your best.",
             Style = BotStyle.Tricky,
@@ -110,7 +110,7 @@ public static class BotRoster
         },
         new()
         {
-            Id = "jade", Name = "Jade", Rating = 2000, Monogram = "J", Color = "#43A047",
+            Id = "jade", BookDepth = 14, Name = "Jade", Rating = 2000, Monogram = "J", Color = "#43A047",
             Tagline = "Expert. Precise. Patient.",
             Bio = "Jade plays expert-level chess with deep calculation and good technique.",
             MaxDepth = 10, MaxNodes = 1_500_000, Candidates = 2, Temperature = 8, EvalNoise = 5,
@@ -120,7 +120,7 @@ public static class BotRoster
         },
         new()
         {
-            Id = "kestrel", Name = "Kestrel", Rating = 2200, Monogram = "K", Color = "#F4511E",
+            Id = "kestrel", BookDepth = 16, Name = "Kestrel", Rating = 2200, Monogram = "K", Color = "#F4511E",
             Tagline = "Hovers. Waits. Strikes.",
             Bio = "Kestrel is a master-level hunter that converts the smallest advantages.",
             Style = BotStyle.Aggressive,
@@ -130,7 +130,7 @@ public static class BotRoster
         },
         new()
         {
-            Id = "lumen", Name = "Lumen", Rating = 2400, Monogram = "L", Color = "#FDD835",
+            Id = "lumen", BookDepth = 20, Name = "Lumen", Rating = 2400, Monogram = "L", Color = "#FDD835",
             Tagline = "Illuminates every line.",
             Bio = "Lumen calculates deeply and plays near full engine strength.",
             ThinkTimeMs = 3000, UsesClock = true,
@@ -139,7 +139,7 @@ public static class BotRoster
         },
         new()
         {
-            Id = "monolith", Name = "Monolith", Rating = 2600, IsMaxStrength = true, Monogram = "M", Color = "#455A64",
+            Id = "monolith", BookDepth = 24, Name = "Monolith", Rating = 2600, IsMaxStrength = true, Monogram = "M", Color = "#455A64",
             Tagline = "Full strength. No mercy.",
             Bio = "The engine at full power with generous thinking time. Good luck.",
             ThinkTimeMs = 6000, UsesClock = true, MinMoveDelayMs = 0, MaxMoveDelayMs = 200,
