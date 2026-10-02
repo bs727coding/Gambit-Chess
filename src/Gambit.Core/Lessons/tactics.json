@@ -1,7 +1,7 @@
 {
   "id": "tactics",
   "title": "Tactics",
-  "description": "Forks, pins, skewers, discovered and double checks, decoys, overloaded and trapped pieces: the tricks that win material.",
+  "description": "Forks, pins, skewers, discovered and double checks, decoys, deflections, overloaded and trapped pieces: the tricks that win material.",
   "glyph": "",
   "color": "#C62828",
   "lessons": [
@@ -212,6 +212,28 @@
           "text": "Sacrifice to bring the king to d8, then fork it with the queen.",
           "hint": "Give up the rook with check on d8.",
           "success": "The rook was bait: the king took it, and the knight fork won the queen."
+        }
+      ]
+    },
+    {
+      "id": "deflection",
+      "title": "Deflection",
+      "summary": "Pull a defender away from its post.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "3r2k1/ppp2ppp/8/3q4/8/8/QPP2PPP/4R1K1 w - - 0 1",
+          "arrows": ["e1e8"],
+          "highlights": ["d8"],
+          "text": "Deflection pulls a defender away from an important square. Black's rook on d8 guards the back rank: without it, Re8 would be mate, because Black's pawns box in the king. Find a capture the rook has to answer."
+        },
+        {
+          "kind": "moves",
+          "fen": "3r2k1/ppp2ppp/8/3q4/8/8/QPP2PPP/4R1K1 w - - 0 1",
+          "moves": ["Qxd5", "Rxd5", "Re8#"],
+          "text": "Deflect the rook from the back rank.",
+          "hint": "Offer a queen trade the rook would have to recapture.",
+          "success": "The rook took the bait and left the back rank. If Black doesn't recapture, White is simply a queen up."
         }
       ]
     }

@@ -69,8 +69,8 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 - [x] Content validator test (all FENs/moves legal, all steps reachable)
 - [~] Courses: **Basics** (pieces, check, mate, special moves) ✔, **Checkmate patterns** ✔,
       **Tactics**: fork, pin, skewer, discovered attack, double check, removing the defender,
-      overloading, trapped pieces, decoy ✔ (back rank is in Checkmate patterns) — deflection,
-      zwischenzug, X-ray still to write
+      overloading, trapped pieces, decoy, deflection ✔ (back rank is in Checkmate patterns) —
+      zwischenzug and X-ray still to write
 
 ## Session 5 — Lessons II: openings + endgames
 
