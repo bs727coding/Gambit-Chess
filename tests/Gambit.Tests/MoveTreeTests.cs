@@ -79,6 +79,31 @@ public sealed class MoveTreeTests
     }
 
     [Fact]
+    public void Pgn_variations_are_read_back_into_the_tree()
+    {
+        const string text = "[Event \"Study\"]\n\n1. e4 {best by test} e5 (1... c5!? 2. Nf3 (2. c3) 2... d6 $1) 2. Nf3 Nc6\n(2... d6 3. d4) 3. Bb5 *";
+        PgnGame game = Pgn.ReadOne(text);
+        Assert.Equal(["e4", "e5", "Nf3", "Nc6", "Bb5"], game.Moves); // the main-line reader is unchanged
+
+        MoveTree tree = game.ToTree(out string? error);
+        Assert.Null(error);
+        const string expected = "1. e4 e5 ( 1... c5 2. Nf3 ( 2. c3 ) 2... d6 ) 2. Nf3 Nc6 ( 2... d6 3. d4 ) 3. Bb5";
+        Assert.Equal(expected, string.Join(' ', tree.MovetextTokens()));
+
+        // Write → read → same tree.
+        string written = Pgn.Write(tree.ToGame(tree.MainLine()), tree);
+        Assert.Equal(expected, string.Join(' ', Pgn.ReadOne(written).ToTree(out _).MovetextTokens()));
+    }
+
+    [Fact]
+    public void A_broken_variation_is_dropped_but_the_game_loads()
+    {
+        MoveTree tree = Pgn.ReadOne("1. e4 e5 (1... Qxh7 2. d4 (2. c4)) 2. Nf3 *").ToTree(out string? error);
+        Assert.NotNull(error);
+        Assert.Equal("1. e4 e5 2. Nf3", string.Join(' ', tree.MovetextTokens()));
+    }
+
+    [Fact]
     public void Trees_can_start_from_any_position()
     {
         var tree = new MoveTree("4k3/8/8/8/8/8/4P3/4K3 b - - 0 40");

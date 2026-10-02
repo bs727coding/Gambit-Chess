@@ -16,7 +16,112 @@ public sealed class PgnGame
     public string? InitialComment { get; set; }
     public string Result { get; set; } = "*";
 
+    /// <summary>The raw movetext (moves, comments and variations) as it appeared in the file.</summary>
+    public string Movetext { get; set; } = "";
+
     public string? Tag(string name) => Tags.FirstOrDefault(t => t.Key == name).Value;
+
+    /// <summary>
+    /// Replays the movetext into a <see cref="MoveTree"/>, keeping variations. Illegal moves end their
+    /// line (a broken variation is dropped from that point; the rest of the game still loads).
+    /// </summary>
+    public MoveTree ToTree(out string? error)
+    {
+        error = null;
+        string? fen = Tag("FEN");
+        var tree = new MoveTree(Tag("SetUp") == "1" || fen != null ? fen : null);
+        var resume = new Stack<MoveNode?>(); // where each open variation's enclosing line continues
+        MoveNode? last = tree.Root;           // null while skipping the rest of a broken line
+        int skipDepth = 0;                    // nested variations inside a broken line
+
+        foreach (string token in MovetextTokens(Movetext))
+        {
+            if (token == "(")
+            {
+                if (last == null)
+                {
+                    skipDepth++;
+                    continue;
+                }
+                resume.Push(last);
+                last = last.Parent ?? last; // a variation replaces the move just played
+                continue;
+            }
+            if (token == ")")
+            {
+                if (skipDepth > 0) skipDepth--;
+                else if (resume.Count > 0) last = resume.Pop();
+                continue;
+            }
+            if (token is "1-0" or "0-1" or "1/2-1/2" or "*") break;
+            if (last == null) continue;
+            if (San.TryParse(last.Position, token, out Board.Move m))
+            {
+                last = tree.Play(last, m);
+            }
+            else
+            {
+                error ??= $"Illegal move '{token}' after {(last.IsRoot ? "the start" : last.San)}.";
+                last = null;
+            }
+        }
+        return tree;
+    }
+
+    /// <summary>Moves, "(" and ")" from movetext; comments, NAGs and move numbers are dropped.</summary>
+    private static IEnumerable<string> MovetextTokens(string text)
+    {
+        int i = 0, n = text.Length;
+        while (i < n)
+        {
+            char c = text[i];
+            if (char.IsWhiteSpace(c))
+            {
+                i++;
+            }
+            else if (c == '{')
+            {
+                int end = text.IndexOf('}', i);
+                i = end < 0 ? n : end + 1;
+            }
+            else if (c == ';')
+            {
+                int end = text.IndexOf('\n', i);
+                i = end < 0 ? n : end + 1;
+            }
+            else if (c is '(' or ')')
+            {
+                i++;
+                yield return c.ToString();
+            }
+            else if (c == '$')
+            {
+                i++;
+                while (i < n && char.IsDigit(text[i])) i++;
+            }
+            else
+            {
+                int start = i;
+                while (i < n && !char.IsWhiteSpace(text[i]) && text[i] is not ('{' or '(' or ')' or ';')) i++;
+                string token = text[start..i];
+                if (token is "1-0" or "0-1" or "1/2-1/2" or "*")
+                {
+                    yield return token;
+                    continue;
+                }
+                int k = 0;
+                while (k < token.Length && char.IsDigit(token[k])) k++;
+                if (k == token.Length) continue; // bare number
+                if (k > 0 && token[k] == '.')
+                {
+                    while (k < token.Length && token[k] == '.') k++;
+                    token = token[k..];
+                }
+                token = token.TrimEnd('!', '?');
+                if (token.Length > 0) yield return token;
+            }
+        }
+    }
 
     /// <summary>Replays the moves into a <see cref="Game"/>. Stops (without throwing) at the first illegal move.</summary>
     public Game ToGame(out string? error)
@@ -125,13 +230,16 @@ public static class Pgn
     public static PgnGame ReadOne(string text) =>
         ReadAll(text).FirstOrDefault() ?? throw new FormatException("No game found in PGN.");
 
-    /// <summary>Reads every game in a PGN database. Variations are skipped; comments are kept.</summary>
+    /// <summary>
+    /// Reads every game in a PGN database. <see cref="PgnGame.Moves"/> is the main line (variations
+    /// skipped, comments kept); <see cref="PgnGame.ToTree"/> also reads the variations.
+    /// </summary>
     public static List<PgnGame> ReadAll(string text)
     {
         var games = new List<PgnGame>();
         PgnGame? current = null;
         bool inMoves = false;
-        int i = 0, n = text.Length;
+        int i = 0, n = text.Length, movetextStart = 0;
 
         while (i < n)
         {
@@ -155,13 +263,18 @@ public static class Pgn
             if (c == '[' && inMoves)
             {
                 // A new game starts without a result token in between.
-                if (current != null) games.Add(current);
+                if (current != null)
+                {
+                    current.Movetext = text[movetextStart..i];
+                    games.Add(current);
+                }
                 current = null;
                 inMoves = false;
                 continue;
             }
 
             current ??= new PgnGame();
+            if (!inMoves) movetextStart = i;
             inMoves = true;
 
             switch (c)
@@ -222,6 +335,7 @@ public static class Pgn
             if (token is "1-0" or "0-1" or "1/2-1/2" or "*")
             {
                 current.Result = token;
+                current.Movetext = text[movetextStart..i];
                 games.Add(current);
                 current = null;
                 inMoves = false;
@@ -246,7 +360,11 @@ public static class Pgn
             current.Comments.Add(null);
         }
 
-        if (current != null && (current.Moves.Count > 0 || current.Tags.Count > 0)) games.Add(current);
+        if (current != null && (current.Moves.Count > 0 || current.Tags.Count > 0))
+        {
+            if (inMoves) current.Movetext = text[movetextStart..n];
+            games.Add(current);
+        }
         return games;
     }
 

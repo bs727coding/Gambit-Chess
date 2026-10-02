@@ -97,12 +97,14 @@ public sealed partial class AnalysisPage : Page
     private void LoadPgn(string text)
     {
         PgnGame pgn = Pgn.ReadOne(text);
-        Game game = pgn.ToGame(out string? error);
-        _tree = MoveTree.FromGame(game);
-        _tags = new Dictionary<string, string>(game.Tags);
-        ShowLine(MoveTree.LineThrough(_tree.Root)[^1]);
+        _tree = pgn.ToTree(out string? error);
+        _tags = [];
+        foreach (var (name, value) in pgn.Tags) _tags[name] = value;
+        List<MoveNode> main = _tree.MainLine();
+        ShowLine(main[^1]);
+        string variations = HasVariations(_tree.Root) ? " + variations" : "";
         if (error != null) ShowToast("PGN partially loaded", error, InfoBarSeverity.Warning);
-        else ShowToast("Game loaded", $"{pgn.Tag("White") ?? "?"} vs {pgn.Tag("Black") ?? "?"} · {game.Moves.Count} plies", InfoBarSeverity.Success);
+        else ShowToast("Game loaded", $"{pgn.Tag("White") ?? "?"} vs {pgn.Tag("Black") ?? "?"} · {main.Count - 1} plies{variations}", InfoBarSeverity.Success);
     }
 
     private void LoadFen(string fen)
