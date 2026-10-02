@@ -1,5 +1,5 @@
 // Gambit puzzle generator: mines tactics from bot self-play.
-//   dotnet run -c Release --project tools/Gambit.PuzzleGen -- <minutes> <output.csv>
+//   dotnet run -c Release --project tools/Gambit.PuzzleGen -- <minutes> <output.csv> [minBotRating] [maxBotRating]
 // Existing puzzles in the output file are kept (runs accumulate); duplicates are skipped.
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -28,7 +28,8 @@ if (File.Exists(output))
 int existing = puzzles.Count;
 Console.WriteLine($"Generating for {minutes} min on {workers} workers (existing: {existing})…");
 
-var bots = BotRoster.Bots.Where(b => b.Rating is >= 600 and <= 2000).ToList();
+int minBot = args.Length > 2 ? int.Parse(args[2]) : 600, maxBot = args.Length > 3 ? int.Parse(args[3]) : 2000;
+var bots = BotRoster.Bots.Where(b => b.Rating >= minBot && b.Rating <= maxBot).ToList();
 var deadline = DateTime.UtcNow.AddMinutes(minutes);
 var sw = Stopwatch.StartNew();
 int games = 0;
