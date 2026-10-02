@@ -125,4 +125,78 @@ public sealed class OnlineTests : IAsyncLifetime
         Assert.Equal(GameResult.Draw, end.Result); // resigning before both sides moved aborts the game
         Assert.Equal(Termination.Aborted, end.Termination);
     }
+
+    [Fact]
+    public async Task Rematch_starts_when_both_agree_with_colors_swapped()
+    {
+        OnlineClient alice = await Connect("Ada"), bob = await Connect("Bo");
+        Task<GameStartDto> aStart = Next<GameStartDto>(h => alice.GameStarted += h);
+        ChallengeDto ch = await alice.CreateChallengeAsync(new TimeControlDto(300, 0), "white");
+        await bob.AcceptChallengeAsync(ch.Code);
+        GameStartDto first = await aStart;
+
+        await alice.OfferRematchAsync(first.GameId); // ignored: the game is still running
+        Task<GameOverDto> over = Next<GameOverDto>(h => alice.GameOver += h);
+        Assert.True(await alice.MakeMoveAsync(first.GameId, 1, "e2e4"));
+        Assert.True(await bob.MakeMoveAsync(first.GameId, 2, "e7e5"));
+        await bob.ResignAsync(first.GameId);
+        await over;
+
+        // Offer → decline.
+        Task<string> offered = Next<string>(h => bob.RematchOffered += h);
+        await alice.OfferRematchAsync(first.GameId);
+        Assert.Equal(first.GameId, await offered);
+        Task<(string Id, bool Unavailable)> declined = Next<(string, bool)>(h => alice.RematchDeclined += (id, u) => h((id, u)));
+        await bob.DeclineRematchAsync(first.GameId);
+        Assert.Equal((first.GameId, false), await declined);
+
+        // Offer → offer back = accepted.
+        Task<GameStartDto> aNext = Next<GameStartDto>(h => alice.GameStarted += h);
+        Task<GameStartDto> bNext = Next<GameStartDto>(h => bob.GameStarted += h);
+        await bob.OfferRematchAsync(first.GameId);
+        await alice.OfferRematchAsync(first.GameId);
+        GameStartDto second = await aNext;
+        Assert.Equal(second.GameId, (await bNext).GameId);
+        Assert.NotEqual(first.GameId, second.GameId);
+        Assert.Equal("black", second.YourColor);
+        Assert.Equal("Bo", second.White.Name);
+        Assert.Equal(first.TimeControl, second.TimeControl);
+
+        // The finished game can't be rematched twice.
+        Task<GameStartDto> extra = Next<GameStartDto>(h => alice.GameStarted += h);
+        await bob.OfferRematchAsync(first.GameId);
+        await alice.OfferRematchAsync(first.GameId);
+        await Assert.ThrowsAsync<TimeoutException>(() => extra.WaitAsync(TimeSpan.FromMilliseconds(500)));
+    }
+
+    [Fact]
+    public async Task Remote_sessions_negotiate_a_rematch()
+    {
+        OnlineClient alice = await Connect("Cy"), bob = await Connect("Di");
+        Task<GameStartDto> aStart = Next<GameStartDto>(h => alice.GameStarted += h);
+        Task<GameStartDto> bStart = Next<GameStartDto>(h => bob.GameStarted += h);
+        ChallengeDto ch = await alice.CreateChallengeAsync(new TimeControlDto(300, 0), "black");
+        await bob.AcceptChallengeAsync(ch.Code);
+        using var a = new RemoteGameSession(alice, await aStart);
+        using var b = new RemoteGameSession(bob, await bStart);
+
+        a.OfferRematch(); // not before the game is over
+        Assert.Equal(RematchStatus.None, a.Rematch);
+        Task<GameEndedEventArgs> aEnded = Next<GameEndedEventArgs>(h => a.GameEnded += (_, e) => h(e));
+        Task<GameEndedEventArgs> bEnded = Next<GameEndedEventArgs>(h => b.GameEnded += (_, e) => h(e));
+        a.Resign();
+        await aEnded;
+        await bEnded;
+
+        Task<EventArgs> bAsked = Next<EventArgs>(h => b.RematchChanged += (_, e) => h(e));
+        a.OfferRematch();
+        Assert.Equal(RematchStatus.Offered, a.Rematch);
+        await bAsked;
+        Assert.Equal(RematchStatus.Received, b.Rematch);
+
+        Task<GameStartDto> aNext = Next<GameStartDto>(h => alice.GameStarted += h);
+        b.OfferRematch(); // accepts
+        GameStartDto next = await aNext;
+        Assert.Equal("white", next.YourColor); // Alice had Black
+    }
 }

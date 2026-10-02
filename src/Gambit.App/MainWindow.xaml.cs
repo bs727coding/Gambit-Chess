@@ -64,7 +64,7 @@ public sealed partial class MainWindow : Window
     /// <summary>Clicking the already-selected item returns to that section's main page (e.g. from a puzzle back to the hub).</summary>
     private void NavView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
     {
-        if (args.InvokedItemContainer != NavView.SelectedItem) return;
+        if (!ReferenceEquals(args.InvokedItemContainer, NavView.SelectedItem)) return;
         string tag = args.IsSettingsInvoked ? "settings" : args.InvokedItemContainer?.Tag as string ?? "";
         if (tag == "play" && GamePage.HasActiveGame) return;
         if (Pages.TryGetValue(tag, out Type? page) && ContentFrame.CurrentSourcePageType != page)

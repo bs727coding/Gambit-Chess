@@ -23,49 +23,52 @@ public enum StepKind
 
 public sealed record LessonStep
 {
-    public StepKind Kind { get; init; }
-    public string Text { get; init; } = "";
-    public string Fen { get; init; } = Position.StartFen;
-    public IReadOnlyList<string> Arrows { get; init; } = [];
-    public IReadOnlyList<string> Highlights { get; init; } = [];
+    public StepKind Kind { get; set; }
+    public string Text { get; set; } = "";
+    public string Fen { get; set; } = Position.StartFen;
+    public IReadOnlyList<string> Arrows { get; set; } = [];
+    public IReadOnlyList<string> Highlights { get; set; } = [];
 
     /// <summary>Moves steps: solver move, opponent reply, solver move, ... in SAN.</summary>
-    public IReadOnlyList<string> Moves { get; init; } = [];
+    public IReadOnlyList<string> Moves { get; set; } = [];
 
     /// <summary>Moves steps: "mate" or "check" accepts any move achieving it (single-move steps).</summary>
-    public string? Goal { get; init; }
+    public string? Goal { get; set; }
 
     /// <summary>Stars steps: squares to visit ("e4").</summary>
-    public IReadOnlyList<string> Targets { get; init; } = [];
+    public IReadOnlyList<string> Targets { get; set; } = [];
 
-    public IReadOnlyList<string> Choices { get; init; } = [];
-    public int Answer { get; init; }
+    public IReadOnlyList<string> Choices { get; set; } = [];
+    public int Answer { get; set; }
 
-    public string? Hint { get; init; }
-    public string? Success { get; init; }
+    public string? Hint { get; set; }
+    public string? Success { get; set; }
 }
 
 public sealed record Lesson(string Id, string Title, string Summary, IReadOnlyList<LessonStep> Steps)
 {
     /// <summary>Set by the catalog: "course/lesson".</summary>
-    public string Key { get; init; } = Id;
+    public string Key { get; set; } = Id;
 }
 
 public sealed record Course(string Id, string Title, string Description, string Glyph, string Color, IReadOnlyList<Lesson> Lessons);
+
+/// <summary>Source-generated JSON reader for the lesson files (no reflection, so trimming-safe).</summary>
+[JsonSourceGenerationOptions(
+    PropertyNameCaseInsensitive = true,
+    ReadCommentHandling = JsonCommentHandling.Skip,
+    AllowTrailingCommas = true,
+    Converters = new[] { typeof(StepKindConverter) })]
+[JsonSerializable(typeof(Course))]
+internal sealed partial class LessonJson : JsonSerializerContext;
+
+internal sealed class StepKindConverter() : JsonStringEnumConverter<StepKind>(JsonNamingPolicy.CamelCase);
 
 /// <summary>Built-in courses (embedded Lessons/*.json), in display order.</summary>
 public static class LessonCatalog
 {
     private static readonly string[] Order = ["basics", "mates", "tactics", "openings", "endgames"];
     private static readonly Lazy<List<Course>> Loaded = new(Load);
-
-    private static readonly JsonSerializerOptions Options = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-    };
 
     public static IReadOnlyList<Course> Courses => Loaded.Value;
 
@@ -94,7 +97,7 @@ public static class LessonCatalog
         foreach (string name in asm.GetManifestResourceNames().Where(n => n.StartsWith("Gambit.Core.Lessons.", StringComparison.Ordinal) && n.EndsWith(".json", StringComparison.Ordinal)))
         {
             using Stream s = asm.GetManifestResourceStream(name)!;
-            Course? c = JsonSerializer.Deserialize<Course>(s, Options);
+            Course? c = JsonSerializer.Deserialize(s, LessonJson.Default.Course);
             if (c == null) continue;
             courses.Add(c with { Lessons = c.Lessons.Select(l => l with { Key = $"{c.Id}/{l.Id}" }).ToList() });
         }

@@ -52,6 +52,12 @@ public interface IGameClient
     Task OpponentConnection(string gameId, bool connected, int graceSeconds);
     Task Resync(GameStartDto game);
     Task Notice(string message);
+
+    /// <summary>The opponent of a finished game wants a rematch.</summary>
+    Task RematchOffered(string gameId);
+
+    /// <summary>A rematch offer was declined or withdrawn; <paramref name="unavailable"/> = the other player left or is busy.</summary>
+    Task RematchDeclined(string gameId, bool unavailable);
 }
 
 /// <summary>Client → server calls (implemented by the hub).</summary>
@@ -67,4 +73,10 @@ public interface IGameServer
     Task OfferDraw(string gameId);
     Task RespondToDraw(string gameId, bool accept);
     Task<bool> Rejoin(string gameId);
+
+    /// <summary>Offers a rematch of a finished game, or accepts the opponent's offer (colors swap).</summary>
+    Task OfferRematch(string gameId);
+
+    /// <summary>Declines the opponent's rematch offer, or withdraws one's own.</summary>
+    Task DeclineRematch(string gameId);
 }

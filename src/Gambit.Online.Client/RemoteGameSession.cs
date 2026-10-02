@@ -5,6 +5,20 @@ using Gambit.Core.Sessions;
 
 namespace Gambit.Online.Client;
 
+/// <summary>Where a finished game's rematch negotiation stands.</summary>
+public enum RematchStatus
+{
+    None,
+    /// <summary>We asked; waiting for the opponent.</summary>
+    Offered,
+    /// <summary>The opponent asked; offering back accepts.</summary>
+    Received,
+    /// <summary>The opponent declined our offer.</summary>
+    Declined,
+    /// <summary>The opponent left, started another game, or withdrew their offer.</summary>
+    Unavailable,
+}
+
 /// <summary>
 /// An online game. Local moves are applied optimistically and sent to the server; the server is
 /// authoritative — any disagreement triggers a resync from the server's move list. Server events
@@ -39,6 +53,8 @@ public sealed class RemoteGameSession : IGameSession
         _client.DrawDeclined += OnDrawDeclined;
         _client.OpponentConnection += OnOpponentConnection;
         _client.Resync += OnResync;
+        _client.RematchOffered += OnRematchOffered;
+        _client.RematchDeclined += OnRematchDeclined;
     }
 
     public string GameId { get; }
@@ -60,6 +76,11 @@ public sealed class RemoteGameSession : IGameSession
 
     /// <summary>Rating changes reported by the server when the game ended.</summary>
     public (int? White, int? Black) RatingChanges { get; private set; }
+
+    /// <summary>Rematch negotiation after the game; the server starts the new game (a new session) once both agree.</summary>
+    public RematchStatus Rematch { get; private set; }
+
+    public event EventHandler? RematchChanged;
 
     public event EventHandler<MovePlayedEventArgs>? MovePlayed;
     public event EventHandler<GameEndedEventArgs>? GameEnded;
@@ -106,6 +127,22 @@ public sealed class RemoteGameSession : IGameSession
     public void RespondToDraw(bool accept) => Fire(() => _client.RespondToDrawAsync(GameId, accept));
 
     public bool Takeback() => false;
+
+    /// <summary>Asks for a rematch, or accepts the opponent's request. Only after the game has ended.</summary>
+    public void OfferRematch()
+    {
+        if (!_finished || Rematch == RematchStatus.Offered) return;
+        if (Rematch != RematchStatus.Received) SetRematch(RematchStatus.Offered);
+        Fire(() => _client.OfferRematchAsync(GameId));
+    }
+
+    /// <summary>Declines the opponent's request, or withdraws our own.</summary>
+    public void DeclineRematch()
+    {
+        if (Rematch is not (RematchStatus.Offered or RematchStatus.Received)) return;
+        SetRematch(RematchStatus.None);
+        Fire(() => _client.DeclineRematchAsync(GameId));
+    }
 
     // ------------------------------------------------------------------ server events
 
@@ -178,6 +215,24 @@ public sealed class RemoteGameSession : IGameSession
             StateReset?.Invoke(this, EventArgs.Empty);
             ThinkingChanged?.Invoke(this, EventArgs.Empty);
         });
+    }
+
+    private void OnRematchOffered(string gameId)
+    {
+        if (gameId == GameId) Post(() => SetRematch(RematchStatus.Received));
+    }
+
+    private void OnRematchDeclined(string gameId, bool unavailable)
+    {
+        if (gameId != GameId) return;
+        Post(() => SetRematch(Rematch == RematchStatus.Offered && !unavailable ? RematchStatus.Declined : RematchStatus.Unavailable));
+    }
+
+    private void SetRematch(RematchStatus status)
+    {
+        if (Rematch == status) return;
+        Rematch = status;
+        RematchChanged?.Invoke(this, EventArgs.Empty);
     }
 
     // ------------------------------------------------------------------ helpers
@@ -278,5 +333,7 @@ public sealed class RemoteGameSession : IGameSession
         _client.DrawDeclined -= OnDrawDeclined;
         _client.OpponentConnection -= OnOpponentConnection;
         _client.Resync -= OnResync;
+        _client.RematchOffered -= OnRematchOffered;
+        _client.RematchDeclined -= OnRematchDeclined;
     }
 }

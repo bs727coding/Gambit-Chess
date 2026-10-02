@@ -35,6 +35,8 @@ public sealed class OnlineClient : IAsyncDisposable
     public event Action<string, bool, int>? OpponentConnection;
     public event Action<GameStartDto>? Resync;
     public event Action<string>? Notice;
+    public event Action<string>? RematchOffered;
+    public event Action<string, bool>? RematchDeclined;
 
     public async Task ConnectAsync(string serverUrl, string token, string name, CancellationToken ct = default)
     {
@@ -61,6 +63,8 @@ public sealed class OnlineClient : IAsyncDisposable
         _hub.On<string, bool, int>(nameof(IGameClient.OpponentConnection), (id, c, s) => OpponentConnection?.Invoke(id, c, s));
         _hub.On<GameStartDto>(nameof(IGameClient.Resync), g => Resync?.Invoke(g));
         _hub.On<string>(nameof(IGameClient.Notice), m => Notice?.Invoke(m));
+        _hub.On<string>(nameof(IGameClient.RematchOffered), id => RematchOffered?.Invoke(id));
+        _hub.On<string, bool>(nameof(IGameClient.RematchDeclined), (id, unavailable) => RematchDeclined?.Invoke(id, unavailable));
 
         _hub.Reconnecting += _ =>
         {
@@ -119,6 +123,8 @@ public sealed class OnlineClient : IAsyncDisposable
     public Task OfferDrawAsync(string gameId) => Hub.InvokeAsync(nameof(IGameServer.OfferDraw), gameId);
     public Task RespondToDrawAsync(string gameId, bool accept) => Hub.InvokeAsync(nameof(IGameServer.RespondToDraw), gameId, accept);
     public Task<bool> RejoinAsync(string gameId) => Hub.InvokeAsync<bool>(nameof(IGameServer.Rejoin), gameId);
+    public Task OfferRematchAsync(string gameId) => Hub.InvokeAsync(nameof(IGameServer.OfferRematch), gameId);
+    public Task DeclineRematchAsync(string gameId) => Hub.InvokeAsync(nameof(IGameServer.DeclineRematch), gameId);
 
     private void SetState(OnlineState s)
     {

@@ -24,6 +24,10 @@ public sealed class GameRoom(string id, Player white, Player black, TimeControlD
     public string? DrawOfferBy { get; set; }
     public bool Finished { get; set; }
 
+    /// <summary>"white"/"black" while that player's rematch offer is pending (finished games only).</summary>
+    public string? RematchOfferBy { get; set; }
+    public bool RematchStarted { get; set; }
+
     public Color? ColorOf(Player p) => ReferenceEquals(p, White) ? Color.White : ReferenceEquals(p, Black) ? Color.Black : null;
     public Player PlayerOf(Color c) => c == Color.White ? White : Black;
 
@@ -64,6 +68,7 @@ public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerReg
     public async Task SeekAsync(Player p, TimeControlDto tc)
     {
         if (!IsValid(tc) || ActiveRoom(p) != null) return;
+        await WithdrawRematchOffersAsync(p);
         Player? opponent = null;
         lock (_seekGate)
         {
@@ -127,6 +132,8 @@ public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerReg
         _activeRoomByPlayer[white.PublicId] = room.Id;
         _activeRoomByPlayer[black.PublicId] = room.Id;
         log.LogInformation("Game {Id}: {White} vs {Black} ({Tc})", room.Id, white.Name, black.Name, tc.Key);
+        await WithdrawRematchOffersAsync(white);
+        await WithdrawRematchOffersAsync(black);
 
         foreach (Player pl in new[] { white, black })
         {
@@ -231,6 +238,77 @@ public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerReg
         return true;
     }
 
+    // ------------------------------------------------------------------ rematches
+
+    /// <summary>Offers a rematch of a finished game, or accepts the opponent's pending offer. Colors swap.</summary>
+    public async Task OfferRematchAsync(Player p, string gameId)
+    {
+        if (!_rooms.TryGetValue(gameId, out GameRoom? room)) return;
+        Player opponent;
+        bool available, start = false;
+        lock (room.Gate)
+        {
+            if (!room.Finished || room.RematchStarted || room.ColorOf(p) is not Color c) return;
+            opponent = room.PlayerOf(c.Opposite());
+            string me = c == Color.White ? "white" : "black";
+            available = opponent.Connected && ActiveRoom(opponent) == null && ActiveRoom(p) == null;
+            if (!available)
+            {
+                room.RematchOfferBy = null;
+            }
+            else if (room.RematchOfferBy == me)
+            {
+                return; // already offered
+            }
+            else if (room.RematchOfferBy != null)
+            {
+                room.RematchStarted = true; // both want it
+                start = true;
+            }
+            else
+            {
+                room.RematchOfferBy = me;
+            }
+        }
+
+        if (!available)
+        {
+            if (p.ConnectionId is string conn) await hub.Clients.Client(conn).RematchDeclined(room.Id, true);
+        }
+        else if (start)
+        {
+            CancelSeek(p);
+            CancelSeek(opponent);
+            await StartGameAsync(room.Black, room.White, room.TimeControl, "white");
+        }
+        else if (opponent.ConnectionId is string conn)
+        {
+            await hub.Clients.Client(conn).RematchOffered(room.Id);
+        }
+    }
+
+    /// <summary>Declines the opponent's rematch offer, or withdraws one's own; the other player is told.</summary>
+    public async Task DeclineRematchAsync(Player p, string gameId, bool unavailable = false)
+    {
+        if (!_rooms.TryGetValue(gameId, out GameRoom? room)) return;
+        Player opponent;
+        lock (room.Gate)
+        {
+            if (room.RematchStarted || room.RematchOfferBy == null || room.ColorOf(p) is not Color c) return;
+            room.RematchOfferBy = null;
+            opponent = room.PlayerOf(c.Opposite());
+        }
+        if (opponent.ConnectionId is string conn) await hub.Clients.Client(conn).RematchDeclined(room.Id, unavailable);
+    }
+
+    /// <summary>Cancels pending rematch offers involving <paramref name="p"/> (they left or started another game).</summary>
+    private async Task WithdrawRematchOffersAsync(Player p)
+    {
+        foreach (GameRoom room in _rooms.Values)
+            if (room.Finished && room.RematchOfferBy != null && room.ColorOf(p) != null)
+                await DeclineRematchAsync(p, room.Id, unavailable: true);
+    }
+
     // ------------------------------------------------------------------ connections
 
     public async Task OnConnectedAsync(Player p)
@@ -248,6 +326,7 @@ public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerReg
     public async Task OnDisconnectedAsync(Player p)
     {
         CancelSeek(p);
+        await WithdrawRematchOffersAsync(p);
         if (ActiveRoom(p) is not GameRoom room) return;
         lock (room.Gate)
         {

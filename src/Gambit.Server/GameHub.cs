@@ -48,6 +48,10 @@ public sealed class GameHub(PlayerRegistry players, GameManager games) : Hub<IGa
 
     public Task<bool> Rejoin(string gameId) => games.RejoinAsync(Me, gameId);
 
+    public Task OfferRematch(string gameId) => games.OfferRematchAsync(Me, gameId);
+
+    public Task DeclineRematch(string gameId) => games.DeclineRematchAsync(Me, gameId);
+
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         if (players.Disconnect(Context.ConnectionId) is Player p) await games.OnDisconnectedAsync(p);

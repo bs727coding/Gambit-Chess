@@ -44,7 +44,7 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 - [x] Opening book (curated SAN lines → hash table), opening name detection (ECO subset)
 - [x] Game review: engine pass over finished games; move classes (Brilliant, Great, Best, Excellent,
       Good, Book, Inaccuracy, Mistake, Miss, Blunder); accuracy %; eval graph; key moments
-- [~] Analysis board: free play, MultiPV engine lines, eval bar, FEN/PGN import + export ✔ — board editor + variations still to do
+- [~] Analysis board: free play, MultiPV engine lines, eval bar, FEN/PGN import + export ✔, board editor ✔ — variations still to do
 - [x] Game archive: every finished game saved (PGN); list + reopen in analysis
 - [x] Sounds (generated locally: move, capture, check, castle, promote, game end, low time)
 - [~] Keyboard navigation ✔, Play a Friend (hot-seat) ✔, hints ✔, resume after restart ✔ — premoves still to do
@@ -91,11 +91,12 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 
 ## Session 7 — Online multiplayer (server + client)
 
-- [x] `Gambit.Server` (ASP.NET Core 10 + SignalR): server-authoritative games using `Gambit.Core`,
+- [~] `Gambit.Server` (ASP.NET Core 10 + SignalR): server-authoritative games using `Gambit.Core`,
       server clocks, matchmaking pools (time control × rating), private challenges via invite code,
-      draw/resign/abort/rematch, reconnection, Glicko-2 ratings, guest → registered accounts
+      draw/resign/abort/rematch, reconnection, Glicko-2 ratings ✔ — guest tokens only; registered
+      accounts → Session 8
 - [x] `Gambit.Online.Contracts`: shared DTOs + hub interfaces (strongly typed SignalR)
-- [x] Client: `RemoteGameSession : IGameSession`, Online page (sign in, quick pair, challenge a friend,
+- [x] Client: `RemoteGameSession : IGameSession`, Online page (connect, quick pair, challenge a friend,
       lobby), connection status UX
 - [x] Integration tests: two clients play a full game against an in-process test server
 

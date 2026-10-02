@@ -18,7 +18,8 @@ namespace Gambit.App.Pages;
 
 /// <summary>
 /// Plays one game through an <see cref="IGameSession"/>. The page never asks whether the opponent is
-/// a bot: it renders session state and forwards the user's moves. (Online games will reuse it.)
+/// a bot: it renders session state and forwards the user's moves. Online games use the same page
+/// through <see cref="RemoteGameSession"/> (which adds rating changes and rematches).
 /// </summary>
 public sealed partial class GamePage : Page
 {
@@ -33,6 +34,7 @@ public sealed partial class GamePage : Page
     private string _appliedPieces = "";
     private readonly DispatcherTimer _clockTimer = new() { Interval = TimeSpan.FromMilliseconds(100) };
     private readonly DispatcherTimer _toastTimer = new() { Interval = TimeSpan.FromSeconds(4) };
+    private ContentDialog? _resultDialog;
 
     public GamePage()
     {
@@ -172,6 +174,8 @@ public sealed partial class GamePage : Page
         _session.ChatReceived += Session_ChatReceived;
         _session.DrawOfferAnswered += Session_DrawOfferAnswered;
         _session.DrawOfferReceived += Session_DrawOfferReceived;
+        if (_session is RemoteGameSession remote) remote.RematchChanged += Remote_RematchChanged;
+        UpdateRematchButton();
         Board.SetMarkers([]);
 
         Game game = session.Game;
@@ -199,6 +203,11 @@ public sealed partial class GamePage : Page
         _session.ChatReceived -= Session_ChatReceived;
         _session.DrawOfferAnswered -= Session_DrawOfferAnswered;
         _session.DrawOfferReceived -= Session_DrawOfferReceived;
+        if (_session is RemoteGameSession remote)
+        {
+            remote.RematchChanged -= Remote_RematchChanged;
+            remote.DeclineRematch(); // moving on: answer or withdraw any pending rematch offer
+        }
         _session.Dispose();
         _session = null;
         _clockTimer.Stop();
@@ -264,6 +273,42 @@ public sealed partial class GamePage : Page
     private void Session_DrawOfferAnswered(object? sender, bool accepted)
     {
         if (!accepted) ShowToast("Draw declined", $"{OpponentDisplayName()} wants to keep playing.", InfoBarSeverity.Informational);
+    }
+
+    private void Remote_RematchChanged(object? sender, EventArgs e)
+    {
+        if (sender is not RemoteGameSession remote || !ReferenceEquals(remote, _session)) return;
+        string name = OpponentDisplayName();
+        switch (remote.Rematch)
+        {
+            case RematchStatus.Offered:
+                ShowToast("Rematch offered", $"Waiting for {name}…", InfoBarSeverity.Informational);
+                break;
+            case RematchStatus.Received:
+                ShowToast("Rematch?", $"{name} wants a rematch.", InfoBarSeverity.Success, ("Accept", remote.OfferRematch));
+                break;
+            case RematchStatus.Declined:
+                ShowToast("Rematch declined", $"{name} doesn't want a rematch right now.", InfoBarSeverity.Informational);
+                break;
+            case RematchStatus.Unavailable:
+                ShowToast("No rematch", $"{name} is no longer available for a rematch.", InfoBarSeverity.Informational);
+                break;
+        }
+        UpdateRematchButton();
+    }
+
+    /// <summary>The post-game "Rematch" button (and an open result dialog) reflect the online rematch state.</summary>
+    private void UpdateRematchButton()
+    {
+        RematchStatus status = (_session as RemoteGameSession)?.Rematch ?? RematchStatus.None;
+        RematchText.Text = status switch
+        {
+            RematchStatus.Offered => "Rematch offered…",
+            RematchStatus.Received => "Accept rematch",
+            _ => "Rematch",
+        };
+        RematchButton.IsEnabled = status != RematchStatus.Offered;
+        if (_resultDialog != null && status == RematchStatus.Received) _resultDialog.SecondaryButtonText = "Accept rematch";
     }
 
     // ------------------------------------------------------------------ board + history
@@ -550,24 +595,47 @@ public sealed partial class GamePage : Page
             Title = title,
             Content = content,
             PrimaryButtonText = "Game review",
-            SecondaryButtonText = _setup.IsOnline ? "New online game" : "Rematch",
+            SecondaryButtonText = (_session as RemoteGameSession)?.Rematch == RematchStatus.Received ? "Accept rematch" : "Rematch",
             CloseButtonText = "Close",
             DefaultButton = ContentDialogButton.Primary,
         };
 
-        ContentDialogResult result = await Dialogs.ShowAsync(dialog, XamlRoot);
+        _resultDialog = dialog;
+        ContentDialogResult result;
+        try
+        {
+            result = await Dialogs.ShowAsync(dialog, XamlRoot);
+        }
+        finally
+        {
+            _resultDialog = null;
+        }
         if (result == ContentDialogResult.Primary) Review_Click(this, new RoutedEventArgs());
         else if (result == ContentDialogResult.Secondary) Rematch_Click(this, new RoutedEventArgs());
     }
 
-    private void ShowToast(string title, string message, InfoBarSeverity severity)
+    private void ShowToast(string title, string message, InfoBarSeverity severity, (string Label, Action Run)? action = null)
     {
         Toast.Title = title;
         Toast.Message = message;
         Toast.Severity = severity;
+        if (action is (string label, Action run))
+        {
+            var button = new Button { Content = label };
+            button.Click += (_, _) =>
+            {
+                Toast.IsOpen = false;
+                run();
+            };
+            Toast.ActionButton = button;
+        }
+        else
+        {
+            Toast.ActionButton = null;
+        }
         Toast.IsOpen = true;
         _toastTimer.Stop();
-        _toastTimer.Start();
+        if (action == null) _toastTimer.Start(); // questions stay until answered or dismissed
     }
 
     // ------------------------------------------------------------------ buttons
@@ -637,11 +705,15 @@ public sealed partial class GamePage : Page
 
     private void Rematch_Click(object sender, RoutedEventArgs e)
     {
-        if (_setup?.IsOnline == true) App.Window.Navigate(typeof(OnlinePage), null, "online");
+        if (_session is RemoteGameSession remote) remote.OfferRematch(); // the server opens the new game
         else if (_setup != null) StartGame(_setup);
     }
 
-    private void NewGame_Click(object sender, RoutedEventArgs e) => App.Window.NavigateTo("play", PlayPage.ChooseParameter);
+    private void NewGame_Click(object sender, RoutedEventArgs e)
+    {
+        if (_setup?.IsOnline == true) App.Window.Navigate(typeof(OnlinePage), null, "online");
+        else App.Window.NavigateTo("play", PlayPage.ChooseParameter);
+    }
 
     private void Review_Click(object sender, RoutedEventArgs e)
     {
