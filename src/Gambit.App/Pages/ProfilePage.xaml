@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="Gambit.App.Pages.ProfilePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel MaxWidth="{StaticResource PageMaxWidth}" Padding="32,16,32,32" Spacing="8">
+            <Grid ColumnSpacing="20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid x:Name="AvatarHost" Width="80" Height="80" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock x:Name="NameText" Style="{StaticResource TitleTextBlockStyle}" />
+                        <Button x:Name="RenameButton" Click="Rename_Click" ToolTipService.ToolTip="Change display name" AutomationProperties.Name="Change display name" VerticalAlignment="Center">
+                            <FontIcon Glyph="&#xE70F;" FontSize="13" />
+                        </Button>
+                    </StackPanel>
+                    <TextBlock x:Name="SinceText" Style="{StaticResource SecondaryTextStyle}" />
+                </StackPanel>
+            </Grid>
+
+            <TextBlock Text="Statistics" Style="{StaticResource SectionHeaderStyle}" />
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="Games" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock x:Name="GamesText" Style="{StaticResource TitleTextBlockStyle}" />
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="Win rate" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock x:Name="WinRateText" Style="{StaticResource TitleTextBlockStyle}" />
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="Wins · Losses · Draws" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock x:Name="RecordText" Style="{StaticResource TitleTextBlockStyle}" />
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="3" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="Win streak (best)" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock x:Name="StreakText" Style="{StaticResource TitleTextBlockStyle}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <TextBlock Text="Record against bots" Style="{StaticResource SectionHeaderStyle}" />
+            <Border Style="{StaticResource CardStyle}" Padding="8">
+                <StackPanel x:Name="BotRecords" Spacing="2" />
+            </Border>
+
+            <TextBlock Text="Game history" Style="{StaticResource SectionHeaderStyle}" />
+            <StackPanel x:Name="History" Spacing="6" />
+
+            <InfoBar IsOpen="True" IsClosable="False" Severity="Informational" Margin="0,16,0,0"
+                     Title="Achievements, rating graphs and more stats"
+                     Message="Coming in Session 6 of the roadmap: about 50 achievements, rating history charts and per-opening statistics." />
+        </StackPanel>
+    </ScrollViewer>
+</Page>
