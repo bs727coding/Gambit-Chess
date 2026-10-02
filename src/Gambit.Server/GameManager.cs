@@ -46,7 +46,8 @@ public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerReg
 {
     private readonly ConcurrentDictionary<string, GameRoom> _rooms = new();
     private readonly ConcurrentDictionary<string, string> _activeRoomByPlayer = new();
-    private readonly ConcurrentDictionary<string, (Player Creator, TimeControlDto Tc, string Color, DateTimeOffset At)> _challenges = new();
+    private readonly ConcurrentDictionary<string, (Player Creator, TimeControlDto Tc, string Color, DateTimeOffset At, long Seq)> _challenges = new();
+    private long _challengeSeq;
     private readonly object _seekGate = new();
     private readonly List<(Player Player, TimeControlDto Tc)> _seeks = [];
 
@@ -99,7 +100,11 @@ public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerReg
         do code = Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(3));
         while (_challenges.ContainsKey(code));
         color = color is "white" or "black" ? color : "random";
-        _challenges[code] = (p, tc, color, DateTimeOffset.UtcNow);
+        _challenges[code] = (p, tc, color, DateTimeOffset.UtcNow, Interlocked.Increment(ref _challengeSeq));
+
+        // Keep only the newest few codes per player.
+        var mine = _challenges.Where(c => ReferenceEquals(c.Value.Creator, p)).OrderBy(c => c.Value.Seq).ToList();
+        foreach (var old in mine.Take(Math.Max(0, mine.Count - options.MaxOpenChallenges))) _challenges.TryRemove(old.Key, out _);
         return new ChallengeDto(code, tc, color, players.ToDto(p, Category(tc)));
     }
 

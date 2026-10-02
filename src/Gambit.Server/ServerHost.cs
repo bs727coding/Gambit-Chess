@@ -1,4 +1,6 @@
+using System.Threading.RateLimiting;
 using Gambit.Online;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Gambit.Server;
 
@@ -22,15 +24,28 @@ public static class ServerHost
         builder.Services.AddSingleton<PlayerRegistry>();
         builder.Services.AddSingleton<GameManager>();
         builder.Services.AddHostedService<GameClockService>();
+        builder.Services.AddSingleton<CallRateLimitFilter>();
         builder.Services.AddSignalR(o =>
         {
             o.KeepAliveInterval = TimeSpan.FromSeconds(10);
             o.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
             o.MaximumReceiveMessageSize = 32 * 1024;
+            o.AddFilter<CallRateLimitFilter>();
+        });
+
+        // Connection attempts per client IP. Behind a reverse proxy (most cloud hosts) set
+        // ASPNETCORE_FORWARDEDHEADERS_ENABLED=true so the client's real address is used.
+        builder.Services.AddRateLimiter(o =>
+        {
+            o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            o.AddPolicy("connect", http => RateLimitPartition.GetFixedWindowLimiter(
+                http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions { PermitLimit = options.ConnectionsPerMinute, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
         });
 
         WebApplication app = builder.Build();
-        app.MapHub<GameHub>(OnlineProtocol.HubPath);
+        app.UseRateLimiter();
+        app.MapHub<GameHub>(OnlineProtocol.HubPath).RequireRateLimiting("connect");
         app.MapGet("/health", () => Results.Ok("ok"));
         app.MapGet("/", (GameManager games) =>
         {

@@ -144,4 +144,15 @@ public sealed class ServerOptions
 
     /// <summary>Games are aborted if White hasn't moved within this time.</summary>
     public TimeSpan FirstMoveTimeout { get; set; } = TimeSpan.FromSeconds(45);
+
+    /// <summary>Hub calls per connection per second (sustained); short bursts up to <see cref="CallBurst"/>.</summary>
+    public int CallsPerSecond { get; set; } = 10;
+
+    public int CallBurst { get; set; } = 30;
+
+    /// <summary>Hub HTTP requests (negotiate + connect) per client IP per minute.</summary>
+    public int ConnectionsPerMinute { get; set; } = 60;
+
+    /// <summary>Open challenge codes per player; creating more drops the oldest.</summary>
+    public int MaxOpenChallenges { get; set; } = 5;
 }

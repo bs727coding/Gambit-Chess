@@ -97,6 +97,25 @@ public sealed class OnlineTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Flooding_calls_is_rate_limited_and_challenge_codes_are_capped()
+    {
+        OnlineClient spammer = await Connect("Spam");
+        var codes = new List<string>();
+        for (int i = 0; i < 7; i++) codes.Add((await spammer.CreateChallengeAsync(new TimeControlDto(180, 0), "random")).Code);
+
+        OnlineClient friend = await Connect("Pal");
+        Assert.False(await friend.AcceptChallengeAsync(codes[0])); // only the newest 5 stay open
+        Assert.False(await friend.AcceptChallengeAsync(codes[1]));
+        Assert.True(await friend.AcceptChallengeAsync(codes[6]));
+
+        Exception ex = await Assert.ThrowsAnyAsync<Exception>(async () =>
+        {
+            for (int i = 0; i < 300; i++) await spammer.CancelSeekAsync();
+        });
+        Assert.Contains("Too many requests", ex.Message);
+    }
+
+    [Fact]
     public async Task Remote_sessions_mirror_each_other()
     {
         OnlineClient alice = await Connect("Ann"), bob = await Connect("Ben");

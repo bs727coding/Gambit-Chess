@@ -51,6 +51,10 @@ Pick one:
 | `GAMBIT_DATA` | `./data` next to the server | Ratings + PGN archive |
 | `Gambit:ReconnectGrace` | `00:01:00` | appsettings.json or env `Gambit__ReconnectGrace` |
 | `Gambit:FirstMoveTimeout` | `00:00:45` | Game aborted if White doesn't move |
+| `Gambit:CallsPerSecond` / `Gambit:CallBurst` | `10` / `30` | Hub calls per connection (token bucket); excess calls fail with "Too many requests" |
+| `Gambit:ConnectionsPerMinute` | `60` | Hub HTTP requests per client IP (a connect is ~2); excess gets HTTP 429 |
+| `Gambit:MaxOpenChallenges` | `5` | Friend codes per player; creating more drops the oldest |
+| `ASPNETCORE_FORWARDEDHEADERS_ENABLED` | unset | Set to `true` behind a reverse proxy (Azure Container Apps, Fly.io, nginx) so limits see the real client IP |
 
 Health check: `GET /health` → `ok`. `GET /` shows players online and games in progress.
 
