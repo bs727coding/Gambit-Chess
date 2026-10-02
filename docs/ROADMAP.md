@@ -51,57 +51,57 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 
 ## Session 3 — Puzzles
 
-- [ ] Puzzle pipeline (`tools/puzzles`): import the Lichess puzzle DB (CC0, ask before downloading),
+- [x] Puzzle pipeline: **engine-generated** (`tools/Gambit.PuzzleGen`, bot self-play, verified unique solutions); optional Lichess CC0 import later (ask before downloading),
       pick a stratified subset (~15–25k puzzles, 400–3000 rating, all major themes), pack as an
       embedded compressed resource; validation test that every solution is legal
-- [ ] Rated puzzles with Glicko-2 puzzle rating; adaptive selection near rating; no repeats
-- [ ] Puzzle UX: opponent's setup move animates, wrong move feedback, hint (highlight piece → move),
+- [x] Rated puzzles with Glicko-2 puzzle rating; adaptive selection near rating; no repeats
+- [x] Puzzle UX: opponent's setup move animates, wrong move feedback, hint (highlight piece → move),
       retry, show solution, "next", themes + rating shown after solve
-- [ ] Puzzle Rush: 3 min, 5 min, Survival (3 strikes); best scores
-- [ ] Daily puzzle (deterministic by date) and streak tracking
-- [ ] Progression: puzzle "ranks"/tiers by rating, per-theme practice and per-theme stats
+- [x] Puzzle Rush: 3 min, 5 min, Survival (3 strikes); best scores
+- [x] Daily puzzle (deterministic by date) and streak tracking
+- [x] Progression: puzzle "ranks"/tiers by rating, per-theme practice and per-theme stats
 
 ## Session 4 — Lessons I: framework + fundamentals + tactics
 
-- [ ] Lesson format (JSON): course → lesson → steps (explain, make-a-move, find-the-move,
+- [x] Lesson format (JSON): course → lesson → steps (explain, make-a-move, find-the-move,
       multiple choice, play-it-out vs bot from position), arrows + square highlights, hints
-- [ ] Lesson player UI with progress, stars/score, retry; course map with unlock progression
-- [ ] Content validator test (all FENs/moves legal, all steps reachable)
-- [ ] Courses: **Basics** (pieces, check, mate, special moves), **Checkmate patterns**,
+- [x] Lesson player UI with progress, stars/score, retry; course map with unlock progression
+- [x] Content validator test (all FENs/moves legal, all steps reachable)
+- [x] Courses: **Basics** (pieces, check, mate, special moves), **Checkmate patterns**,
       **Tactics** (fork, pin, skewer, discovered attack, double check, deflection, decoy,
       removing the defender, overloading, zwischenzug, back rank, X-ray)
 
 ## Session 5 — Lessons II: openings + endgames
 
-- [ ] **Opening principles** + opening courses with main lines, ideas and traps: Italian, Ruy Lopez,
+- [x] **Opening principles** + opening courses with main lines, ideas and traps: Italian, Ruy Lopez,
       Scotch, Sicilian (Open/Alapin), French, Caro-Kann, Queen's Gambit (QGD/QGA/Slav), London,
       King's Indian, English — drilled with a "play the line" trainer
-- [ ] **Endgames**: K+Q/K+R/2B/B+N mates, opposition, square rule, key squares, Lucena, Philidor,
+- [x] **Endgames**: K+Q/K+R/2B/B+N mates, opposition, square rule, key squares, Lucena, Philidor,
       triangulation, rook-pawn draws, basic rook/queen endings
-- [ ] Opening trainer (spaced repetition of repertoire lines)
+- [~] Opening trainer: "play the line" drills in each opening lesson ✔ — spaced repetition still to do
 
 ## Session 6 — Profile: statistics, achievements, themes
 
-- [ ] Persistent profile store (SQLite), schema versioning/migrations, import of earlier JSON data
-- [ ] Statistics page: rating graphs (bots/puzzles), W/L/D by bot/color/time control, accuracy trend,
+- [ ] Persistent profile store (SQLite), schema versioning/migrations (currently JSON — works fine so far)
+- [x] Statistics page: rating graphs (bots/puzzles), W/L/D by bot/color/time control, accuracy trend,
       openings played, puzzle themes heat-map, streaks, time played
-- [ ] Achievements (~50): data-driven definitions, progress tracking, unlock toasts, achievement gallery
-- [ ] Themes: 8+ board themes, 3+ piece sets, custom board colors, highlight styles, sound packs,
+- [x] Achievements (~50): data-driven definitions, progress tracking, unlock toasts, achievement gallery
+- [~] Themes: 8 board themes ✔, 4 piece sets ✔, live preview ✔ — custom colors, highlight styles, sound packs,
       accent options; live preview in Settings
 
 ## Session 7 — Online multiplayer (server + client)
 
-- [ ] `Gambit.Server` (ASP.NET Core 10 + SignalR): server-authoritative games using `Gambit.Core`,
+- [x] `Gambit.Server` (ASP.NET Core 10 + SignalR): server-authoritative games using `Gambit.Core`,
       server clocks, matchmaking pools (time control × rating), private challenges via invite code,
       draw/resign/abort/rematch, reconnection, Glicko-2 ratings, guest → registered accounts
-- [ ] `Gambit.Online.Contracts`: shared DTOs + hub interfaces (strongly typed SignalR)
-- [ ] Client: `RemoteGameSession : IGameSession`, Online page (sign in, quick pair, challenge a friend,
+- [x] `Gambit.Online.Contracts`: shared DTOs + hub interfaces (strongly typed SignalR)
+- [x] Client: `RemoteGameSession : IGameSession`, Online page (sign in, quick pair, challenge a friend,
       lobby), connection status UX
-- [ ] Integration tests: two clients play a full game against an in-process test server
+- [x] Integration tests: two clients play a full game against an in-process test server
 
 ## Session 8 — Hosting & distribution
 
-- [ ] Dockerfile + config; deploy to a host with WebSockets (Azure Container Apps / App Service,
+- [x] Dockerfile + config; deploy to a host with WebSockets (Azure Container Apps / App Service,
       Fly.io or similar — **you** create the account and sign in; Claude prepares scripts + docs)
 - [ ] Production DB (PostgreSQL), TLS/domain, rate limiting, logging/health checks
 - [ ] MSIX packaging + signing, app icon/assets, versioning, App Installer auto-update
