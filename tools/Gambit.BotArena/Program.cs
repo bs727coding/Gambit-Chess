@@ -3,9 +3,12 @@
 //   dotnet run -c Release --project tools/Gambit.BotArena -- <minutes> [results.csv] [bot ids, comma-separated]
 //   dotnet run -c Release --project tools/Gambit.BotArena -- 0 artifacts/arena.csv        (summary only)
 // Games are untimed (bots use their ThinkTimeMs, as in untimed games in the app). Every finished game
-// is appended to the CSV, so runs accumulate and an interrupted run loses nothing.
+// is appended to the CSV, so runs accumulate and an interrupted run loses nothing. Each row carries a
+// fingerprint of both bots' strength settings; after a bot is tuned, its old games no longer count.
 using System.Diagnostics;
 using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 using Gambit.Core.Board;
 using Gambit.Core.Games;
 using Gambit.Core.Sessions;
@@ -25,15 +28,23 @@ var rows = new List<Row>();
 if (File.Exists(output))
     foreach (string line in File.ReadLines(output))
         if (Row.Parse(line) is Row r) rows.Add(r);
+
+// Rows written before fingerprints existed were played with today's settings: stamp them once.
+if (rows.Any(r => r.Version == null))
+{
+    rows = rows.Select(r => r.Version != null ? r : r with { Version = Strength.Pair(BotRoster.Get(r.Low), BotRoster.Get(r.High)) }).ToList();
+    File.WriteAllLines(output, rows.Select(r => r.ToCsv()));
+}
+
 var gate = new object();
-int[] started = pairs.Select(p => rows.Count(r => r.Low == p.Low.Id && r.High == p.High.Id)).ToArray();
+int[] started = pairs.Select(p => rows.Count(r => r.Matches(p.Low, p.High))).ToArray();
 
 Directory.CreateDirectory(Path.GetDirectoryName(output)!);
 using var writer = new StreamWriter(output, append: true);
 var deadline = DateTime.UtcNow.AddMinutes(minutes);
 var sw = Stopwatch.StartNew();
 int played = 0;
-if (minutes > 0) Console.WriteLine($"Arena: {pairs.Count} pairings on {workers} workers for {minutes} min (existing games: {rows.Count})...");
+if (minutes > 0) Console.WriteLine($"Arena: {pairs.Count} pairings on {workers} workers for {minutes} min (existing games with current settings: {started.Sum()})...");
 
 Parallel.For(0, minutes > 0 ? workers : 0, new ParallelOptions { MaxDegreeOfParallelism = workers }, w =>
 {
@@ -74,8 +85,9 @@ static Row Play(BotProfile low, BotProfile high, bool highIsWhite, Random rng)
         game.Play(m);
     }
     double whiteScore = game.Result switch { GameResult.WhiteWins => 1, GameResult.BlackWins => 0, _ => 0.5 };
-    return new Row(low.Id, high.Id, highIsWhite, highIsWhite ? whiteScore : 1 - whiteScore, game.Moves.Count);
+    return new Row(low.Id, high.Id, highIsWhite, highIsWhite ? whiteScore : 1 - whiteScore, game.Moves.Count, Strength.Pair(low, high));
 }
+
 
 // Elo gap from a score: D = 400*log10(s / (1 - s)); the 95% margin uses the binomial standard error.
 static void Summarize(List<Row> rows, List<(BotProfile Low, BotProfile High)> pairs)
@@ -86,7 +98,7 @@ static void Summarize(List<Row> rows, List<(BotProfile Low, BotProfile High)> pa
     var gaps = new List<double?>();
     foreach (var (low, high) in pairs)
     {
-        var g = rows.Where(r => r.Low == low.Id && r.High == high.Id).ToList();
+        var g = rows.Where(r => r.Matches(low, high)).ToList();
         if (g.Count == 0)
         {
             gaps.Add(null);
@@ -117,14 +129,30 @@ static void Summarize(List<Row> rows, List<(BotProfile Low, BotProfile High)> pa
         Console.WriteLine($"  {ladder[i].Name,-9} labelled {ladder[i].RatingText,5}   measured {(measured[i] is double m ? m.ToString("0") : "?"),5}");
 }
 
-sealed record Row(string Low, string High, bool HighIsWhite, double HighScore, int Plies)
+sealed record Row(string Low, string High, bool HighIsWhite, double HighScore, int Plies, string? Version = null)
 {
-    public string ToCsv() => string.Join(',', Low, High, HighIsWhite ? "1" : "0", HighScore.ToString(CultureInfo.InvariantCulture), Plies);
+    public bool Matches(BotProfile low, BotProfile high) => Low == low.Id && High == high.Id && Version == Strength.Pair(low, high);
+
+    public string ToCsv() => string.Join(',', Low, High, HighIsWhite ? "1" : "0", HighScore.ToString(CultureInfo.InvariantCulture), Plies, Version);
 
     public static Row? Parse(string line)
     {
         string[] p = line.Split(',');
-        if (p.Length != 5 || !double.TryParse(p[3], CultureInfo.InvariantCulture, out double score) || !int.TryParse(p[4], out int plies)) return null;
-        return new Row(p[0], p[1], p[2] == "1", score, plies);
+        if (p.Length is not (5 or 6) || !double.TryParse(p[3], CultureInfo.InvariantCulture, out double score) || !int.TryParse(p[4], out int plies)) return null;
+        return new Row(p[0], p[1], p[2] == "1", score, plies, p.Length == 6 ? p[5] : null);
     }
+}
+
+static class Strength
+{
+    /// <summary>A short hash of everything that sets a bot's strength.</summary>
+    public static string Fingerprint(BotProfile p)
+    {
+        string knobs = string.Join('|', p.MaxDepth, p.MaxNodes, p.ThinkTimeMs, p.UsesClock, p.Candidates,
+            p.Temperature.ToString(CultureInfo.InvariantCulture), p.EvalNoise.ToString(CultureInfo.InvariantCulture),
+            p.RandomMoveChance.ToString(CultureInfo.InvariantCulture), p.BookDepth);
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(knobs)))[..6].ToLowerInvariant();
+    }
+
+    public static string Pair(BotProfile low, BotProfile high) => Fingerprint(low) + Fingerprint(high);
 }

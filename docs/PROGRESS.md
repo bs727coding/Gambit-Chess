@@ -20,7 +20,7 @@ natively on Arm64.
 ## Next steps
 
 1. **Bot ladder** — see [BOT-CALIBRATION.md](BOT-CALIBRATION.md). Self-play shows cliffs in the
-   middle (Dash → Kestrel steps measure +300…+650 bot-Elo instead of +200) and a flat, drawish low
+   middle (Dash → Kestrel steps measure +265…+645 bot-Elo instead of +200) and a flat, drawish low
    end. Tune the steepest steps first (Harbor → Iris, Dash → Ember) with `tools/Gambit.BotArena`,
    then help the weakest bots convert won endgames.
 2. **Lessons** still missing per the roadmap: zwischenzug, X-ray, triangulation. New tactics must
