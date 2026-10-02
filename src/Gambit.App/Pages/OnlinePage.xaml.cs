@@ -122,6 +122,7 @@ public sealed partial class OnlinePage : Page
 
     private async Task SeekAsync(string tc)
     {
+        if (!EnsureConnected()) return;
         try
         {
             App.Settings.Current.LastOnlineTimeControl = tc;
@@ -151,6 +152,7 @@ public sealed partial class OnlinePage : Page
 
     private async void CreateChallenge_Click(object sender, RoutedEventArgs e)
     {
+        if (!EnsureConnected()) return;
         try
         {
             string tc = ChallengeTime.SelectedItem as string ?? "10+0";
@@ -174,6 +176,7 @@ public sealed partial class OnlinePage : Page
 
     private async void Join_Click(object sender, RoutedEventArgs e)
     {
+        if (!EnsureConnected()) return;
         try
         {
             if (!await Online.Client.AcceptChallengeAsync(JoinBox.Text.Trim()))
@@ -183,6 +186,15 @@ public sealed partial class OnlinePage : Page
         {
             ShowError(ex.Message);
         }
+    }
+
+    /// <summary>Clears old errors and refuses lobby actions until the connection is up.</summary>
+    private bool EnsureConnected()
+    {
+        ErrorBar.IsOpen = false;
+        if (Online.IsConnected) return true;
+        ShowError("Connect to a server first.");
+        return false;
     }
 
     private void ShowError(string message)

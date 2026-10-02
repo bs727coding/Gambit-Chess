@@ -17,8 +17,9 @@ end to end. The app builds and runs natively on Arm64.
 
 ## Next steps
 
-1. **Verify online play in the app UI** with `./build.ps1 server` + `tools/Gambit.OnlineBot` (see
-   docs/ONLINE.md) — the protocol is covered by tests; the lobby page hasn't been clicked through yet.
+1. Online play is verified end to end in the app (local server + `tools/Gambit.OnlineBot` joining a
+   friend code: moves both ways, opening names, resign → result dialog with rating change).
+   Next: rematch offers, spectating, real accounts (see Session 8).
 2. **Puzzle volume/quality:** run the generator longer (`dotnet run -c Release --project tools/Gambit.PuzzleGen -- 60 src/Gambit.Core/Puzzles/puzzles.csv`; it appends) or, with the user's OK, import the Lichess CC0 puzzle DB (~250 MB download).
 3. Board editor + variations on the analysis board; premoves.
 4. Bot calibration by self-play (ratings are estimates); distinct play styles.
