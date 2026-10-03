@@ -28,7 +28,9 @@ session short at any moment, so **checkpoint often**).
 * `./build.ps1 server` — online server on :5080 (all interfaces; may trigger a firewall prompt —
   for local testing bind to 127.0.0.1 with `dotnet run --project src/Gambit.Server -c Release --urls http://127.0.0.1:5080`)
 * Puzzles: `dotnet run -c Release --project tools/Gambit.PuzzleGen -- <minutes> src/Gambit.Core/Puzzles/puzzles.csv [minBot] [maxBot]` (appends, below-normal priority)
-* Online bot: `dotnet run -c Release --project tools/Gambit.OnlineBot -- http://localhost:5080 <bot-id> <tc|code>`
+* Online bot: `dotnet run -c Release --project tools/Gambit.OnlineBot -- http://localhost:5080 <bot-id> <tc|code> [games]`
+* Bot ladder: `dotnet run -c Release --project tools/Gambit.BotArena -- <minutes> artifacts/arena.csv <ids,...>`
+  (see docs/BOT-CALIBRATION.md; bump `BotMoveProvider.Revision` when bot move choice changes)
 * Sounds: `python tools/gen_sounds.py`; icon: `tools/make-icon.ps1`.
 * Edit files with the Edit/Write tools, `sed` or Python — in Windows PowerShell 5.1 `Set-Content -Encoding utf8`
   adds a BOM and `Get-Content` without `-Encoding utf8` reads UTF-8 as ANSI (mangles —, →, ≥).
@@ -60,7 +62,7 @@ src/Gambit.Online.Contracts net10.0  protocol DTOs + hub interfaces (bump Online
 src/Gambit.Online.Client    net10.0  OnlineClient (SignalR) + RemoteGameSession : IGameSession
 src/Gambit.Server           ASP.NET Core + SignalR, authoritative GameManager (Dockerfile at repo root)
 tests/Gambit.Tests          xUnit — perft, notation, rules, engine, content validation, online end-to-end
-tools/                      PuzzleGen, OnlineBot, ui.ps1, screenshots, sound/icon generators
+tools/                      PuzzleGen, BotArena, OnlineBot, ui.ps1, screenshots, sound/icon generators
 docs/                       ROADMAP.md, PROGRESS.md, ARCHITECTURE.md, ONLINE.md
 ```
 
