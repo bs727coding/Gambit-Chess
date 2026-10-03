@@ -19,21 +19,24 @@ natively on Arm64.
 
 ## Next steps
 
-1. **Bot ladder** — see [BOT-CALIBRATION.md](BOT-CALIBRATION.md). Revision 2 (bots convert won
-   endgames) fixed the flat, drawish low end. The middle still has cliffs (Dash → Kestrel steps
-   +350…+530 bot-Elo under revision 2, instead of +200): follow the systematic approach in that
-   document (plausible mistakes instead of uniformly random moves; one skill number per bot).
-2. **Lessons** still missing per the roadmap: zwischenzug, X-ray, triangulation. New tactics must
-   pass the engine audit in `LessonTests` (the scripted move has to be the engine's choice).
-3. **Puzzles:** harder ones from stronger bots
-   (`dotnet run -c Release --project tools/Gambit.PuzzleGen -- 60 src/Gambit.Core/Puzzles/puzzles.csv 1600 2600`;
-   it appends) or, with the user's OK, the Lichess CC0 puzzle DB (~250 MB download).
-4. **Analysis board:** show variations inline in the move list (today: one line at a time plus
-   "Also tried here" and side-line actions).
-5. **Online / Session 8:** deploying needs the user's cloud account — with Fly.io it's four
-   commands (docs/ONLINE.md, `fly.toml`). Then accounts/sign-in, PostgreSQL, friends list, MSIX
-   packaging + signing, auto-update.
-6. **Polish:** keyboard play on the board, Narrator pass, localization, light-theme screenshot review.
+**Priority (from the user, 2026-10-02): a functional, clean, correct app over bot tuning.**
+
+1. **QA pass of every page in the running app** (Home, Play, Game, Review, Analysis, Puzzles,
+   puzzle trainer, Learn, lesson player, Online, Profile, Settings) in light and dark theme and at
+   a narrow window size; fix what turns up. Not yet seen on screen: Game Review explanations and
+   red refutation arrow, the bot style line on the Play page, the premove highlight, the newer
+   lessons played through. Needs the screen — agree a time with the user.
+2. **Puzzles:** only 19 puzzles are rated 1600+, so improving players will run out. Best fix: the
+   Lichess CC0 puzzle DB (~250 MB download — ask first), embedding a curated ~20k subset.
+3. **Clean-up:** move `GamePage`'s game-flow logic (local / online / spectator / hot-seat,
+   premoves, rematch) into a testable view model; share the board-settings code duplicated across
+   four pages.
+4. **Online:** deploying needs the user's cloud account (Fly.io: four commands, docs/ONLINE.md).
+   Later: accounts/sign-in, friends list, chat.
+5. **Polish:** keyboard play on the board, Narrator pass, inline variations in the analysis move
+   list, localization; MSIX packaging if wanted (`./build.ps1 install` covers local install).
+6. **Parked unless asked:** bot ladder tuning (BOT-CALIBRATION.md), lessons on zwischenzug /
+   X-ray / triangulation.
 
 ## Known issues / notes
 
