@@ -184,7 +184,7 @@ static Puzzle? BuildPuzzle(Game game, int i, Position start, SearchResult deep, 
     if (mate)
     {
         themes.Add("mate");
-        themes.Add(solverMoves >= 4 ? "mateIn4" : $"mateIn{solverMoves}");
+        themes.Add(solverMoves >= 5 ? "mateIn5" : $"mateIn{solverMoves}");
         int k = pos.KingSquare(pos.SideToMove);
         ulong checkers = pos.Checkers;
         int checker = Bitboard.Lsb(checkers);

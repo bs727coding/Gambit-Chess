@@ -98,12 +98,16 @@ public sealed class PuzzleService
         var sorted = All.OrderBy(p => p.Rating).ToList();
         if (sorted.Count == 0) return [];
         var ladder = new List<Puzzle>();
+        var used = new HashSet<string>();
         double rating = 500;
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < count && used.Count < sorted.Count; i++)
         {
             double target = rating;
-            var near = sorted.Where(p => Math.Abs(p.Rating - target) < 120 && !ladder.Contains(p)).ToList();
-            ladder.Add(near.Count > 0 ? near[_rng.Next(near.Count)] : sorted[Math.Min(sorted.Count - 1, ladder.Count)]);
+            var near = sorted.Where(p => Math.Abs(p.Rating - target) < 120 && !used.Contains(p.Id)).ToList();
+            // Past the hardest puzzles, keep serving the hardest ones left (not the easiest).
+            Puzzle pick = near.Count > 0 ? near[_rng.Next(near.Count)] : sorted.Last(p => !used.Contains(p.Id));
+            ladder.Add(pick);
+            used.Add(pick.Id);
             rating += i < 10 ? 60 : 35;
         }
         return ladder;
@@ -125,7 +129,7 @@ public sealed class PuzzleService
         return (int)Math.Round(p.Rating - before);
     }
 
-    /// <summary>Records an unrated attempt (Rush, daily repeat, theme practice).</summary>
+    /// <summary>Records an unrated attempt (Puzzle Rush, Survival, the daily puzzle).</summary>
     public void RecordUnrated(Puzzle puzzle, bool solved) => RecordCommon(puzzle, solved);
 
     public void RecordDaily(DateOnly date, bool solved)

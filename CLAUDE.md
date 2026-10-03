@@ -27,7 +27,9 @@ session short at any moment, so **checkpoint often**).
 * `./build.ps1 run` — build (Release) + launch the app  `./build.ps1 publish` — self-contained app in `artifacts/`
 * `./build.ps1 server` — online server on :5080 (all interfaces; may trigger a firewall prompt —
   for local testing bind to 127.0.0.1 with `dotnet run --project src/Gambit.Server -c Release --urls http://127.0.0.1:5080`)
-* Puzzles: `dotnet run -c Release --project tools/Gambit.PuzzleGen -- <minutes> src/Gambit.Core/Puzzles/puzzles.csv [minBot] [maxBot]` (appends, below-normal priority)
+* Puzzles: the bundled set comes from the Lichess puzzle DB (CC0): `python tools/import_lichess_puzzles.py artifacts/lichess_db_puzzle.csv.zst src/Gambit.Core/Puzzles/puzzles.csv`
+  (needs the ~300 MB download from database.lichess.org). `tools/Gambit.PuzzleGen` (engine-generated,
+  heuristic ratings) is for experiments — don't mix its output into the bundled set.
 * Online bot: `dotnet run -c Release --project tools/Gambit.OnlineBot -- http://localhost:5080 <bot-id> <tc|code> [games]`
 * Bot ladder: `dotnet run -c Release --project tools/Gambit.BotArena -- <minutes> artifacts/arena.csv <ids,...>`
   (see docs/BOT-CALIBRATION.md; bump `BotMoveProvider.Revision` when bot move choice changes)
@@ -70,7 +72,7 @@ src/Gambit.Online.Contracts net10.0  protocol DTOs + hub interfaces (bump Online
 src/Gambit.Online.Client    net10.0  OnlineClient (SignalR) + RemoteGameSession : IGameSession
 src/Gambit.Server           ASP.NET Core + SignalR, authoritative GameManager (Dockerfile at repo root)
 tests/Gambit.Tests          xUnit — perft, notation, rules, engine, content validation, online end-to-end
-tools/                      PuzzleGen, BotArena, OnlineBot, ui.ps1, screenshots, sound/icon generators
+tools/                      Lichess puzzle import, PuzzleGen, BotArena, OnlineBot, ui.ps1, screenshots, sound/icon generators
 docs/                       ROADMAP.md, PROGRESS.md, ARCHITECTURE.md, ONLINE.md
 ```
 

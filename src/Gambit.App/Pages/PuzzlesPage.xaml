@@ -117,7 +117,7 @@
             </Grid>
 
             <TextBlock Text="Practice by theme" Style="{StaticResource SectionHeaderStyle}" />
-            <VariableSizedWrapGrid x:Name="ThemeGrid" Orientation="Horizontal" ItemWidth="206" ItemHeight="70" />
+            <StackPanel x:Name="ThemeGroupsPanel" Spacing="16" />
 
             <TextBlock x:Name="SourceNote" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Margin="0,16,0,0" TextWrapping="Wrap" />
         </StackPanel>

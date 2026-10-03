@@ -39,6 +39,30 @@ public class PuzzleTests
     }
 
     [Fact]
+    public void Every_practice_theme_has_a_name_and_plenty_of_puzzles()
+    {
+        foreach ((string title, string[] themes) in PuzzleThemes.PracticeGroups)
+        {
+            foreach (string theme in themes)
+            {
+                Assert.True(PuzzleThemes.Names.ContainsKey(theme), $"{title}: no display name for {theme}");
+                Assert.True(PuzzleCatalog.CountWithTheme(theme) >= 100, $"{title}: only {PuzzleCatalog.CountWithTheme(theme)} puzzles for {theme}");
+            }
+        }
+    }
+
+    [Fact]
+    public void Ratings_cover_beginners_to_masters()
+    {
+        IReadOnlyList<Puzzle> all = PuzzleCatalog.All;
+        for (int band = 400; band < 3000; band += 100)
+        {
+            int from = band;
+            Assert.True(all.Count(p => p.Rating >= from && p.Rating < from + 100) >= 100, $"fewer than 100 puzzles rated {from}-{from + 99}");
+        }
+    }
+
+    [Fact]
     public void Csv_round_trip()
     {
         var p = new Puzzle("abc1234", Position.StartFen, ["e2e4", "e7e5"], 1234, ["opening", "short"]);

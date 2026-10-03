@@ -11,8 +11,9 @@ lessons, review your games, earn achievements, and play online against friends.
 * **Game Review** — every position analysed in parallel on all cores: Brilliant/Great/Best …
   Mistake/Blunder classifications with plain-language reasons ("this hangs your knight", "allows
   mate in 2"), accuracy for both sides, eval graph, best-move and refutation arrows.
-* **Puzzles** — rated (Glicko-2) with ranks, Puzzle Rush (3 min / 5 min / Survival), a daily puzzle
-  with streaks, and practice by theme (mates, forks, pins, discovered attacks, sacrifices…).
+* **Puzzles** — about 21,000 puzzles from the Lichess puzzle database, rated 400 to 3000: rated
+  (Glicko-2) with ranks, Puzzle Rush (3 min / 5 min / Survival), a daily puzzle with streaks, and
+  practice by 49 themes (mate patterns, forks, pins, skewers, deflection, endgame types…).
 * **Lessons** — 5 courses, 49 interactive lessons: how pieces move (with star-collecting
   mini-games), checkmate patterns, tactics, openings (Italian, Ruy Lopez, Scotch, Sicilian,
   French, Caro-Kann, Queen's Gambit, London, King's Indian, English) and endgames (two-bishop and bishop-knight mates, opposition, key squares, Lucena, Philidor…).
@@ -56,4 +57,10 @@ profile, puzzle progress, game archive) lives in `%LOCALAPPDATA%\Gambit` and sur
 | `src/Gambit.Online.Client` | SignalR client + `RemoteGameSession` |
 | `src/Gambit.Server` | Online server (Dockerfile at the repo root) |
 | `tests/Gambit.Tests` | xUnit tests (perft, rules, engine, content validation, online end-to-end) |
-| `tools/` | Puzzle generator, online bot, screenshots, UI automation, icon and sound generators |
+| `tools/` | Lichess puzzle import, puzzle generator, online bot, screenshots, UI automation, icon and sound generators |
+
+## Credits
+
+Puzzles come from the [Lichess puzzle database](https://database.lichess.org/#puzzles), released
+under [CC0](https://creativecommons.org/publicdomain/zero/1.0/) — thank you, Lichess and its players.
+`tools/import_lichess_puzzles.py` rebuilds the collection from a fresh download.

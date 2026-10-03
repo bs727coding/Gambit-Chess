@@ -51,9 +51,10 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 
 ## Session 3 — Puzzles
 
-- [x] Puzzle pipeline: **engine-generated** (`tools/Gambit.PuzzleGen`, bot self-play, verified unique solutions); optional Lichess CC0 import later (ask before downloading),
-      pick a stratified subset (~15–25k puzzles, 400–3000 rating, all major themes), pack as an
-      embedded compressed resource; validation test that every solution is legal
+- [x] Puzzle pipeline: Lichess CC0 import (`tools/import_lichess_puzzles.py`): a stratified
+      subset (~21k puzzles, 400–3000 rating, 49 practice themes) embedded in Core; validation tests
+      (legal solutions, mates, unique positions, rating and theme coverage). The engine generator
+      (`tools/Gambit.PuzzleGen`) remains for experiments
 - [x] Rated puzzles with Glicko-2 puzzle rating; adaptive selection near rating; no repeats
 - [x] Puzzle UX: opponent's setup move animates, wrong move feedback, hint (highlight piece → move),
       retry, show solution, "next", themes + rating shown after solve

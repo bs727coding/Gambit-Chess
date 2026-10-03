@@ -60,7 +60,7 @@ public sealed record Puzzle(string Id, string Fen, IReadOnlyList<string> Moves, 
     }
 }
 
-/// <summary>Human-friendly names for puzzle themes.</summary>
+/// <summary>Human-friendly names for puzzle themes (the Lichess theme keys) and the practice groups.</summary>
 public static class PuzzleThemes
 {
     public static readonly IReadOnlyDictionary<string, string> Names = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -69,24 +69,92 @@ public static class PuzzleThemes
         ["mateIn1"] = "Mate in 1",
         ["mateIn2"] = "Mate in 2",
         ["mateIn3"] = "Mate in 3",
-        ["mateIn4"] = "Mate in 4+",
+        ["mateIn4"] = "Mate in 4",
+        ["mateIn5"] = "Mate in 5 or more",
+        ["anastasiaMate"] = "Anastasia's mate",
+        ["arabianMate"] = "Arabian mate",
         ["backRankMate"] = "Back-rank mate",
+        ["balestraMate"] = "Balestra mate",
+        ["blindSwineMate"] = "Blind swine mate",
+        ["bodenMate"] = "Boden's mate",
+        ["cornerMate"] = "Corner mate",
+        ["doubleBishopMate"] = "Double bishop mate",
+        ["dovetailMate"] = "Dovetail mate",
+        ["epauletteMate"] = "Epaulette mate",
+        ["hookMate"] = "Hook mate",
+        ["killBoxMate"] = "Kill box mate",
+        ["morphysMate"] = "Morphy's mate",
+        ["operaMate"] = "Opera mate",
+        ["pillsburysMate"] = "Pillsbury's mate",
         ["smotheredMate"] = "Smothered mate",
-        ["fork"] = "Fork",
-        ["pin"] = "Pin",
+        ["swallowstailMate"] = "Swallow's tail mate",
+        ["triangleMate"] = "Triangle mate",
+        ["vukovicMate"] = "Vuković mate",
+        ["advancedPawn"] = "Advanced pawn",
+        ["attackingF2F7"] = "Attacking f2 or f7",
+        ["attraction"] = "Attraction",
+        ["capturingDefender"] = "Capture the defender",
+        ["castling"] = "Castling",
+        ["clearance"] = "Clearance",
+        ["collinearMove"] = "Collinear move",
+        ["defensiveMove"] = "Defensive move",
+        ["deflection"] = "Deflection",
         ["discoveredAttack"] = "Discovered attack",
+        ["discoveredCheck"] = "Discovered check",
+        ["doubleCheck"] = "Double check",
+        ["enPassant"] = "En passant",
+        ["exposedKing"] = "Exposed king",
+        ["fork"] = "Fork",
         ["hangingPiece"] = "Hanging piece",
-        ["sacrifice"] = "Sacrifice",
+        ["interference"] = "Interference",
+        ["intermezzo"] = "Intermezzo",
+        ["kingsideAttack"] = "Kingside attack",
+        ["pin"] = "Pin",
         ["promotion"] = "Promotion",
-        ["crushing"] = "Crushing",
-        ["advantage"] = "Advantage",
+        ["queensideAttack"] = "Queenside attack",
+        ["quietMove"] = "Quiet move",
+        ["sacrifice"] = "Sacrifice",
+        ["skewer"] = "Skewer",
+        ["trappedPiece"] = "Trapped piece",
+        ["underPromotion"] = "Underpromotion",
+        ["xRayAttack"] = "X-ray attack",
+        ["zugzwang"] = "Zugzwang",
         ["opening"] = "Opening",
         ["middlegame"] = "Middlegame",
         ["endgame"] = "Endgame",
-        ["oneMove"] = "One-move",
-        ["short"] = "Short",
-        ["long"] = "Long",
+        ["bishopEndgame"] = "Bishop endgame",
+        ["knightEndgame"] = "Knight endgame",
+        ["pawnEndgame"] = "Pawn endgame",
+        ["queenEndgame"] = "Queen endgame",
+        ["queenRookEndgame"] = "Queen and rook endgame",
+        ["rookEndgame"] = "Rook endgame",
+        ["advantage"] = "Advantage",
+        ["crushing"] = "Crushing",
+        ["equality"] = "Equality",
+        ["oneMove"] = "One-move puzzle",
+        ["short"] = "Short puzzle",
+        ["long"] = "Long puzzle",
+        ["veryLong"] = "Very long puzzle",
+        ["master"] = "Master game",
+        ["masterVsMaster"] = "Master vs master game",
+        ["superGM"] = "Super GM game",
     };
+
+    /// <summary>
+    /// The themes offered as practice on the Puzzles page, in groups. The collection is built so
+    /// each has plenty of puzzles (tools/import_lichess_puzzles.py: keep its list in sync).
+    /// </summary>
+    public static readonly IReadOnlyList<(string Title, string[] Themes)> PracticeGroups =
+    [
+        ("Checkmate patterns", ["mateIn1", "mateIn2", "mateIn3", "mateIn4", "mateIn5", "backRankMate", "smotheredMate",
+            "anastasiaMate", "arabianMate", "hookMate", "bodenMate", "doubleBishopMate", "dovetailMate"]),
+        ("Tactics", ["fork", "pin", "skewer", "discoveredAttack", "doubleCheck", "hangingPiece", "trappedPiece",
+            "sacrifice", "deflection", "attraction", "clearance", "interference", "intermezzo", "xRayAttack",
+            "capturingDefender", "quietMove", "defensiveMove", "zugzwang", "exposedKing", "kingsideAttack",
+            "queensideAttack", "attackingF2F7", "advancedPawn", "promotion", "underPromotion", "enPassant", "castling"]),
+        ("Game phases", ["opening", "middlegame", "endgame", "rookEndgame", "pawnEndgame", "bishopEndgame",
+            "knightEndgame", "queenEndgame", "queenRookEndgame"]),
+    ];
 
     public static string Name(string theme) => Names.TryGetValue(theme, out string? n) ? n : theme;
 }
@@ -95,8 +163,18 @@ public static class PuzzleThemes
 public static class PuzzleCatalog
 {
     private static readonly Lazy<List<Puzzle>> Loaded = new(Load);
+    private static readonly Lazy<Dictionary<string, int>> Counts = new(() =>
+    {
+        var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (Puzzle p in Loaded.Value)
+            foreach (string theme in p.Themes) counts[theme] = counts.GetValueOrDefault(theme) + 1;
+        return counts;
+    });
 
     public static IReadOnlyList<Puzzle> All => Loaded.Value;
+
+    /// <summary>How many puzzles carry each theme.</summary>
+    public static int CountWithTheme(string theme) => Counts.Value.GetValueOrDefault(theme);
 
     public static Puzzle? Get(string id) => Loaded.Value.FirstOrDefault(p => p.Id == id);
 
