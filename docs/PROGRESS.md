@@ -30,10 +30,8 @@ natively on Arm64.
    it appends) or, with the user's OK, the Lichess CC0 puzzle DB (~250 MB download).
 4. **Analysis board:** show variations inline in the move list (today: one line at a time plus
    "Also tried here" and side-line actions).
-5. **Online / Session 8:** spectating works end to end in tests; **its UI (Online page "Watch live
-   games", spectator mode on the game page) still needs a visual check** — it was built while the
-   user was using the app. Then: accounts/sign-in, PostgreSQL, deploy to the user's cloud account
-   (needs the user), MSIX packaging + signing, auto-update.
+5. **Online / Session 8:** accounts/sign-in, PostgreSQL, deploy to the user's cloud account (needs
+   the user), friends list, MSIX packaging + signing, auto-update.
 6. **Polish:** keyboard play on the board, Narrator pass, localization, light-theme screenshot review.
 
 ## Known issues / notes
@@ -85,7 +83,8 @@ natively on Arm64.
   in the app.
 * Server abuse protection (per-connection call rate limit, per-IP connection limit, challenge cap).
 * Spectating: list live games, watch one (re-watched after reconnects), spectator mode on the game
-  page (no moves, offers, rematch or profile stats). Tested end to end; UI not yet checked visually.
+  page (no moves, offers, rematch or profile stats). Verified in the app watching two OnlineBots:
+  live moves, "Watching · X to move", neutral "Black wins" result, nothing saved to the archive.
 * `./build.ps1 install` / `uninstall`; zero build warnings; ARCHITECTURE.md rewritten to match code.
 * Lessons 36 → 49: tactics (double check, removing the defender, overloading, trapped pieces,
   decoy, deflection), openings (Scotch, English, QGA, Slav, Alapin), endgames (two-bishop and
