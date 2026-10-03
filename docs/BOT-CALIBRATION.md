@@ -56,8 +56,22 @@ step:
 | Ember → Flint | 1017 | 91% (+918 =6 −93) | +393 ± 37 | +431 | 81 (114) |
 
 Draws at the low end fell from about half the games to almost none, games are a third as long,
-and the low steps are now real steps. The middle-ladder cliffs (Dash → Ember especially) remain;
-the stronger bots were not re-measured under revision 2 yet.
+and the low steps are now real steps.
+
+The rest of the ladder under revision 2 (40 minutes; the strong bots are slow, so only ~48 games
+per step and wide margins):
+
+| Step | Games | Stronger bot scores | Measured gap (±95%) | Revision 1 |
+|---|---|---|---|---|
+| Flint → Gale | 48 | 89% (+42 =1 −5) | +355 ± 154 | +265 |
+| Gale → Harbor | 48 | 94% (+45 =0 −3) | +470 ± 203 | +431 |
+| Harbor → Iris | 48 | 95% (+44 =3 −1) | +504 ± 221 | +645 |
+| Iris → Jade | 48 | 89% (+38 =9 −1) | +355 ± 154 | +355 |
+| Jade → Kestrel | 48 | 94% (+44 =2 −2) | +470 ± 203 | +428 |
+| Kestrel → Lumen | 47 | 77% (+28 =16 −3) | +206 ± 117 | +146 |
+
+As expected the endgame change leaves the middle cliffs in place (every step from Dash to Kestrel
+is still +350…+530): that needs the systematic approach below.
 
 ## What it means
 

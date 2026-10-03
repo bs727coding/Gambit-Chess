@@ -21,9 +21,8 @@ natively on Arm64.
 
 1. **Bot ladder** — see [BOT-CALIBRATION.md](BOT-CALIBRATION.md). Revision 2 (bots convert won
    endgames) fixed the flat, drawish low end. The middle still has cliffs (Dash → Kestrel steps
-   +265…+645 bot-Elo instead of +200): re-measure the whole ladder under revision 2, then follow
-   the systematic approach in that document (plausible mistakes instead of uniformly random moves;
-   one skill number per bot).
+   +350…+530 bot-Elo under revision 2, instead of +200): follow the systematic approach in that
+   document (plausible mistakes instead of uniformly random moves; one skill number per bot).
 2. **Lessons** still missing per the roadmap: zwischenzug, X-ray, triangulation. New tactics must
    pass the engine audit in `LessonTests` (the scripted move has to be the engine's choice).
 3. **Puzzles:** harder ones from stronger bots
