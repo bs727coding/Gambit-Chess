@@ -16,7 +16,13 @@ public sealed record GameSetup(BotProfile? Bot, Color HumanColor, TimeControl Ti
     /// <summary>An online game (the session is a RemoteGameSession).</summary>
     public bool IsOnline { get; init; }
 
+    /// <summary>Watching someone else's online game: no moves, nothing recorded in the profile.</summary>
+    public bool IsSpectating { get; init; }
+
     public bool IsHotSeat => Bot == null && !IsOnline;
+
+    /// <summary>The result is shown neutrally ("White wins") instead of "You won".</summary>
+    public bool IsNeutralView => IsHotSeat || IsSpectating;
 }
 
 public static class Ui

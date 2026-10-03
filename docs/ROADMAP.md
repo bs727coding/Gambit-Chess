@@ -108,7 +108,7 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
       Fly.io or similar — **you** create the account and sign in; Claude prepares scripts + docs)
 - [~] Rate limiting ✔, health check ✔, console logging ✔ — production DB (PostgreSQL), TLS/domain still to do
 - [~] Per-user install with Start menu shortcut (`./build.ps1 install`) ✔, app icon ✔ — MSIX packaging + signing, versioning, auto-update still to do
-- [ ] Online polish: friends list, game history sync, spectating
+- [~] Online polish: spectating ✔ — friends list, game history sync still to do
 
 ## Backlog / stretch
 

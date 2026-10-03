@@ -23,6 +23,7 @@ public enum RematchStatus
 /// An online game. Local moves are applied optimistically and sent to the server; the server is
 /// authoritative — any disagreement triggers a resync from the server's move list. Server events
 /// are marshalled to the synchronization context that created the session (the UI thread).
+/// A spectator session (<see cref="IsSpectator"/>) only mirrors the game: it never moves or offers.
 /// </summary>
 public sealed class RemoteGameSession : IGameSession
 {
@@ -37,6 +38,7 @@ public sealed class RemoteGameSession : IGameSession
         _client = client;
         _sync = SynchronizationContext.Current;
         GameId = start.GameId;
+        IsSpectator = start.YourColor == "spectator";
         _me = start.YourColor == "black" ? Color.Black : Color.White;
         TimeControl = new TimeControl(TimeSpan.FromSeconds(start.TimeControl.InitialSeconds), TimeSpan.FromSeconds(start.TimeControl.IncrementSeconds));
         Clock = new ChessClock(TimeControl);
@@ -61,7 +63,12 @@ public sealed class RemoteGameSession : IGameSession
     public TimeControl TimeControl { get; }
     public PlayerDto WhiteDto { get; }
     public PlayerDto BlackDto { get; }
+
+    /// <summary>The local player's colour (White for spectators, who watch from White's side).</summary>
     public Color LocalColor => _me;
+
+    /// <summary>Watching someone else's game: no moves, offers or rematches.</summary>
+    public bool IsSpectator { get; }
 
     public Game Game { get; private set; }
     public PlayerInfo White { get; }
@@ -69,10 +76,10 @@ public sealed class RemoteGameSession : IGameSession
     public ChessClock? Clock { get; }
 
     /// <summary>"Thinking" = waiting for the opponent's move.</summary>
-    public bool IsOpponentThinking => !_finished && !Game.IsOver && Game.SideToMove != _me;
+    public bool IsOpponentThinking => !IsSpectator && !_finished && !Game.IsOver && Game.SideToMove != _me;
 
     public bool CanTakeback => false;
-    public bool CanOfferDraw => !_finished && !Game.IsOver && Game.Moves.Count >= 2;
+    public bool CanOfferDraw => !IsSpectator && !_finished && !Game.IsOver && Game.Moves.Count >= 2;
 
     /// <summary>Rating changes reported by the server when the game ended.</summary>
     public (int? White, int? Black) RatingChanges { get; private set; }
@@ -90,7 +97,7 @@ public sealed class RemoteGameSession : IGameSession
     public event EventHandler<bool>? DrawOfferAnswered;
     public event EventHandler? DrawOfferReceived;
 
-    public bool IsLocalSide(Color side) => side == _me;
+    public bool IsLocalSide(Color side) => !IsSpectator && side == _me;
 
     public void Start()
     {
@@ -99,7 +106,7 @@ public sealed class RemoteGameSession : IGameSession
 
     public bool TrySubmitMove(Move move)
     {
-        if (_finished || Game.IsOver || Game.SideToMove != _me || !Game.IsLegal(move)) return false;
+        if (IsSpectator || _finished || Game.IsOver || Game.SideToMove != _me || !Game.IsLegal(move)) return false;
         int ply = Game.Moves.Count + 1;
         GameMove gm = Game.Play(move);
         MovePlayed?.Invoke(this, new MovePlayedEventArgs(gm, byLocalPlayer: true));
@@ -120,18 +127,27 @@ public sealed class RemoteGameSession : IGameSession
         }
     }
 
-    public void Resign() => Fire(() => _client.ResignAsync(GameId));
+    public void Resign()
+    {
+        if (!IsSpectator) Fire(() => _client.ResignAsync(GameId));
+    }
 
-    public void OfferDraw() => Fire(() => _client.OfferDrawAsync(GameId));
+    public void OfferDraw()
+    {
+        if (!IsSpectator) Fire(() => _client.OfferDrawAsync(GameId));
+    }
 
-    public void RespondToDraw(bool accept) => Fire(() => _client.RespondToDrawAsync(GameId, accept));
+    public void RespondToDraw(bool accept)
+    {
+        if (!IsSpectator) Fire(() => _client.RespondToDrawAsync(GameId, accept));
+    }
 
     public bool Takeback() => false;
 
     /// <summary>Asks for a rematch, or accepts the opponent's request. Only after the game has ended.</summary>
     public void OfferRematch()
     {
-        if (!_finished || Rematch == RematchStatus.Offered) return;
+        if (IsSpectator || !_finished || Rematch == RematchStatus.Offered) return;
         if (Rematch != RematchStatus.Received) SetRematch(RematchStatus.Offered);
         Fire(() => _client.OfferRematchAsync(GameId));
     }
@@ -187,22 +203,23 @@ public sealed class RemoteGameSession : IGameSession
 
     private void OnDrawOffered(string gameId, string byColor)
     {
-        if (gameId != GameId) return;
+        if (gameId != GameId || IsSpectator) return;
         bool mine = byColor == (_me == Color.White ? "white" : "black");
         if (!mine) Post(() => DrawOfferReceived?.Invoke(this, EventArgs.Empty));
     }
 
     private void OnDrawDeclined(string gameId)
     {
-        if (gameId == GameId) Post(() => DrawOfferAnswered?.Invoke(this, false));
+        if (gameId == GameId && !IsSpectator) Post(() => DrawOfferAnswered?.Invoke(this, false));
     }
 
     private void OnOpponentConnection(string gameId, bool connected, int graceSeconds)
     {
         if (gameId != GameId) return;
+        string who = IsSpectator ? "A player" : "Your opponent";
         Post(() => ChatReceived?.Invoke(this, new ChatEventArgs(ServerVoice, connected
-            ? "Your opponent is connected."
-            : $"Your opponent disconnected. They have {graceSeconds} seconds to come back.")));
+            ? $"{who} is connected."
+            : $"{who} disconnected and has {graceSeconds} seconds to come back.")));
     }
 
     private void OnResync(GameStartDto dto)
@@ -240,7 +257,7 @@ public sealed class RemoteGameSession : IGameSession
     private static readonly PlayerInfo ServerVoice = new("Server", PlayerKind.Remote) { Id = "server" };
 
     private PlayerInfo ToInfo(PlayerDto dto, Color side) =>
-        new(dto.Name, side == _me ? PlayerKind.LocalHuman : PlayerKind.Remote, dto.Rating)
+        new(dto.Name, IsLocalSide(side) ? PlayerKind.LocalHuman : PlayerKind.Remote, dto.Rating)
         {
             Id = dto.Id,
             Subtitle = dto.Provisional ? $"{dto.Rating}? (provisional)" : dto.Rating.ToString(),
@@ -327,6 +344,7 @@ public sealed class RemoteGameSession : IGameSession
     {
         if (_disposed) return;
         _disposed = true;
+        if (IsSpectator) Fire(() => _client.UnwatchAsync(GameId));
         _client.MovePlayed -= OnMovePlayed;
         _client.GameOver -= OnGameOver;
         _client.DrawOffered -= OnDrawOffered;

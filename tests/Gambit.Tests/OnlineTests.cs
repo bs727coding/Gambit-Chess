@@ -189,6 +189,41 @@ public sealed class OnlineTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Spectators_list_watch_and_follow_games()
+    {
+        OnlineClient alice = await Connect("Eve"), bob = await Connect("Fay"), viewer = await Connect("Gus");
+        Task<GameStartDto> aStart = Next<GameStartDto>(h => alice.GameStarted += h);
+        ChallengeDto ch = await alice.CreateChallengeAsync(new TimeControlDto(300, 0), "white");
+        await bob.AcceptChallengeAsync(ch.Code);
+        GameStartDto game = await aStart;
+        Assert.True(await alice.MakeMoveAsync(game.GameId, 1, "e2e4"));
+
+        LiveGameDto listed = Assert.Single(await viewer.ListGamesAsync(), g => g.GameId == game.GameId);
+        Assert.Equal("Eve", listed.White.Name);
+        Assert.Equal(1, listed.Plies);
+
+        GameStartDto? watched = await viewer.WatchAsync(game.GameId);
+        Assert.NotNull(watched);
+        Assert.Equal("spectator", watched.YourColor);
+        Assert.Equal(["e2e4"], watched.Moves);
+        Assert.Equal(1, (await viewer.ListGamesAsync()).Single(g => g.GameId == game.GameId).Spectators);
+
+        using var session = new RemoteGameSession(viewer, watched);
+        Assert.True(session.IsSpectator);
+        Assert.False(session.IsLocalSide(Gambit.Core.Board.Color.White));
+        Assert.False(session.IsLocalSide(Gambit.Core.Board.Color.Black));
+        Assert.False(session.TrySubmitMove(Uci.Parse(session.Game.Position, "e7e5")));
+
+        Task<MovePlayedEventArgs> seen = Next<MovePlayedEventArgs>(h => session.MovePlayed += (_, e) => h(e));
+        Assert.True(await bob.MakeMoveAsync(game.GameId, 2, "e7e5"));
+        Assert.Equal("e5", (await seen).Move.San);
+
+        await viewer.UnwatchAsync(game.GameId);
+        Assert.Equal(0, (await viewer.ListGamesAsync()).Single(g => g.GameId == game.GameId).Spectators);
+        Assert.Null(await viewer.WatchAsync("no-such-game"));
+    }
+
+    [Fact]
     public async Task Remote_sessions_negotiate_a_rematch()
     {
         OnlineClient alice = await Connect("Cy"), bob = await Connect("Di");

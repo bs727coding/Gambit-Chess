@@ -19,6 +19,7 @@ public sealed class OnlineClient : IAsyncDisposable
 {
     private HubConnection? _hub;
     private string _name = "Guest";
+    private readonly HashSet<string> _watching = [];
 
     public OnlineState State { get; private set; } = OnlineState.Disconnected;
     public PlayerDto? Me { get; private set; }
@@ -75,6 +76,11 @@ public sealed class OnlineClient : IAsyncDisposable
         {
             SetState(OnlineState.Connected);
             await _hub.InvokeAsync<PlayerDto>(nameof(IGameServer.Hello), _name, OnlineProtocol.Version);
+            // A new connection isn't in any spectator group yet: watch again and catch up.
+            string[] watching;
+            lock (_watching) watching = [.. _watching];
+            foreach (string id in watching)
+                if (await _hub.InvokeAsync<GameStartDto?>(nameof(IGameServer.Watch), id) is GameStartDto game) Resync?.Invoke(game);
         };
         _hub.Closed += _ =>
         {
@@ -98,6 +104,7 @@ public sealed class OnlineClient : IAsyncDisposable
 
     public async Task DisconnectAsync()
     {
+        lock (_watching) _watching.Clear();
         if (_hub == null) return;
         HubConnection hub = _hub;
         _hub = null;
@@ -125,6 +132,21 @@ public sealed class OnlineClient : IAsyncDisposable
     public Task<bool> RejoinAsync(string gameId) => Hub.InvokeAsync<bool>(nameof(IGameServer.Rejoin), gameId);
     public Task OfferRematchAsync(string gameId) => Hub.InvokeAsync(nameof(IGameServer.OfferRematch), gameId);
     public Task DeclineRematchAsync(string gameId) => Hub.InvokeAsync(nameof(IGameServer.DeclineRematch), gameId);
+    public Task<IReadOnlyList<LiveGameDto>> ListGamesAsync() => Hub.InvokeAsync<IReadOnlyList<LiveGameDto>>(nameof(IGameServer.ListGames));
+
+    /// <summary>Starts watching a game (null if it's no longer running). Watched games survive reconnects.</summary>
+    public async Task<GameStartDto?> WatchAsync(string gameId)
+    {
+        GameStartDto? game = await Hub.InvokeAsync<GameStartDto?>(nameof(IGameServer.Watch), gameId);
+        if (game?.YourColor == "spectator") lock (_watching) _watching.Add(gameId);
+        return game;
+    }
+
+    public async Task UnwatchAsync(string gameId)
+    {
+        lock (_watching) _watching.Remove(gameId);
+        if (_hub is { State: HubConnectionState.Connected } hub) await hub.InvokeAsync(nameof(IGameServer.Unwatch), gameId);
+    }
 
     private void SetState(OnlineState s)
     {

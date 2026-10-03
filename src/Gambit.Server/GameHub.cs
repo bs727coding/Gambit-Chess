@@ -52,8 +52,15 @@ public sealed class GameHub(PlayerRegistry players, GameManager games) : Hub<IGa
 
     public Task DeclineRematch(string gameId) => games.DeclineRematchAsync(Me, gameId);
 
+    public Task<IReadOnlyList<LiveGameDto>> ListGames() => Task.FromResult(games.ListGames());
+
+    public Task<GameStartDto?> Watch(string gameId) => games.WatchAsync(Me, Context.ConnectionId, gameId);
+
+    public Task Unwatch(string gameId) => games.UnwatchAsync(Context.ConnectionId, gameId);
+
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
+        games.RemoveSpectator(Context.ConnectionId);
         if (players.Disconnect(Context.ConnectionId) is Player p) await games.OnDisconnectedAsync(p);
         await base.OnDisconnectedAsync(exception);
     }

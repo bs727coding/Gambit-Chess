@@ -16,12 +16,12 @@ public sealed record TimeControlDto(int InitialSeconds, int IncrementSeconds)
     public string Key => $"{InitialSeconds / 60}+{IncrementSeconds}";
 }
 
-/// <summary>Sent to both players when a game starts (also when rejoining a running game).</summary>
+/// <summary>Sent to both players when a game starts (also when rejoining a running game), and to spectators.</summary>
 public sealed record GameStartDto(
     string GameId,
     PlayerDto White,
     PlayerDto Black,
-    string YourColor,          // "white" | "black"
+    string YourColor,          // "white" | "black" | "spectator"
     TimeControlDto TimeControl,
     string StartFen,
     IReadOnlyList<string> Moves,
@@ -39,6 +39,9 @@ public sealed record GameOverDto(string GameId, string Result, string Terminatio
 public sealed record ChallengeDto(string Code, TimeControlDto TimeControl, string Color, PlayerDto Creator);
 
 public sealed record LobbyStatsDto(int PlayersOnline, int GamesInProgress, IReadOnlyDictionary<string, int> Seeking);
+
+/// <summary>A game in progress that can be watched.</summary>
+public sealed record LiveGameDto(string GameId, PlayerDto White, PlayerDto Black, TimeControlDto TimeControl, int Plies, int Spectators);
 
 /// <summary>Server → client calls.</summary>
 public interface IGameClient
@@ -79,4 +82,12 @@ public interface IGameServer
 
     /// <summary>Declines the opponent's rematch offer, or withdraws one's own.</summary>
     Task DeclineRematch(string gameId);
+
+    /// <summary>Games in progress, most-watched first.</summary>
+    Task<IReadOnlyList<LiveGameDto>> ListGames();
+
+    /// <summary>Starts watching a game: returns its state (YourColor = "spectator") and streams its moves; null if it isn't running.</summary>
+    Task<GameStartDto?> Watch(string gameId);
+
+    Task Unwatch(string gameId);
 }

@@ -89,11 +89,82 @@ public sealed partial class OnlinePage : Page
         StatusText.Text = text;
         StatusDot.Fill = new SolidColorBrush(Ui.ParseColor(color));
         bool connected = state == OnlineState.Connected;
-        LobbyGrid.IsHitTestVisible = connected;
-        LobbyGrid.Opacity = connected ? 1 : 0.45;
+        LobbyGrid.IsHitTestVisible = WatchCard.IsHitTestVisible = connected;
+        LobbyGrid.Opacity = WatchCard.Opacity = connected ? 1 : 0.45;
         ConnectButton.Content = connected ? "Disconnect" : "Connect";
         ConnectButton.IsEnabled = state is OnlineState.Connected or OnlineState.Disconnected;
-        if (!connected) StatsText.Text = "";
+        if (!connected)
+        {
+            StatsText.Text = "";
+            LiveGamesList.Children.Clear();
+            NoGamesText.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            _ = RefreshGamesAsync();
+        }
+    }
+
+    // ------------------------------------------------------------------ spectating
+
+    private async void RefreshGames_Click(object sender, RoutedEventArgs e) => await RefreshGamesAsync();
+
+    private async Task RefreshGamesAsync()
+    {
+        if (!Online.IsConnected) return;
+        try
+        {
+            IReadOnlyList<LiveGameDto> games = await Online.Client.ListGamesAsync();
+            LiveGamesList.Children.Clear();
+            foreach (LiveGameDto g in games) LiveGamesList.Children.Add(LiveGameRow(g));
+            NoGamesText.Visibility = games.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex.Message);
+        }
+    }
+
+    private FrameworkElement LiveGameRow(LiveGameDto g)
+    {
+        var row = new Grid { ColumnSpacing = 12 };
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        var text = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+        text.Children.Add(new TextBlock
+        {
+            Text = $"{g.White.Name} ({g.White.Rating}) vs {g.Black.Name} ({g.Black.Rating})",
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        });
+        string watching = g.Spectators > 0 ? $" · {g.Spectators} watching" : "";
+        text.Children.Add(new TextBlock { Text = $"{g.TimeControl.Key.Replace("+", " | ")} · move {g.Plies / 2 + 1}{watching}", FontSize = 12, Opacity = 0.7 });
+        row.Children.Add(text);
+
+        var watch = new Button { Content = "Watch", VerticalAlignment = VerticalAlignment.Center };
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(watch, $"Watch {g.White.Name} vs {g.Black.Name}");
+        watch.Click += async (_, _) => await WatchAsync(g.GameId);
+        Grid.SetColumn(watch, 1);
+        row.Children.Add(watch);
+        return row;
+    }
+
+    private async Task WatchAsync(string gameId)
+    {
+        if (!EnsureConnected()) return;
+        try
+        {
+            if (await Online.Client.WatchAsync(gameId) is GameStartDto game) Online.Open(game);
+            else
+            {
+                ShowError("That game has already finished.");
+                await RefreshGamesAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex.Message);
+        }
     }
 
     private async void Connect_Click(object sender, RoutedEventArgs e)

@@ -62,7 +62,7 @@ Health check: `GET /health` → `ok`. `GET /` shows players online and games in 
 
 Client → server: `Hello(name, version)`, `Seek(tc)`, `CancelSeek()`, `CreateChallenge(tc, color)`,
 `AcceptChallenge(code)`, `MakeMove(gameId, ply, uci)`, `Resign`, `OfferDraw`, `RespondToDraw`, `Rejoin`,
-`OfferRematch(gameId)`, `DeclineRematch(gameId)`.
+`OfferRematch(gameId)`, `DeclineRematch(gameId)`, `ListGames()`, `Watch(gameId)`, `Unwatch(gameId)`.
 
 Server → client: `Welcome`, `GameStarted`, `MovePlayed`, `GameOver`, `DrawOffered`, `DrawDeclined`,
 `OpponentConnection`, `Resync`, `Notice`, `RematchOffered`, `RematchDeclined(gameId, unavailable)`.
@@ -74,7 +74,12 @@ Bump `OnlineProtocol.Version` for incompatible changes (older apps are told to u
 server starts a new game with colors swapped and the same time control (once per game). Offers are
 withdrawn automatically when a player seeks, starts another game or disconnects.
 
+**Spectators:** `ListGames` returns the games in progress (most-watched first). `Watch` returns the
+game's state with `YourColor = "spectator"` and adds the connection to the game's group, so it
+receives the same move and result messages as the players; draw offers are ignored client-side.
+The client re-watches after a reconnect.
+
 ## Next steps (roadmap Session 8)
 
-Real accounts (sign-in), PostgreSQL storage, rate limiting, spectating, friends list,
+Real accounts (sign-in), PostgreSQL storage, friends list,
 chat with moderation, and a public deployment.

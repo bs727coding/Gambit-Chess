@@ -28,6 +28,9 @@ public sealed class GameRoom(string id, Player white, Player black, TimeControlD
     public string? RematchOfferBy { get; set; }
     public bool RematchStarted { get; set; }
 
+    /// <summary>Connection ids of spectators (they share the room's SignalR group with the players).</summary>
+    public HashSet<string> Spectators { get; } = [];
+
     public Color? ColorOf(Player p) => ReferenceEquals(p, White) ? Color.White : ReferenceEquals(p, Black) ? Color.Black : null;
     public Player PlayerOf(Color c) => c == Color.White ? White : Black;
 
@@ -306,6 +309,52 @@ public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerReg
         if (opponent.ConnectionId is string conn) await hub.Clients.Client(conn).RematchDeclined(room.Id, unavailable);
     }
 
+    // ------------------------------------------------------------------ spectators
+
+    /// <summary>Games in progress, most-watched first.</summary>
+    public IReadOnlyList<LiveGameDto> ListGames()
+    {
+        var list = new List<LiveGameDto>();
+        foreach (GameRoom room in _rooms.Values)
+        {
+            lock (room.Gate)
+            {
+                if (room.Finished || room.Game.IsOver) continue;
+                list.Add(new LiveGameDto(room.Id, players.ToDto(room.White, room.Category), players.ToDto(room.Black, room.Category),
+                    room.TimeControl, room.Game.Moves.Count, room.Spectators.Count));
+            }
+        }
+        return list.OrderByDescending(g => g.Spectators).ThenByDescending(g => g.Plies).Take(50).ToList();
+    }
+
+    /// <summary>Adds a spectator to a running game; returns its current state, or null.</summary>
+    public async Task<GameStartDto?> WatchAsync(Player p, string connectionId, string gameId)
+    {
+        if (!_rooms.TryGetValue(gameId, out GameRoom? room)) return null;
+        lock (room.Gate)
+        {
+            if (room.Finished) return null;
+            if (room.ColorOf(p) == null) room.Spectators.Add(connectionId);
+        }
+        await hub.Groups.AddToGroupAsync(connectionId, room.Id);
+        return StartDto(room, p);
+    }
+
+    public async Task UnwatchAsync(string connectionId, string gameId)
+    {
+        if (!_rooms.TryGetValue(gameId, out GameRoom? room)) return;
+        bool removed;
+        lock (room.Gate) removed = room.Spectators.Remove(connectionId);
+        if (removed) await hub.Groups.RemoveFromGroupAsync(connectionId, room.Id);
+    }
+
+    /// <summary>Forgets a closed connection's spectator seats (SignalR drops its groups itself).</summary>
+    public void RemoveSpectator(string connectionId)
+    {
+        foreach (GameRoom room in _rooms.Values)
+            lock (room.Gate) room.Spectators.Remove(connectionId);
+    }
+
     /// <summary>Cancels pending rematch offers involving <paramref name="p"/> (they left or started another game).</summary>
     private async Task WithdrawRematchOffersAsync(Player p)
     {
@@ -429,7 +478,7 @@ public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerReg
                 room.Id,
                 players.ToDto(room.White, room.Category),
                 players.ToDto(room.Black, room.Category),
-                ReferenceEquals(forPlayer, room.White) ? "white" : "black",
+                room.ColorOf(forPlayer) switch { Color.White => "white", Color.Black => "black", _ => "spectator" },
                 room.TimeControl,
                 room.Game.StartFen,
                 room.Game.Moves.Select(m => m.Uci).ToList(),

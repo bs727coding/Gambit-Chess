@@ -54,6 +54,9 @@ public sealed class OnlineService
 
     public Task DisconnectAsync() => Client.DisconnectAsync();
 
+    /// <summary>Shows a game the server sent (a player's own game, or one being watched). Call on the UI thread.</summary>
+    public void Open(GameStartDto start) => OpenGame(start);
+
     private void OpenGame(GameStartDto start)
     {
         GameOpened?.Invoke();

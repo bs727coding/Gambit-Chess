@@ -58,9 +58,9 @@ public sealed partial class GamePage : Page
         ApplySettings();
     }
 
-    /// <summary>True while an unfinished game exists (the Play tab returns to it).</summary>
+    /// <summary>True while an unfinished game of the user's exists (the Play tab returns to it).</summary>
     public static bool HasActiveGame =>
-        _instance?._session is { } s ? !s.Game.IsOver : ActiveGameStore.Exists;
+        _instance?._session is { } s ? !s.Game.IsOver && _instance._setup?.IsSpectating != true : ActiveGameStore.Exists;
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
@@ -153,7 +153,7 @@ public sealed partial class GamePage : Page
     private void StartOnline(RemoteGameSession remote)
     {
         EndSession();
-        var setup = new GameSetup(null, remote.LocalColor, remote.TimeControl, AllowTakebacks: false) { IsOnline = true };
+        var setup = new GameSetup(null, remote.LocalColor, remote.TimeControl, AllowTakebacks: false) { IsOnline = true, IsSpectating = remote.IsSpectator };
         AttachSession(remote, setup, playStartSound: remote.Game.Moves.Count == 0);
     }
 
@@ -248,7 +248,7 @@ public sealed partial class GamePage : Page
         RecordResult();
         if (_setup?.IsOnline != true) ActiveGameStore.Clear();
         _clockTimer.Stop();
-        SoundService.Play(_setup?.IsHotSeat == false && _session?.Game.Winner == _setup.HumanColor ? GameSound.Win : GameSound.End);
+        SoundService.Play(_setup?.IsNeutralView == false && _session?.Game.Winner == _setup.HumanColor ? GameSound.Win : GameSound.End);
         PostGamePanel.Visibility = Visibility.Visible;
         RefreshAll();
         _ = ShowGameOverDialogAsync(e);
@@ -312,6 +312,7 @@ public sealed partial class GamePage : Page
             _ => "Rematch",
         };
         RematchButton.IsEnabled = status != RematchStatus.Offered;
+        RematchButton.Visibility = _setup?.IsSpectating == true ? Visibility.Collapsed : Visibility.Visible;
         if (_resultDialog != null && status == RematchStatus.Received) _resultDialog.SecondaryButtonText = "Accept rematch";
     }
 
@@ -381,7 +382,7 @@ public sealed partial class GamePage : Page
 
     private void UpdateInteraction()
     {
-        if (_session == null || _session.Game.IsOver || _viewPly >= 0 || _setup == null)
+        if (_session == null || _session.Game.IsOver || _viewPly >= 0 || _setup == null || _setup.IsSpectating)
         {
             Board.Interaction = BoardInteraction.None;
             Board.AllowPremoves = false;
@@ -439,7 +440,9 @@ public sealed partial class GamePage : Page
             PlayerInfo opp = _setup.HumanColor == Color.White ? _session.Black : _session.White;
             OpponentAvatar.Children.Add(Ui.Avatar(opp.Name.Length > 0 ? opp.Name[..1].ToUpperInvariant() : "?", "#0F6CBD", 56));
             OpponentName.Text = opp.Rating is int r ? $"{opp.Name} ({r})" : opp.Name;
-            OpponentTagline.Text = $"Online · {_setup.TimeControl.DisplayName} · rated";
+            OpponentTagline.Text = _setup.IsSpectating
+                ? $"Watching {_session.White.Name} vs {_session.Black.Name} · {_setup.TimeControl.DisplayName}"
+                : $"Online · {_setup.TimeControl.DisplayName} · rated";
         }
         else
         {
@@ -481,7 +484,7 @@ public sealed partial class GamePage : Page
             return;
         }
         Color bottom = BottomColor;
-        if (!_lowTimeWarned && _setup is { IsHotSeat: false } && clock.Running == _setup.HumanColor && clock.Remaining(_setup.HumanColor) < TimeSpan.FromSeconds(10))
+        if (!_lowTimeWarned && _setup is { IsHotSeat: false, IsSpectating: false } && clock.Running == _setup.HumanColor && clock.Remaining(_setup.HumanColor) < TimeSpan.FromSeconds(10))
         {
             _lowTimeWarned = true;
             SoundService.Play(GameSound.LowTime);
@@ -509,6 +512,7 @@ public sealed partial class GamePage : Page
         if (g.IsOver) StatusText.Text = g.ResultDescription;
         else if (_viewPly >= 0) StatusText.Text = "Viewing an earlier position";
         else if (_session.IsOpponentThinking) StatusText.Text = $"{OpponentDisplayName()} is thinking…";
+        else if (_setup?.IsSpectating == true) StatusText.Text = $"Watching · {(g.SideToMove == Color.White ? _session.White : _session.Black).Name} to move";
         else if (_setup?.IsHotSeat == true) StatusText.Text = $"{g.SideToMove.Name()} to move";
         else StatusText.Text = g.Position.InCheck ? "Check! Your move" : "Your move";
     }
@@ -516,9 +520,11 @@ public sealed partial class GamePage : Page
     private void UpdateButtons()
     {
         bool live = _session != null && !_session.Game.IsOver;
+        bool playing = _setup?.IsSpectating != true;
         TakebackButton.IsEnabled = live && _session!.CanTakeback;
         DrawButton.IsEnabled = live && _session!.CanOfferDraw;
-        ResignButton.IsEnabled = live && _session!.Game.Moves.Count > 0;
+        ResignButton.IsEnabled = live && playing && _session!.Game.Moves.Count > 0;
+        DrawButton.Visibility = ResignButton.Visibility = playing ? Visibility.Visible : Visibility.Collapsed;
         TakebackButton.Visibility = _setup?.AllowTakebacks == false ? Visibility.Collapsed : Visibility.Visible;
         HintButton.IsEnabled = live && _setup?.IsOnline != true && _viewPly < 0 && !_session!.IsOpponentThinking && _session.IsLocalSide(_session.Game.SideToMove);
 
@@ -558,7 +564,7 @@ public sealed partial class GamePage : Page
 
     private void RecordResult()
     {
-        if (_recorded || _session == null || _setup == null) return;
+        if (_recorded || _session == null || _setup == null || _setup.IsSpectating) return; // watched games aren't yours
         _recorded = true;
         Game g = _session.Game;
         if (g.Moves.Count == 0) return;
@@ -585,7 +591,7 @@ public sealed partial class GamePage : Page
         Game g = _session.Game;
         bool aborted = g.Termination == Termination.Aborted;
         string title = aborted ? "Game aborted"
-            : _setup.IsHotSeat ? g.Winner switch { Color.White => "White wins", Color.Black => "Black wins", _ => "Draw" }
+            : _setup.IsNeutralView ? g.Winner switch { Color.White => "White wins", Color.Black => "Black wins", _ => "Draw" }
             : g.Winner == _setup.HumanColor ? "You won!" : g.Winner == null ? "Draw" : "You lost";
 
         var content = new StackPanel { Spacing = 10 };
@@ -605,7 +611,7 @@ public sealed partial class GamePage : Page
             if (g.Winner == _setup.HumanColor && rec.Wins == 1)
                 content.Children.Add(new TextBlock { Text = $"First win against {bp.Name}! Try the next bot up.", TextWrapping = TextWrapping.Wrap });
         }
-        if (_session is RemoteGameSession remote)
+        if (_session is RemoteGameSession { IsSpectator: false } remote)
         {
             int? change = _setup.HumanColor == Color.White ? remote.RatingChanges.White : remote.RatingChanges.Black;
             if (change is int d)
@@ -617,7 +623,9 @@ public sealed partial class GamePage : Page
             Title = title,
             Content = content,
             PrimaryButtonText = "Game review",
-            SecondaryButtonText = (_session as RemoteGameSession)?.Rematch == RematchStatus.Received ? "Accept rematch" : "Rematch",
+            // Spectators get no rematch button (an empty text hides it).
+            SecondaryButtonText = _setup.IsSpectating ? ""
+                : (_session as RemoteGameSession)?.Rematch == RematchStatus.Received ? "Accept rematch" : "Rematch",
             CloseButtonText = "Close",
             DefaultButton = ContentDialogButton.Primary,
         };
