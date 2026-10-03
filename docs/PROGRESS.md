@@ -15,15 +15,14 @@ natively on Arm64.
 | Tools | `import_lichess_puzzles.py`, `Gambit.PuzzleGen` (experiments), `Gambit.BotArena` (ladder measurement), `Gambit.OnlineBot` (plays online, accepts rematches), `ui.ps1`, `ui-scroll.ps1`, `screenshot-quiet.ps1` |
 | Content | 21,162 puzzles from the Lichess puzzle DB (CC0; `tools/import_lichess_puzzles.py`): 400–1,100 per 100-point band from 400 to 2999, 49 practice themes with ≥ 120 each, 25 practice openings with ≥ 50 each; 49 lessons; tactic/mate solutions audited by the engine in tests |
 | Install | `./build.ps1 install` → `%LOCALAPPDATA%\Programs\Gambit` + Start menu shortcut (tested into a scratch folder; not installed for real, the user decides) |
-| Tests | 135 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
+| Tests | 136 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
 
 ## Next steps
 
 **Priority (from the user, 2026-10-02): a functional, clean, correct app over bot tuning.**
 
-1. **In progress (the user's list, 2026-10-03), in this order:**
-   a. a faster engine (benchmark first; bot strength must not change unmeasured);
-   b. first-run onboarding (name, experience level → suggested bot and starting puzzle rating).
+1. **In progress (the user's list, 2026-10-03):** first-run onboarding (name, experience level →
+   suggested bot and starting puzzle rating).
 2. **Accessibility (not yet asked for):** keyboard play on the board, a Narrator pass.
 3. **Online:** stays local for now (the user's call, 2026-10-02); hosting is ready for when they
    want it (Fly.io: four commands, docs/ONLINE.md). Before real users: accounts/sign-in, a
@@ -36,8 +35,9 @@ natively on Arm64.
 
 ## Known issues / notes
 
-* Engine speed is modest (~0.7M nodes/s single-threaded). Ideas: incremental eval, pawn hash,
-  staged movegen, cheaper SEE.
+* Engine: ~1.5M nodes/s on one thread (Release, `tools/bench.cs`). Ideas left: Lazy SMP for the
+  analysis board (the big one; makes analysis nondeterministic), incremental piece-square sums and
+  a pawn hash (~5% each). Staged move generation would change move order (and the signature).
 * Online accounts are guest tokens (secret in settings). No sign-in, no moderation yet.
 * UI tests: `tools/ui.ps1` drives the app through UI Automation. Board squares are invokable
   elements (`sq-e4`), so moves can be played without the mouse:
@@ -157,3 +157,14 @@ natively on Arm64.
   your success rate, and a solved puzzle names its opening. Tests cover the CSV column, the names
   and the coverage. Verified in the app: a Sicilian puzzle (Lichess #dA7r3) solved, rated and
   counted on its tile.
+* Faster engine, same moves. New `tools/bench.cs` + `Bench` (12 positions at a fixed depth): the
+  node count is the search signature, pinned by a test and unchanged (478,571 at depth 8), so every
+  search visits exactly the same tree as before. Changes: evaluation rewritten for speed (branch-free
+  piece-square sums, per-piece-type mobility, king squares looked up once) — same scores, ~1.6x
+  faster per call; `Position` keeps its bitboards and board inline; magic lookups packed per square;
+  a 1 MB static-evaluation cache in the searcher (27% hits). Alternating old and new builds: 1.2x
+  faster search with tiered PGO (as the app runs), 1.28x without. Startup: the magic bitboard
+  factors were searched for on every launch (0.9 s Release, 1.9 s Debug, despite a comment saying
+  "a few milliseconds"); they are now constants, checked while the tables are built (24 ms).
+  Depth- and node-limited bots (Acorn to Iris) play exactly as before; time-limited searches (hints,
+  review, analysis, Jade and up) get ~1.2x more nodes. Verified: all tests, analysis in the app.

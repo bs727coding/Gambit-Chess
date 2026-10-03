@@ -12,9 +12,10 @@ public sealed class Position
 {
     public const string StartFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-    private readonly ulong[] _byType = new ulong[7];
-    private readonly ulong[] _byColor = new ulong[2];
-    private readonly Piece[] _board = new Piece[64];
+    // Stored inline (no array objects): read millions of times a second by the engine.
+    private TypeBitboards _byType;   // by PieceType (0 and 7 unused)
+    private ColorBitboards _byColor; // by Color
+    private Mailbox _board;          // the piece on each square
     private StateInfo[] _states = new StateInfo[512];
     private int _stateCount;
 
@@ -53,9 +54,9 @@ public sealed class Position
 
     private Position(Position other)
     {
-        Array.Copy(other._byType, _byType, _byType.Length);
-        Array.Copy(other._byColor, _byColor, _byColor.Length);
-        Array.Copy(other._board, _board, _board.Length);
+        _byType = other._byType;
+        _byColor = other._byColor;
+        _board = other._board;
         _states = (StateInfo[])other._states.Clone();
         _stateCount = other._stateCount;
         SideToMove = other.SideToMove;
@@ -84,23 +85,23 @@ public sealed class Position
     public ulong Occupied
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => _byColor[0] | _byColor[1];
+        get => ColorBb(0) | ColorBb(1);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ulong Pieces(Color c) => _byColor[(int)c];
+    public ulong Pieces(Color c) => ColorBb((int)c);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ulong Pieces(PieceType t) => _byType[(int)t];
+    public ulong Pieces(PieceType t) => TypeBb((int)t);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ulong Pieces(Color c, PieceType t) => _byType[(int)t] & _byColor[(int)c];
+    public ulong Pieces(Color c, PieceType t) => TypeBb((int)t) & ColorBb((int)c);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ulong Pieces(Color c, PieceType t1, PieceType t2) => (_byType[(int)t1] | _byType[(int)t2]) & _byColor[(int)c];
+    public ulong Pieces(Color c, PieceType t1, PieceType t2) => (TypeBb((int)t1) | TypeBb((int)t2)) & ColorBb((int)c);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public int KingSquare(Color c) => Bitboard.Lsb(_byType[(int)PieceType.King] & _byColor[(int)c]);
+    public int KingSquare(Color c) => Bitboard.Lsb(TypeBb((int)PieceType.King) & ColorBb((int)c));
 
     public int Count(Color c, PieceType t) => Bitboard.Count(Pieces(c, t));
 
@@ -108,10 +109,10 @@ public sealed class Position
     public ulong AttackersTo(int sq, ulong occupied) =>
         (Attacks.Pawn(Color.White, sq) & Pieces(Color.Black, PieceType.Pawn))
         | (Attacks.Pawn(Color.Black, sq) & Pieces(Color.White, PieceType.Pawn))
-        | (Attacks.Knight(sq) & _byType[(int)PieceType.Knight])
-        | (Attacks.King(sq) & _byType[(int)PieceType.King])
-        | (Attacks.Bishop(sq, occupied) & (_byType[(int)PieceType.Bishop] | _byType[(int)PieceType.Queen]))
-        | (Attacks.Rook(sq, occupied) & (_byType[(int)PieceType.Rook] | _byType[(int)PieceType.Queen]));
+        | (Attacks.Knight(sq) & TypeBb((int)PieceType.Knight))
+        | (Attacks.King(sq) & TypeBb((int)PieceType.King))
+        | (Attacks.Bishop(sq, occupied) & (TypeBb((int)PieceType.Bishop) | TypeBb((int)PieceType.Queen)))
+        | (Attacks.Rook(sq, occupied) & (TypeBb((int)PieceType.Rook) | TypeBb((int)PieceType.Queen)));
 
     public ulong AttackersTo(int sq) => AttackersTo(sq, Occupied);
 
@@ -213,7 +214,7 @@ public sealed class Position
         st.Checkers = Checkers;
 
         int from = m.From, to = m.To;
-        Piece piece = _board[from];
+        Piece piece = BoardAt(from);
         Color us = SideToMove, them = us.Opposite();
         ulong key = Key;
 
@@ -230,7 +231,7 @@ public sealed class Position
         {
             int rookFrom = flag == MoveFlag.KingCastle ? to + 1 : to - 2;
             int rookTo = flag == MoveFlag.KingCastle ? to - 1 : to + 1;
-            Piece rook = _board[rookFrom];
+            Piece rook = BoardAt(rookFrom);
             MovePieceRaw(from, to, piece);
             MovePieceRaw(rookFrom, rookTo, rook);
             key ^= Zobrist.Piece(piece, from) ^ Zobrist.Piece(piece, to)
@@ -241,7 +242,7 @@ public sealed class Position
             if (m.IsCapture)
             {
                 int capSq = flag == MoveFlag.EnPassant ? (us == Color.White ? to - 8 : to + 8) : to;
-                Piece captured = _board[capSq];
+                Piece captured = BoardAt(capSq);
                 st.Captured = captured;
                 RemovePieceRaw(capSq, captured);
                 key ^= Zobrist.Piece(captured, capSq);
@@ -302,18 +303,18 @@ public sealed class Position
         {
             int rookFrom = flag == MoveFlag.KingCastle ? to + 1 : to - 2;
             int rookTo = flag == MoveFlag.KingCastle ? to - 1 : to + 1;
-            MovePieceRaw(to, from, _board[to]);
-            MovePieceRaw(rookTo, rookFrom, _board[rookTo]);
+            MovePieceRaw(to, from, BoardAt(to));
+            MovePieceRaw(rookTo, rookFrom, BoardAt(rookTo));
         }
         else
         {
             if (m.IsPromotion)
             {
-                RemovePieceRaw(to, _board[to]);
+                RemovePieceRaw(to, BoardAt(to));
                 AddPieceRaw(to, PieceType.Pawn.Of(us));
             }
 
-            MovePieceRaw(to, from, _board[to]);
+            MovePieceRaw(to, from, BoardAt(to));
 
             if (st.Captured != Piece.None)
             {
@@ -371,9 +372,9 @@ public sealed class Position
 
     internal void Clear()
     {
-        Array.Clear(_byType);
-        Array.Clear(_byColor);
-        Array.Clear(_board);
+        _byType = default;
+        _byColor = default;
+        _board = default;
         _stateCount = 0;
         SideToMove = Color.White;
         Castling = CastlingRights.None;
@@ -456,28 +457,55 @@ public sealed class Position
     private void AddPieceRaw(int sq, Piece p)
     {
         ulong bb = 1UL << sq;
-        _board[sq] = p;
-        _byType[(int)p & 7] |= bb;
-        _byColor[(int)p >> 3] |= bb;
+        BoardAt(sq) = p;
+        TypeBb((int)p) |= bb;
+        ColorBb((int)p >> 3) |= bb;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RemovePieceRaw(int sq, Piece p)
     {
         ulong bb = 1UL << sq;
-        _board[sq] = Piece.None;
-        _byType[(int)p & 7] &= ~bb;
-        _byColor[(int)p >> 3] &= ~bb;
+        BoardAt(sq) = Piece.None;
+        TypeBb((int)p) &= ~bb;
+        ColorBb((int)p >> 3) &= ~bb;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void MovePieceRaw(int from, int to, Piece p)
     {
         ulong fromTo = (1UL << from) | (1UL << to);
-        _board[from] = Piece.None;
-        _board[to] = p;
-        _byType[(int)p & 7] ^= fromTo;
-        _byColor[(int)p >> 3] ^= fromTo;
+        BoardAt(from) = Piece.None;
+        BoardAt(to) = p;
+        TypeBb((int)p) ^= fromTo;
+        ColorBb((int)p >> 3) ^= fromTo;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private ref ulong TypeBb(int type) => ref Unsafe.Add(ref Unsafe.As<TypeBitboards, ulong>(ref _byType), type & 7);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private ref ulong ColorBb(int color) => ref Unsafe.Add(ref Unsafe.As<ColorBitboards, ulong>(ref _byColor), color & 1);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private ref Piece BoardAt(int sq) => ref Unsafe.Add(ref Unsafe.As<Mailbox, Piece>(ref _board), sq & 63);
+
+    [InlineArray(8)]
+    private struct TypeBitboards
+    {
+        private ulong _element;
+    }
+
+    [InlineArray(2)]
+    private struct ColorBitboards
+    {
+        private ulong _element;
+    }
+
+    [InlineArray(64)]
+    private struct Mailbox
+    {
+        private Piece _element;
     }
 
     private static CastlingRights[] BuildCastleMask()

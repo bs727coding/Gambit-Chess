@@ -31,6 +31,10 @@ session short at any moment, so **checkpoint often**).
   (needs the ~300 MB download from database.lichess.org). `tools/Gambit.PuzzleGen` (engine-generated,
   heuristic ratings) is for experiments — don't mix its output into the bundled set.
 * Online bot: `dotnet run -c Release --project tools/Gambit.OnlineBot -- http://localhost:5080 <bot-id> <tc|code> [games]`
+* Engine speed: `dotnet run -c Release tools/bench.cs [depth] [rounds]` searches fixed positions to a
+  fixed depth. Its node count is the search signature (pinned by `Search_signature_is_unchanged`):
+  a pure speed-up keeps it. This machine's clock speed drifts (up to 2x between runs), so compare
+  timings by running the old and new builds alternately, never against an earlier run.
 * Bot ladder: `dotnet run -c Release --project tools/Gambit.BotArena -- <minutes> artifacts/arena.csv <ids,...>`
   (see docs/BOT-CALIBRATION.md; bump `BotMoveProvider.Revision` when bot move choice changes)
 * Sounds: `python tools/gen_sounds.py`; icon: `tools/make-icon.ps1`.

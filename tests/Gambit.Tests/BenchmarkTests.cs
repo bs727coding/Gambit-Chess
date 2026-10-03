@@ -23,4 +23,18 @@ public class BenchmarkTests(ITestOutputHelper output)
         output.WriteLine($"search: depth {r.Depth}, {r.Nodes:N0} nodes in {r.Elapsed.TotalMilliseconds:0} ms = {r.NodesPerSecond / 1000:N0} knps, best {r.BestMove} {Searcher.FormatScore(r.Score)}");
         Assert.True(r.Depth >= 6);
     }
+
+    /// <summary>
+    /// The search signature: total nodes of the fixed benchmark (tools/bench.cs). Speed-ups must
+    /// leave it alone; it changes only when the search or evaluation plays differently. If that is
+    /// intended, update the number here, and bump BotMoveProvider.Revision when bot moves change.
+    /// </summary>
+    [Fact]
+    public void Search_signature_is_unchanged()
+    {
+        foreach (string fen in Bench.Positions) Assert.Null(Position.FromFen(fen).Validate());
+        (long nodes, TimeSpan elapsed) = Bench.Run(Bench.Positions, depth: 8);
+        output.WriteLine($"bench depth 8: {nodes:N0} nodes in {elapsed.TotalMilliseconds:0} ms");
+        Assert.Equal(478_571, nodes);
+    }
 }

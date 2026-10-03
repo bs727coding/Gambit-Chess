@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Gambit.Core.Board;
 
 namespace Gambit.Engine.Evaluation;
@@ -20,7 +21,7 @@ public static class Evaluator
 
     private static readonly int[] PhaseInc = [0, 0, 1, 1, 2, 4, 0];
 
-    // [piece (16)][square] -> material + PST, white and black precomputed.
+    // [piece (16)][square] -> material + PST from White's point of view (black pieces negative).
     private static readonly int[] MgTable = new int[16 * 64];
     private static readonly int[] EgTable = new int[16 * 64];
 
@@ -173,13 +174,7 @@ public static class Evaluator
     private static readonly int[] PassedMg = [0, 5, 10, 15, 25, 45, 70, 0];
     private static readonly int[] PassedEg = [0, 10, 20, 35, 60, 100, 160, 0];
 
-    // Mobility weights (per reachable square, centred on a typical count).
-    private static readonly int[] MobMg = [0, 0, 4, 5, 3, 1, 0];
-    private static readonly int[] MobEg = [0, 0, 4, 5, 4, 2, 0];
-    private static readonly int[] MobCenter = [0, 0, 4, 6, 6, 12, 0];
-
-    // King-zone attack weights per attacking piece type, and the danger curve.
-    private static readonly int[] KingAttackWeight = [0, 0, 2, 2, 3, 5, 0];
+    // Mobility weights and king-zone attack weights are per piece type, in EvaluateSide.
     private static readonly int[] KingDanger = BuildKingDanger();
 
     private static readonly ulong[] PassedMask = new ulong[2 * 64];
@@ -198,8 +193,8 @@ public static class Evaluator
                 // Our squares have a1 = 0; the tables have a8 = 0. White uses the flipped index, Black the raw one.
                 MgTable[white * 64 + sq] = MgValue[t] + mg[t][sq ^ 56];
                 EgTable[white * 64 + sq] = EgValue[t] + eg[t][sq ^ 56];
-                MgTable[black * 64 + sq] = MgValue[t] + mg[t][sq];
-                EgTable[black * 64 + sq] = EgValue[t] + eg[t][sq];
+                MgTable[black * 64 + sq] = -(MgValue[t] + mg[t][sq]);
+                EgTable[black * 64 + sq] = -(EgValue[t] + eg[t][sq]);
             }
         }
 
@@ -245,28 +240,21 @@ public static class Evaluator
         int mg = 0, eg = 0;
         ulong occ = pos.Occupied;
 
-        // Material + piece-square tables (iterate occupied squares only).
+        // Material + piece-square tables (iterate occupied squares only; the index is always in range).
+        ref int mgTable = ref MemoryMarshal.GetArrayDataReference(MgTable);
+        ref int egTable = ref MemoryMarshal.GetArrayDataReference(EgTable);
         ulong occupiedSquares = occ;
         while (occupiedSquares != 0)
         {
             int sq = Bitboard.PopLsb(ref occupiedSquares);
-            Piece p = pos.PieceAt(sq);
-            int idx = ((int)p << 6) | sq;
-            if (p.Color() == Color.White)
-            {
-                mg += MgTable[idx];
-                eg += EgTable[idx];
-            }
-            else
-            {
-                mg -= MgTable[idx];
-                eg -= EgTable[idx];
-            }
+            int idx = (((int)pos.PieceAt(sq) & 15) << 6) | sq;
+            mg += Unsafe.Add(ref mgTable, idx);
+            eg += Unsafe.Add(ref egTable, idx);
         }
 
         int phase = Phase(pos);
-        EvaluateSide(pos, Color.White, occ, phase, ref mg, ref eg);
-        EvaluateSide(pos, Color.Black, occ, phase, ref mg, ref eg, sign: -1);
+        EvaluateSide(pos, Color.White, occ, ref mg, ref eg, sign: 1);
+        EvaluateSide(pos, Color.Black, occ, ref mg, ref eg, sign: -1);
 
         int score = (mg * phase + eg * (24 - phase)) / 24;
         score = ScaleEndgame(pos, score);
@@ -275,7 +263,7 @@ public static class Evaluator
         return fromStm + 10; // tempo
     }
 
-    private static void EvaluateSide(Position pos, Color us, ulong occ, int phase, ref int mg, ref int eg, int sign = 1)
+    private static void EvaluateSide(Position pos, Color us, ulong occ, ref int mg, ref int eg, int sign)
     {
         Color them = us.Opposite();
         ulong ourPawns = pos.Pieces(us, PieceType.Pawn);
@@ -288,54 +276,54 @@ public static class Evaluator
             : Bitboard.East(Bitboard.South(theirPawns)) | Bitboard.West(Bitboard.South(theirPawns));
         ulong mobilityArea = ~(ours | enemyPawnAttacks);
 
+        int ourKing = pos.KingSquare(us);
         int theirKing = pos.KingSquare(them);
         ulong theirKingZone = KingZone[theirKing];
         int kingAttackers = 0, kingAttackWeight = 0;
 
         int mgS = 0, egS = 0;
 
-        // Pieces: mobility + king attack.
-        for (int t = 2; t <= 5; t++)
+        // Pieces: mobility (per reachable square, centred on a typical count) + attacks on the king zone.
+        //                                                                 centre  mg  eg  king zone
+        for (ulong bb = pos.Pieces(us, PieceType.Knight); bb != 0;)
         {
-            ulong bb = pos.Pieces(us, (PieceType)t);
-            while (bb != 0)
+            int sq = Bitboard.PopLsb(ref bb);
+            Activity(Attacks.Knight(sq), mobilityArea, theirKingZone,      4,   4,  4,  2, ref mgS, ref egS, ref kingAttackers, ref kingAttackWeight);
+        }
+        for (ulong bb = pos.Pieces(us, PieceType.Bishop); bb != 0;)
+        {
+            int sq = Bitboard.PopLsb(ref bb);
+            Activity(Attacks.Bishop(sq, occ), mobilityArea, theirKingZone, 6,   5,  5,  2, ref mgS, ref egS, ref kingAttackers, ref kingAttackWeight);
+        }
+        for (ulong bb = pos.Pieces(us, PieceType.Rook); bb != 0;)
+        {
+            int sq = Bitboard.PopLsb(ref bb);
+            Activity(Attacks.Rook(sq, occ), mobilityArea, theirKingZone,   6,   3,  4,  3, ref mgS, ref egS, ref kingAttackers, ref kingAttackWeight);
+
+            ulong file = Bitboard.FileMask(Square.File(sq));
+            if ((file & ourPawns) == 0)
             {
-                int sq = Bitboard.PopLsb(ref bb);
-                ulong att = Attacks.Of((PieceType)t, sq, occ);
-                int mob = Bitboard.Count(att & mobilityArea) - MobCenter[t];
-                mgS += MobMg[t] * mob;
-                egS += MobEg[t] * mob;
-
-                ulong zoneHits = att & theirKingZone;
-                if (zoneHits != 0)
+                if ((file & theirPawns) == 0)
                 {
-                    kingAttackers++;
-                    kingAttackWeight += KingAttackWeight[t] * Bitboard.Count(zoneHits);
+                    mgS += 25;
+                    egS += 10;
                 }
-
-                if (t == (int)PieceType.Rook)
+                else
                 {
-                    ulong file = Bitboard.FileMask(Square.File(sq));
-                    if ((file & ourPawns) == 0)
-                    {
-                        if ((file & theirPawns) == 0)
-                        {
-                            mgS += 25;
-                            egS += 10;
-                        }
-                        else
-                        {
-                            mgS += 12;
-                            egS += 5;
-                        }
-                    }
-                    if (Square.RelativeRank(sq, us) == 6 && Square.RelativeRank(theirKing, us) == 7)
-                    {
-                        mgS += 15;
-                        egS += 25;
-                    }
+                    mgS += 12;
+                    egS += 5;
                 }
             }
+            if (Square.RelativeRank(sq, us) == 6 && Square.RelativeRank(theirKing, us) == 7)
+            {
+                mgS += 15;
+                egS += 25;
+            }
+        }
+        for (ulong bb = pos.Pieces(us, PieceType.Queen); bb != 0;)
+        {
+            int sq = Bitboard.PopLsb(ref bb);
+            Activity(Attacks.Queen(sq, occ), mobilityArea, theirKingZone,  12,  1,  2,  5, ref mgS, ref egS, ref kingAttackers, ref kingAttackWeight);
         }
 
         if (kingAttackers >= 2 && pos.Pieces(us, PieceType.Queen) != 0)
@@ -349,55 +337,70 @@ public static class Evaluator
         }
 
         // Pawn structure.
+        int forward = us == Color.White ? 8 : -8;
         ulong pawns = ourPawns;
         while (pawns != 0)
         {
             int sq = Bitboard.PopLsb(ref pawns);
             int f = Square.File(sq);
-            ulong fileBb = Bitboard.FileMask(f);
+            ulong front = PassedMask[(int)us * 64 + sq];
+            ulong ownAhead = front & Bitboard.FileMask(f) & ourPawns;
 
-            if ((AdjacentFiles[f] & ourPawns) == 0)
+            if ((AdjacentFiles[f] & ourPawns) == 0) // isolated
             {
                 mgS -= 10;
                 egS -= 15;
             }
 
-            if (Bitboard.MoreThanOne(fileBb & ourPawns) && (PassedMask[(int)us * 64 + sq] & fileBb & ourPawns) != 0)
+            if (ownAhead != 0) // doubled (the rear pawn pays)
             {
                 mgS -= 10;
                 egS -= 20;
             }
-
-            if ((PassedMask[(int)us * 64 + sq] & theirPawns) == 0 && (PassedMask[(int)us * 64 + sq] & fileBb & ourPawns) == 0)
+            else if ((front & theirPawns) == 0) // passed
             {
                 int rr = Square.RelativeRank(sq, us);
                 mgS += PassedMg[rr];
                 egS += PassedEg[rr];
 
                 // King proximity to the passer matters in the endgame.
-                int stop = us == Color.White ? sq + 8 : sq - 8;
+                int stop = sq + forward;
                 if (stop is >= 0 and < 64)
                 {
-                    egS += 5 * Square.Distance(stop, theirKing) - 2 * Square.Distance(stop, pos.KingSquare(us));
+                    egS += 5 * Square.Distance(stop, theirKing) - 2 * Square.Distance(stop, ourKing);
                     if (pos.PieceAt(stop) != Piece.None) egS -= PassedEg[rr] / 4;
                 }
             }
         }
 
         // King shelter (middlegame only): own pawns directly in front of the king.
-        int ksq = pos.KingSquare(us);
-        int kf = Square.File(ksq);
+        int kf = Square.File(ourKing);
         ulong shelterFiles = Bitboard.FileMask(kf) | AdjacentFiles[kf];
-        ulong front = PassedMask[(int)us * 64 + ksq] & shelterFiles;
-        int shelter = Bitboard.Count(front & ourPawns & (us == Color.White
-            ? Bitboard.RankMask(Math.Min(7, Square.Rank(ksq) + 1)) | Bitboard.RankMask(Math.Min(7, Square.Rank(ksq) + 2))
-            : Bitboard.RankMask(Math.Max(0, Square.Rank(ksq) - 1)) | Bitboard.RankMask(Math.Max(0, Square.Rank(ksq) - 2))));
+        ulong shelterZone = PassedMask[(int)us * 64 + ourKing] & shelterFiles;
+        int shelter = Bitboard.Count(shelterZone & ourPawns & (us == Color.White
+            ? Bitboard.RankMask(Math.Min(7, Square.Rank(ourKing) + 1)) | Bitboard.RankMask(Math.Min(7, Square.Rank(ourKing) + 2))
+            : Bitboard.RankMask(Math.Max(0, Square.Rank(ourKing) - 1)) | Bitboard.RankMask(Math.Max(0, Square.Rank(ourKing) - 2))));
         mgS += 12 * Math.Min(shelter, 3);
         if ((Bitboard.FileMask(kf) & ourPawns) == 0) mgS -= 20; // open file in front of the king
 
         mg += sign * mgS;
         eg += sign * egS;
-        _ = phase;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void Activity(ulong attacks, ulong mobilityArea, ulong kingZone, int centre, int mgWeight, int egWeight,
+        int kingWeight, ref int mgS, ref int egS, ref int kingAttackers, ref int kingAttackWeight)
+    {
+        int mob = Bitboard.Count(attacks & mobilityArea) - centre;
+        mgS += mgWeight * mob;
+        egS += egWeight * mob;
+
+        ulong zoneHits = attacks & kingZone;
+        if (zoneHits != 0)
+        {
+            kingAttackers++;
+            kingAttackWeight += kingWeight * Bitboard.Count(zoneHits);
+        }
     }
 
     /// <summary>Scale down drawish material and add mop-up for lone-king endings.</summary>

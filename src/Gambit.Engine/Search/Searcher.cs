@@ -34,6 +34,11 @@ public sealed class Searcher
     private readonly Move[] _pvTable = new Move[MaxPly * MaxPly];
     private readonly int[] _pvLength = new int[MaxPly + 1];
 
+    // Static evaluations by position: quiescence search meets the same leaves on every iteration.
+    // Each entry packs the key's upper 48 bits (the index supplies the rest) with a 16-bit score.
+    private const int EvalCacheBits = 17; // 1 MB
+    private readonly ulong[] _evalCache = new ulong[1 << EvalCacheBits];
+
     private Position _pos = new();
     private SearchLimits _limits = new();
     private CancellationToken _ct;
@@ -272,7 +277,7 @@ public sealed class Searcher
                 return ttScore;
         }
 
-        int staticEval = inCheck ? -Infinity : (ttHit ? ttEval : Evaluator.Evaluate(_pos));
+        int staticEval = inCheck ? -Infinity : (ttHit ? ttEval : StaticEval());
         Color us = _pos.SideToMove;
 
         if (!pvNode && !inCheck)
@@ -399,7 +404,7 @@ public sealed class Searcher
         }
         else
         {
-            standPat = Evaluator.Evaluate(_pos);
+            standPat = StaticEval();
             if (standPat >= beta) return standPat;
             if (standPat > alpha) alpha = standPat;
             best = standPat;
@@ -423,7 +428,7 @@ public sealed class Searcher
                 {
                     int victim = m.IsEnPassant ? 100 : Evaluator.SeeValue[(int)_pos.PieceAt(m.To).Type()];
                     if (standPat + victim + 200 < alpha) continue; // delta pruning
-                    if (scores[i] < GoodCaptureScore && See(_pos, m) < 0) continue;
+                    if (scores[i] < GoodCaptureScore) continue; // ScoreMoves found it loses material (SEE < 0)
                 }
             }
 
@@ -447,6 +452,17 @@ public sealed class Searcher
     }
 
     // ------------------------------------------------------------------ helpers
+
+    /// <summary><see cref="Evaluator.Evaluate"/> of the current position, cached.</summary>
+    private int StaticEval()
+    {
+        ulong key = _pos.Key;
+        ref ulong slot = ref _evalCache[(int)(key & ((1UL << EvalCacheBits) - 1))];
+        if (slot != 0 && ((slot ^ key) & ~0xFFFFUL) == 0) return (short)(ushort)slot;
+        int eval = Evaluator.Evaluate(_pos);
+        if (eval is >= short.MinValue and <= short.MaxValue) slot = (key & ~0xFFFFUL) | (ushort)(short)eval;
+        return eval;
+    }
 
     private void CheckLimits()
     {

@@ -96,6 +96,13 @@ styled bots, ~1,030 games per step, shows the ladder's shape unchanged within th
 (Depth-limited bots move in tens of milliseconds, so these pairs get many games quickly; the
 time-limited top bots — Jade and up — are what make full-ladder runs slow.)
 
+## Engine speed-up (2026-10-03, revision unchanged)
+
+The search got ~1.2x faster with an identical search tree (the bench signature in
+`BenchmarkTests` is unchanged). Bots bound by depth or nodes (Acorn to Iris) play exactly as before.
+Jade and up are mostly bound by time, so they now search ~1.2x more nodes per move: very roughly
++15 Elo each, inside the margins above. Not re-measured.
+
 ## What it means
 
 * **The middle of the ladder has cliffs.** From Dash (800) to Kestrel (2200) every step measures
