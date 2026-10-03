@@ -73,6 +73,11 @@ per step and wide margins):
 As expected the endgame change leaves the middle cliffs in place (every step from Dash to Kestrel
 is still +350…+530): that needs the systematic approach below.
 
+Caveat: since revision 2 the whole ladder is fairly *uniform* in bot-vs-bot Elo (+220…+530 per
+step), and bot-vs-bot gaps overstate gaps against people. Before a big retune it's worth looking at
+real results: the profile already keeps per-bot win/loss records, so a player's record against
+neighbouring bots shows whether a step feels like a cliff.
+
 ## What it means
 
 * **The middle of the ladder has cliffs.** From Dash (800) to Kestrel (2200) every step measures
