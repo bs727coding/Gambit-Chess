@@ -179,3 +179,8 @@ natively on Arm64.
   (`Onboarding`, 4 tests). Verified in the app on fresh data dirs: casual (name, Ember preselected,
   puzzles 1200?), new to chess (Learn, Acorn, Home text), skip, relaunch, and an existing profile.
   `tools/ui.ps1 type` sets text boxes.
+* Fixed (reported by the user): a small "Left" box hovered over the board during games. The
+  game, analysis and review pages attach their arrow-key shortcuts to the whole page, and WinUI
+  shows the first shortcut's key as a tooltip wherever the pointer rests; those pages now hide it
+  (`KeyboardAcceleratorPlacementMode.Hidden`). The keys still work; the move buttons keep their
+  own tooltips. Present since the first app version.

@@ -65,6 +65,9 @@ public sealed partial class GamePage : Page
             });
         };
 
+        // The shortcuts belong to the whole page: without this, WinUI shows the first one's key ("Left")
+        // as a tooltip wherever the pointer rests, e.g. over the board.
+        KeyboardAcceleratorPlacementMode = KeyboardAcceleratorPlacementMode.Hidden;
         AddAccelerator(VirtualKey.Left, () => _vm.StepPly(-1));
         AddAccelerator(VirtualKey.Right, () => _vm.StepPly(+1));
         AddAccelerator(VirtualKey.Home, () => _vm.ShowPly(0));

@@ -59,6 +59,9 @@ public sealed partial class AnalysisPage : Page
         Board.SquareClicked += Board_SquareClicked;
         BuildPalette();
 
+        // The shortcuts belong to the whole page: without this, WinUI shows the first one's key ("Left")
+        // as a tooltip wherever the pointer rests, e.g. over the board.
+        KeyboardAcceleratorPlacementMode = KeyboardAcceleratorPlacementMode.Hidden;
         AddAccelerator(VirtualKey.Left, () => StepPly(-1));
         AddAccelerator(VirtualKey.Right, () => StepPly(+1));
         AddAccelerator(VirtualKey.Home, () => ShowPly(0));
