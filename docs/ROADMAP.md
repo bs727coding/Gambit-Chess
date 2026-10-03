@@ -117,7 +117,7 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 
 ## Backlog / stretch
 
-- Stronger engine (NNUE-style eval, multithreaded search); even out the bot ladder with
+- Stronger engine (NNUE-style eval; multithreaded search ✔ for the analysis board); even out the bot ladder with
   `tools/Gambit.BotArena` (first measurement in docs/BOT-CALIBRATION.md)
 - Opening explorer, endgame tablebase (syzygy) probing; richer coach explanations (Game Review
   already explains hung pieces, allowed/missed mates and forks)

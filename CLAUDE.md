@@ -35,6 +35,9 @@ session short at any moment, so **checkpoint often**).
   fixed depth. Its node count is the search signature (pinned by `Search_signature_is_unchanged`):
   a pure speed-up keeps it. This machine's clock speed drifts (up to 2x between runs), so compare
   timings by running the old and new builds alternately, never against an earlier run.
+  `tools/bench.cs smp [threads] [depth]` compares the analysis board's multi-threaded search
+  (`ParallelSearcher`, Lazy SMP) with one thread. Only analysis is multi-threaded: bots, hints,
+  review workers and the bench stay single-threaded and deterministic.
 * Bot ladder: `dotnet run -c Release --project tools/Gambit.BotArena -- <minutes> artifacts/arena.csv <ids,...>`
   (see docs/BOT-CALIBRATION.md; bump `BotMoveProvider.Revision` when bot move choice changes)
 * Sounds: `python tools/gen_sounds.py`; icon: `tools/make-icon.ps1`.

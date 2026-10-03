@@ -5,6 +5,11 @@
 //   dotnet run -c Release tools/bench.cs [depth=11] [rounds=5]
 //
 // Also times perft (move generation + make/unmake) and the static evaluation on their own.
+//
+//   dotnet run -c Release tools/bench.cs smp [threads] [depth=14]
+//
+// compares the analysis board's search (3 lines) on one thread and on several (ParallelSearcher):
+// time to reach the depth, per position.
 #:project ../src/Gambit.Engine/Gambit.Engine.csproj
 #:property PublishAot=false
 #:property TieredPGO=true
@@ -13,6 +18,26 @@ using System.Diagnostics;
 using Gambit.Core.Board;
 using Gambit.Engine.Evaluation;
 using Gambit.Engine.Search;
+
+if (args.Length > 0 && args[0] == "smp")
+{
+    int threads = args.Length > 1 ? int.Parse(args[1]) : ParallelSearcher.DefaultThreads;
+    int target = args.Length > 2 ? int.Parse(args[2]) : 14;
+    var analysis = new SearchLimits { MaxDepth = target, MultiPv = 3 };
+    double singleTotal = 0, parallelTotal = 0;
+    foreach (string fen in Gambit.Engine.Search.Bench.Positions.Take(8))
+    {
+        var one = new ParallelSearcher(1, 64);
+        var many = new ParallelSearcher(threads, 64);
+        SearchResult a = one.Search(Position.FromFen(fen), analysis);
+        SearchResult b = many.Search(Position.FromFen(fen), analysis);
+        singleTotal += a.Elapsed.TotalSeconds;
+        parallelTotal += b.Elapsed.TotalSeconds;
+        Console.WriteLine($"  {a.Elapsed.TotalSeconds,6:0.00} s -> {b.Elapsed.TotalSeconds,6:0.00} s  ({a.Elapsed / b.Elapsed:0.0}x)  {a.BestMove} / {b.BestMove}  {fen}");
+    }
+    Console.WriteLine($"depth {target}, 3 lines: 1 thread {singleTotal:0.0} s, {threads} threads {parallelTotal:0.0} s = {singleTotal / parallelTotal:0.0}x faster");
+    return;
+}
 
 int depth = args.Length > 0 ? int.Parse(args[0]) : 11;
 int rounds = args.Length > 1 ? int.Parse(args[1]) : 5;

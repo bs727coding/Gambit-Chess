@@ -10,7 +10,7 @@ namespace Gambit.App.Services;
 /// </summary>
 public sealed class AnalysisEngine : IDisposable
 {
-    private readonly Searcher _searcher = new(64);
+    private readonly ParallelSearcher _searcher = new(ParallelSearcher.DefaultThreads, 64);
     private readonly object _gate = new();
     private readonly DispatcherQueue _queue = DispatcherQueue.GetForCurrentThread();
     private CancellationTokenSource? _cts;

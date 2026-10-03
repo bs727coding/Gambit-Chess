@@ -20,11 +20,12 @@ lessons, review your games, earn achievements, and play online against friends.
 * **Lessons** — 5 courses, 49 interactive lessons: how pieces move (with star-collecting
   mini-games), checkmate patterns, tactics, openings (Italian, Ruy Lopez, Scotch, Sicilian,
   French, Caro-Kann, Queen's Gambit, London, King's Indian, English) and endgames (two-bishop and bishop-knight mates, opposition, key squares, Lucena, Philidor…).
+  The opening lines come back for review at growing intervals (spaced repetition).
 * **Online play** — quick pairing by time control or private games with a friend code (with rematches), against a
   self-hostable server (ASP.NET Core + SignalR, authoritative, rated). See [docs/ONLINE.md](docs/ONLINE.md).
-* **Analysis board** with a multi-line engine, evaluation bar, opening names, a position editor and FEN/PGN import/export.
+* **Analysis board** with a multi-line engine on several cores, evaluation bar, opening names, a position editor and FEN/PGN import/export.
 * **Profile & achievements** — ~50 achievements, per-bot records, puzzle rating history, openings
-  you play, and a PGN archive of every game.
+  you play, and a PGN archive of every game. Back up, restore or reset your progress in Settings.
 * **Windows 11 design** — Mica, Fluent controls, light/dark theme, accent color, 8 board themes,
   4 piece sets (three original vector sets), synthesized sound effects.
 * **Accessible board** — every square is a UI Automation element ("e4, white pawn").

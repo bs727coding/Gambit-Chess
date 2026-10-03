@@ -10,12 +10,12 @@ natively on Arm64.
 | Toolchain | .NET SDK 10.0.401 Arm64 (machine-wide). Windows App SDK 2.5.1 via NuGet. No Visual Studio needed. |
 | Gambit.Core | Board, legal movegen (perft-verified, also king-less lesson positions), FEN/SAN/UCI/PGN (incl. variations), Game + draw rules, `MoveTree`, clock, Glicko-2, sessions (`IGameSession`), premove rules, openings (~150, embedded TSV), puzzles (embedded CSV), lessons (embedded JSON) |
 | Gambit.Engine | PVS + TT + QS/SEE + null-move + LMR + MultiPV; PeSTO eval; 13 bots with opening books; `GameReviewer` (parallel, move classes, accuracy) |
-| Gambit.App | Welcome screen (first run), Home, Play (bots, pass-and-play, online), Game (clocks, premoves, hints, takebacks, resume after restart, sounds, online rematch), Game Review (with plain-language explanations), Analysis (engine lines, position editor, variations), Puzzles (rated, Rush, Survival, daily, themes, openings), Learn (5 courses / 49 lessons, opening review), Online lobby, Profile (stats, rating chart, openings, ~50 achievements), Settings (themes, pieces, sounds, premoves) |
+| Gambit.App | Welcome screen (first run), Home, Play (bots, pass-and-play, online), Game (clocks, premoves, hints, takebacks, resume after restart, sounds, online rematch), Game Review (with plain-language explanations), Analysis (multi-core engine lines, position editor, variations), Puzzles (rated, Rush, Survival, daily, themes, openings), Learn (5 courses / 49 lessons, opening review), Online lobby, Profile (stats, rating chart, openings, ~50 achievements), Settings (themes, pieces, sounds, premoves) |
 | Online | `Gambit.Server` (ASP.NET Core + SignalR, authoritative, rematches, spectators, rate limits), `Gambit.Online.Client` (`RemoteGameSession`), Dockerfile, docs/ONLINE.md; `./build.ps1 server` for LAN play |
 | Tools | `import_lichess_puzzles.py`, `Gambit.PuzzleGen` (experiments), `Gambit.BotArena` (ladder measurement), `Gambit.OnlineBot` (plays online, accepts rematches), `ui.ps1`, `ui-scroll.ps1`, `screenshot-quiet.ps1` |
 | Content | 21,162 puzzles from the Lichess puzzle DB (CC0; `tools/import_lichess_puzzles.py`): 400–1,100 per 100-point band from 400 to 2999, 49 practice themes with ≥ 120 each, 25 practice openings with ≥ 50 each; 49 lessons; tactic/mate solutions audited by the engine in tests |
 | Install | `./build.ps1 install` → `%LOCALAPPDATA%\Programs\Gambit` + Start menu shortcut (tested into a scratch folder; not installed for real, the user decides) |
-| Tests | 153 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
+| Tests | 160 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
 
 ## Next steps
 
@@ -24,10 +24,9 @@ The user's list of 2026-10-03 is done (QA pass, GamePage view model, inline vari
 by opening, faster engine, onboarding) and the "Left" tooltip bug is fixed (confirmed by the user).
 
 Proposed to the user on 2026-10-03, in this order (waiting for their pick):
-1. **Single-player polish (the user's pick, in progress):** progress tools in Settings ✔; spaced
-   repetition for the opening drills ✔; a multi-threaded analysis board (bots stay single-threaded
-   and unchanged). The puzzle source link was dropped (the user's call).
-2. **Server ready to go online, built and tested locally (not deployed):** accounts and sign-in
+1. **Single-player polish: done** (2026-10-03): progress tools in Settings, spaced repetition for the
+   opening drills, a multi-core analysis board. The puzzle source link was dropped (the user's call).
+2. **Next, when the user says go — server ready to go online, built and tested locally (not deployed):** accounts and sign-in
    instead of guest tokens, a database instead of ratings.json, handling for abandoned games, name
    moderation, backups. Hosting itself is ready (Fly.io, docs/ONLINE.md).
 3. **Distribution:** version numbers and an update check, MSIX or a signed installer (buying a
@@ -38,9 +37,10 @@ Proposed to the user on 2026-10-03, in this order (waiting for their pick):
 
 ## Known issues / notes
 
-* Engine: ~1.5M nodes/s on one thread (Release, `tools/bench.cs`). Ideas left: Lazy SMP for the
-  analysis board (the big one; makes analysis nondeterministic), incremental piece-square sums and
-  a pawn hash (~5% each). Staged move generation would change move order (and the signature).
+* Engine: ~1.5M nodes/s on one thread (Release, `tools/bench.cs`); the analysis board uses half the
+  cores (max 8) and reaches a depth ~2.2x sooner with 6 threads. Ideas left: more diverse helper
+  threads (better SMP scaling), incremental piece-square sums and a pawn hash (~5% each). Staged
+  move generation would change move order (and the signature).
 * Online accounts are guest tokens (secret in settings). No sign-in, no moderation yet.
 * UI tests: `tools/ui.ps1` drives the app through UI Automation. Board squares are invokable
   elements (`sq-e4`), so moves can be played without the mouse:
@@ -204,3 +204,13 @@ Proposed to the user on 2026-10-03, in this order (waiting for their pick):
   Schedule in `Gambit.ViewModels/OpeningReview` (8 tests). Verified in the app with backdated
   lessons: three lines (one with a deliberate mistake → "comes back tomorrow"), a clean first
   review (→ "in 3 days", box 2), the summary dialog and both cards.
+* Multi-core analysis board (Lazy SMP): `ParallelSearcher` runs helper searchers on their own
+  threads, sharing one transposition table, while the main searcher reports the lines; odd helpers
+  search a ply deeper so the threads diverge. The table became safe to share without locks (each
+  entry stores its data and key XOR data, so a torn write reads as a miss) with identical
+  single-thread behaviour: the bench signature is unchanged, so bots, hints and review play as
+  before. Analysis uses half the cores, at most eight. `tools/bench.cs smp`: with 6 threads the
+  analysis search (3 lines) reaches depth 13 2.1x and depth 15 2.2x sooner. 7 tests (mates found,
+  time limits, cancellation joins every thread, 3 lines, table round trip). In the app (Debug):
+  ~1,000-2,000 kN/s instead of ~300, depth 13 in about 3 s; restarts cleanly on every move, and the
+  thread count stays flat over repeated position changes.

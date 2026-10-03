@@ -58,6 +58,18 @@ public sealed class Searcher
 
     public Searcher(int hashMegabytes = 16) => _tt = new TranspositionTable(hashMegabytes);
 
+    /// <summary>A searcher using a table shared with others (see <see cref="ParallelSearcher"/>).</summary>
+    public Searcher(TranspositionTable table) => _tt = table;
+
+    /// <summary>
+    /// 0 for a normal search. Helpers of a <see cref="ParallelSearcher"/> are numbered from 1: they
+    /// leave the shared table's age alone, and odd ones search one ply deeper so the threads diverge.
+    /// </summary>
+    internal int HelperIndex { get; init; }
+
+    /// <summary>Nodes searched so far (readable from another thread while searching).</summary>
+    internal long NodesSearched => Volatile.Read(ref _nodes);
+
     public TranspositionTable Table => _tt;
 
     /// <summary>Forget everything learned from previous searches (new game).</summary>
@@ -77,7 +89,7 @@ public sealed class Searcher
         _nodes = 0;
         _stop = false;
         _clock.Restart();
-        _tt.NewSearch();
+        if (HelperIndex == 0) _tt.NewSearch();
         Array.Clear(_killers);
         for (int i = 0; i < _history.Length; i++) _history[i] /= 2;
 
@@ -112,9 +124,10 @@ public sealed class Searcher
                     beta = Math.Min(prev + delta, Infinity);
                 }
 
+                int searchDepth = (HelperIndex & 1) == 1 ? Math.Min(depth + 1, maxDepth) : depth;
                 while (true)
                 {
-                    int score = SearchRoot(depth, alpha, beta, pvIdx);
+                    int score = SearchRoot(searchDepth, alpha, beta, pvIdx);
                     SortRootMoves(pvIdx);
                     if (_stop) break;
 
