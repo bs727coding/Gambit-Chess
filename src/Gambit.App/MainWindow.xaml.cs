@@ -61,6 +61,23 @@ public sealed partial class MainWindow : Window
             if (!_showingAchievement) ShowNextAchievement();
         });
         NavView.SelectedItem = NavView.MenuItems[0];
+        if (App.Profile.NeedsOnboarding) ShowWelcome();
+    }
+
+    /// <summary>First launch: the welcome screen covers the app until it is finished or skipped.</summary>
+    private void ShowWelcome()
+    {
+        var welcome = new WelcomeView();
+        Grid.SetRow(welcome, 1);
+        RootGrid.Children.Add(welcome);
+        NavView.Visibility = Visibility.Collapsed;
+        welcome.Finished += next =>
+        {
+            RootGrid.Children.Remove(welcome);
+            NavView.Visibility = Visibility.Visible;
+            if (next == "home") ContentFrame.Navigate(typeof(HomePage), null, new EntranceNavigationTransitionInfo()); // shows the new name and suggestions
+            else NavigateTo(next);
+        };
     }
 
     /// <summary>Clicking the already-selected item returns to that section's main page (e.g. from a puzzle back to the hub).</summary>

@@ -10,19 +10,21 @@ natively on Arm64.
 | Toolchain | .NET SDK 10.0.401 Arm64 (machine-wide). Windows App SDK 2.5.1 via NuGet. No Visual Studio needed. |
 | Gambit.Core | Board, legal movegen (perft-verified, also king-less lesson positions), FEN/SAN/UCI/PGN (incl. variations), Game + draw rules, `MoveTree`, clock, Glicko-2, sessions (`IGameSession`), premove rules, openings (~150, embedded TSV), puzzles (embedded CSV), lessons (embedded JSON) |
 | Gambit.Engine | PVS + TT + QS/SEE + null-move + LMR + MultiPV; PeSTO eval; 13 bots with opening books; `GameReviewer` (parallel, move classes, accuracy) |
-| Gambit.App | Home, Play (bots, pass-and-play, online), Game (clocks, premoves, hints, takebacks, resume after restart, sounds, online rematch), Game Review (with plain-language explanations), Analysis (engine lines, position editor, variations), Puzzles (rated, Rush, Survival, daily, themes, openings), Learn (5 courses / 49 lessons), Online lobby, Profile (stats, rating chart, openings, ~50 achievements), Settings (themes, pieces, sounds, premoves) |
+| Gambit.App | Welcome screen (first run), Home, Play (bots, pass-and-play, online), Game (clocks, premoves, hints, takebacks, resume after restart, sounds, online rematch), Game Review (with plain-language explanations), Analysis (engine lines, position editor, variations), Puzzles (rated, Rush, Survival, daily, themes, openings), Learn (5 courses / 49 lessons), Online lobby, Profile (stats, rating chart, openings, ~50 achievements), Settings (themes, pieces, sounds, premoves) |
 | Online | `Gambit.Server` (ASP.NET Core + SignalR, authoritative, rematches, spectators, rate limits), `Gambit.Online.Client` (`RemoteGameSession`), Dockerfile, docs/ONLINE.md; `./build.ps1 server` for LAN play |
 | Tools | `import_lichess_puzzles.py`, `Gambit.PuzzleGen` (experiments), `Gambit.BotArena` (ladder measurement), `Gambit.OnlineBot` (plays online, accepts rematches), `ui.ps1`, `ui-scroll.ps1`, `screenshot-quiet.ps1` |
 | Content | 21,162 puzzles from the Lichess puzzle DB (CC0; `tools/import_lichess_puzzles.py`): 400–1,100 per 100-point band from 400 to 2999, 49 practice themes with ≥ 120 each, 25 practice openings with ≥ 50 each; 49 lessons; tactic/mate solutions audited by the engine in tests |
 | Install | `./build.ps1 install` → `%LOCALAPPDATA%\Programs\Gambit` + Start menu shortcut (tested into a scratch folder; not installed for real, the user decides) |
-| Tests | 136 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
+| Tests | 140 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
 
 ## Next steps
 
 **Priority (from the user, 2026-10-02): a functional, clean, correct app over bot tuning.**
 
-1. **In progress (the user's list, 2026-10-03):** first-run onboarding (name, experience level →
-   suggested bot and starting puzzle rating).
+1. **The user's list of 2026-10-03 is done** (QA pass, GamePage view model, inline variations,
+   puzzles by opening, faster engine, onboarding). The desktop shortcut runs the Release build,
+   which was locked by the user's open window this session: rebuild it (`./build.ps1 run`) once
+   Gambit is closed so the shortcut gets these changes.
 2. **Accessibility (not yet asked for):** keyboard play on the board, a Narrator pass.
 3. **Online:** stays local for now (the user's call, 2026-10-02); hosting is ready for when they
    want it (Fly.io: four commands, docs/ONLINE.md). Before real users: accounts/sign-in, a
@@ -168,3 +170,12 @@ natively on Arm64.
   "a few milliseconds"); they are now constants, checked while the tables are built (24 ms).
   Depth- and node-limited bots (Acorn to Iris) play exactly as before; time-limited searches (hints,
   review, analysis, Jade and up) get ~1.2x more nodes. Verified: all tests, analysis in the app.
+* First-run welcome screen: name + "how much chess have you played?" (new to chess, beginner,
+  casual, club, strong). The level sets the first suggested bot (Acorn, Clover, Ember, Gale, Iris),
+  the starting puzzle rating (600-2000, still provisional) and the Play page's preselected bot; Home
+  then suggests the weakest unbeaten bot at or above that level. New players land on Learn. Skip
+  keeps the defaults. Profiles that already have games, puzzles or lessons never see it (so the
+  user's reset profile will, once the Release build is rebuilt). Logic in `Gambit.ViewModels`
+  (`Onboarding`, 4 tests). Verified in the app on fresh data dirs: casual (name, Ember preselected,
+  puzzles 1200?), new to chess (Learn, Acorn, Home text), skip, relaunch, and an existing profile.
+  `tools/ui.ps1 type` sets text boxes.

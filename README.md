@@ -6,6 +6,8 @@ lessons, review your games, earn achievements, and play online against friends.
 
 ## Features
 
+* **A quick welcome** on first launch: your name and how much chess you've played set your first
+  suggested opponent and starting puzzle rating.
 * **Play vs 13 bots** (Acorn ≈250 → Monolith, full strength) with personalities and opening books;
   clocks, premoves, hints, takebacks, draw offers, resignation, pass-and-play, and resume after restarting.
 * **Game Review** — every position analysed in parallel on all cores: Brilliant/Great/Best …

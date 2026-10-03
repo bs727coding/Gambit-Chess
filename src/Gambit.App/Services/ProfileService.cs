@@ -1,6 +1,8 @@
 using Gambit.Core.Board;
 using Gambit.Core.Games;
 using Gambit.Core.Notation;
+using Gambit.Engine.Bots;
+using Gambit.ViewModels;
 
 namespace Gambit.App.Services;
 
@@ -51,6 +53,12 @@ public sealed class PlayerProfile
     public PuzzleProfile Puzzles { get; set; } = new();
     public Dictionary<string, LessonResult> Lessons { get; set; } = [];
     public Dictionary<string, DateTimeOffset> Achievements { get; set; } = [];
+
+    /// <summary>Finished or skipped the welcome screen.</summary>
+    public bool Onboarded { get; set; }
+
+    /// <summary>The level chosen on the welcome screen (null if skipped, or a profile from before it).</summary>
+    public ExperienceLevel? Experience { get; set; }
 }
 
 /// <summary>Best result for one lesson (key = "course/lesson").</summary>
@@ -138,6 +146,28 @@ public sealed class ProfileService
         Changed?.Invoke(this, EventArgs.Empty);
         return record;
     }
+
+    /// <summary>A new profile that hasn't seen the welcome screen yet.</summary>
+    public bool NeedsOnboarding =>
+        Onboarding.IsNeeded(Profile.Onboarded, Profile.GamesPlayed, Profile.Puzzles.Attempts, Profile.Lessons.Count);
+
+    /// <summary>Applies the welcome screen: the name, and the level's starting puzzle rating (null = skipped).</summary>
+    public void CompleteOnboarding(string? name, ExperienceOption? option)
+    {
+        PlayerProfile p = Profile;
+        if (!string.IsNullOrWhiteSpace(name)) p.Name = name.Trim();
+        if (option != null)
+        {
+            p.Experience = option.Level;
+            if (p.Puzzles.Attempts == 0) p.Puzzles.Rating = option.PuzzleRating;
+        }
+        p.Onboarded = true;
+        Save();
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>The bot to suggest next: the weakest unbeaten one at or above the player's starting level.</summary>
+    public BotProfile NextBot() => Onboarding.NextBot(Profile.Experience, id => RecordAgainst(id).Wins > 0);
 
     public BotRecord RecordAgainst(string botId) =>
         Profile.Bots.TryGetValue(botId, out BotRecord? r) ? r : new BotRecord();

@@ -90,6 +90,7 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 - [x] Statistics page: rating graphs (bots/puzzles), W/L/D by bot/color/time control, accuracy trend,
       openings played, puzzle themes heat-map, streaks, time played
 - [x] Achievements (~50): data-driven definitions, progress tracking, unlock toasts, achievement gallery
+- [x] First-run welcome: name + experience level → first suggested bot and starting puzzle rating
 - [~] Themes: 8 board themes ✔, 4 piece sets ✔, live preview ✔ — custom colors, highlight styles, sound packs,
       accent options; live preview in Settings
 

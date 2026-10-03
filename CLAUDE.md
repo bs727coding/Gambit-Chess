@@ -65,7 +65,9 @@ through tests instead.
 * After UI changes, read the log (`<data dir>/logs/gambit-<date>.log`): unhandled UI exceptions are
   logged and swallowed, so a page that throws while navigating simply doesn't open.
 * `tools/ui.ps1` drives the app via UI Automation without the mouse: `invoke -Name "Play"`,
-  `board -Moves "e2e4,g1f3"` (board squares are invokable elements `sq-e4`), `list`.
+  `board -Moves "e2e4,g1f3"` (board squares are invokable elements `sq-e4`), `type -Name "Your name" -Text "Sam"`, `list`.
+* A new, empty data dir opens on the welcome screen (onboarding); finish or `invoke -Name "Skip"` it
+  first. Profiles with any games, puzzles or lessons never see it.
   `tools/ui-scroll.ps1 -Percent 100` scrolls the current page.
 * Lessons: `dotnet run tools/lesson-moves.cs > artifacts/lesson-moves.json`, then
   `./tools/play-lessons.ps1 -From tactics/fork -Count 10 [-Shots dir]` plays them start to finish.

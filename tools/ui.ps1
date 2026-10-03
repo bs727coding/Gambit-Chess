@@ -4,11 +4,13 @@
 .EXAMPLE
     ./tools/ui.ps1 list                      # dump named elements
     ./tools/ui.ps1 invoke -Name "Play"       # invoke/select an element by name (no mouse)
+    ./tools/ui.ps1 type -Name "Your name" -Text "Sam"  # set a text box (no keyboard)
     ./tools/ui.ps1 board -Moves "e2e4,g1f3"  # click squares on the board (mouse; window must be in front)
 #>
 param(
-    [Parameter(Position = 0)][ValidateSet('list', 'invoke', 'click', 'board')][string]$Action = 'list',
+    [Parameter(Position = 0)][ValidateSet('list', 'invoke', 'click', 'board', 'type')][string]$Action = 'list',
     [string]$Name,
+    [string]$Text,
     [string]$AutomationId,
     [string]$Moves,
     [switch]$Flipped,
@@ -85,6 +87,11 @@ switch ($Action) {
             throw "Element '$Name' supports no invoke/select/toggle pattern."
         }
         "invoked $($el.Current.Name)"
+    }
+    'type' {
+        $el = Find-Element
+        $el.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).SetValue($Text)
+        "set $($el.Current.Name) to '$Text'"
     }
     'click' {
         $el = Find-Element

@@ -1,6 +1,7 @@
 using Gambit.App.Helpers;
 using Gambit.App.Services;
 using Gambit.Engine.Bots;
+using Gambit.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
@@ -18,16 +19,20 @@ public sealed partial class HomePage : Page
         int hour = DateTime.Now.Hour;
         string part = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
         Greeting.Text = $"{part}, {p.Name}";
-        SubGreeting.Text = p.GamesPlayed == 0
-            ? "Welcome to Gambit. Start with a friendly bot, or explore a position on the analysis board."
-            : "Ready for another game?";
+        SubGreeting.Text = p.GamesPlayed > 0
+            ? "Ready for another game?"
+            : p.Experience == ExperienceLevel.NewToChess && p.Lessons.Count == 0
+                ? "Welcome to Gambit. New to chess? The Basics lessons show how every piece moves."
+                : "Welcome to Gambit. Start with a bot at your level, or explore a position on the analysis board.";
 
         ContinueBar.IsOpen = GamePage.HasActiveGame;
 
-        BotProfile next = NextBot();
-        PlayCardText.Text = p.GamesPlayed == 0
-            ? $"Start with {next.Name} ({next.RatingText}) — a gentle first opponent."
-            : $"Suggested next: {next.Name} ({next.RatingText}).";
+        BotProfile next = App.Profile.NextBot();
+        PlayCardText.Text = p.GamesPlayed > 0
+            ? $"Suggested next: {next.Name} ({next.RatingText})."
+            : next == BotRoster.Bots[0]
+                ? $"Start with {next.Name} ({next.RatingText}) — a gentle first opponent."
+                : $"Start with {next.Name} ({next.RatingText}) — about your level.";
 
         PuzzleProfile pz = p.Puzzles;
         PuzzleCardText.Text = pz.Attempts == 0
@@ -41,10 +46,6 @@ public sealed partial class HomePage : Page
 
         BuildRecentGames(p);
     }
-
-    /// <summary>The weakest bot the player has not beaten yet.</summary>
-    private static BotProfile NextBot() =>
-        BotRoster.Bots.FirstOrDefault(b => App.Profile.RecordAgainst(b.Id).Wins == 0) ?? BotRoster.Bots[^1];
 
     private void BuildRecentGames(PlayerProfile p)
     {
@@ -65,7 +66,7 @@ public sealed partial class HomePage : Page
 
     private void PlayCard_Click(object sender, RoutedEventArgs e)
     {
-        App.Settings.Current.LastBotId = NextBot().Id;
+        App.Settings.Current.LastBotId = App.Profile.NextBot().Id;
         App.Window.NavigateTo("play", PlayPage.ChooseParameter);
     }
 
