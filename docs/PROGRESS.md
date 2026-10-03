@@ -22,10 +22,9 @@ natively on Arm64.
 **Priority (from the user, 2026-10-02): a functional, clean, correct app over bot tuning.**
 
 1. **In progress (the user's list, 2026-10-03), in this order:**
-   a. analysis board: show variations inline in the move list;
-   b. puzzles: practice by opening (keep Lichess `OpeningTags` in the import);
-   c. a faster engine (benchmark first; bot strength must not change unmeasured);
-   d. first-run onboarding (name, experience level → suggested bot and starting puzzle rating).
+   a. puzzles: practice by opening (keep Lichess `OpeningTags` in the import);
+   b. a faster engine (benchmark first; bot strength must not change unmeasured);
+   c. first-run onboarding (name, experience level → suggested bot and starting puzzle rating).
 2. **Accessibility (not yet asked for):** keyboard play on the board, a Narrator pass.
 3. **Online:** stays local for now (the user's call, 2026-10-02); hosting is ready for when they
    want it (Fly.io: four commands, docs/ONLINE.md). Before real users: accounts/sign-in, a
@@ -146,3 +145,10 @@ natively on Arm64.
   recording, pass-and-play, premoves, resuming with the low-time warning, captured material and
   watching. Five pages now share `board.ApplyUserSettings()`. Checked in the app: a bot game,
   history, resign dialog, post-game buttons, rematch, and resuming after a restart.
+* Analysis board: the move list shows the whole move tree (new `MoveTreeView`): the main line in
+  two columns and each variation inline under the move it replaces, numbered like PGN, with deeper
+  variations in parentheses; every move is a button (keyboard and screen-reader friendly), and
+  clicking one switches the board to its line. The separate "also tried here" buttons are gone.
+  Both move lists now keep the current move centered (a rebuilt list scrolled before it had its
+  final size), engine lines take one line each (full line in the tooltip) and the engine card
+  keeps its height between moves, so the move list stops jumping.

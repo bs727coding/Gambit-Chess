@@ -94,6 +94,30 @@ public static class Ui
     }
 
     /// <summary>
+    /// Scrolls <paramref name="scroll"/> so <paramref name="element"/> (inside <paramref name="content"/>)
+    /// sits in the middle of the view. A freshly built element is centered once it is loaded (laid
+    /// out); StartBringIntoView on it right after rebuilding a list does nothing.
+    /// </summary>
+    public static void CenterInView(ScrollViewer scroll, UIElement content, FrameworkElement element)
+    {
+        void Center()
+        {
+            if (element.XamlRoot == null) return;
+            scroll.UpdateLayout();
+            double top = element.TransformToVisual(content).TransformPoint(new Windows.Foundation.Point(0, 0)).Y;
+            double target = top - (scroll.ViewportHeight - element.ActualHeight) / 2;
+            scroll.ChangeView(null, Math.Clamp(target, 0, scroll.ScrollableHeight), null, disableAnimation: true);
+        }
+        void OnLoaded(object sender, RoutedEventArgs e)
+        {
+            element.Loaded -= OnLoaded;
+            Center();
+        }
+        if (element.IsLoaded) Center();
+        else element.Loaded += OnLoaded;
+    }
+
+    /// <summary>
     /// Keeps a wrap grid's tiles filling the width of its parent panel (no ragged gap on the right):
     /// as many columns of at least <paramref name="minWidth"/> as fit, sharing the width equally.
     /// The parent is measured, not the grid: a wrap grid is only as wide as its tiles, so sizing

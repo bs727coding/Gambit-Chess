@@ -40,6 +40,11 @@ public sealed partial class MoveListView : UserControl
         grid.Children.Add(_empty);
         grid.Children.Add(_scroll);
         Content = grid;
+        // Keep the current move in view when the list gets shorter or taller (window size, other cards).
+        _scroll.SizeChanged += (_, _) =>
+        {
+            if (_cells.TryGetValue(_current, out var now)) Ui.CenterInView(_scroll, _rows, now.Cell);
+        };
     }
 
     /// <summary>Raised with the ply to show (1 = position after White's first move).</summary>
@@ -90,7 +95,7 @@ public sealed partial class MoveListView : UserControl
         {
             now.Cell.Background = Ui.AccentBrush;
             now.Text.Foreground = new SolidColorBrush(Colors.White);
-            now.Cell.StartBringIntoView(new BringIntoViewOptions { AnimationDesired = false, VerticalAlignmentRatio = 0.5 });
+            Ui.CenterInView(_scroll, _rows, now.Cell);
         }
     }
 

@@ -23,8 +23,9 @@ public sealed record AnalysisRequest(string? Fen = null, string? PgnFile = null,
 
 /// <summary>
 /// Free analysis: move both sides, engine lines with an eval bar, FEN/PGN import and export. Moves
-/// played from an earlier position become variations (<see cref="MoveTree"/>); the page shows one
-/// line at a time as a <see cref="Game"/> and offers the alternatives at each position.
+/// played from an earlier position become variations (<see cref="MoveTree"/>). The move list shows
+/// the whole tree with variations inline; the board and arrow keys follow one line at a time (the
+/// line through the selected move, as a <see cref="Game"/>).
 /// </summary>
 public sealed partial class AnalysisPage : Page
 {
@@ -51,6 +52,9 @@ public sealed partial class AnalysisPage : Page
             _toastTimer.Stop();
         };
         Board.BoardSizeChanged += (_, size) => Eval.Height = size;
+        // The engine lines are cleared on every move and refilled a moment later; holding the
+        // tallest height seen stops the move list below from jumping up and down each time.
+        Lines.SizeChanged += (_, e) => Lines.MinHeight = Math.Max(Lines.MinHeight, e.NewSize.Height);
         Board.Interaction = BoardInteraction.Both;
         Board.SquareClicked += Board_SquareClicked;
         BuildPalette();
@@ -146,26 +150,12 @@ public sealed partial class AnalysisPage : Page
         SoundService.PlayFor(_game.Moves[at.Ply]);
     }
 
+    /// <summary>Offers "make main line" and "delete" while a side line is on display.</summary>
     private void UpdateVariations()
     {
-        MoveNode at = CurrentNode;
-        MoveNode? next = at.Ply + 1 < _line.Count ? _line[at.Ply + 1] : null;
-        List<MoveNode> others = at.Children.Where(c => !ReferenceEquals(c, next)).ToList();
-        AlternativeButtons.Children.Clear();
-        foreach (MoveNode alternative in others)
-        {
-            var button = new Button { Content = MoveLabel(alternative), Padding = new Thickness(8, 2, 8, 3), FontSize = 12 };
-            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, $"Variation {MoveLabel(alternative)}");
-            ToolTipService.SetToolTip(button, "Switch to this line");
-            button.Click += (_, _) => ShowLine(alternative, animate: true);
-            AlternativeButtons.Children.Add(button);
-        }
-        AlternativesRow.Visibility = others.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-
         MoveNode? branch = _line[^1].BranchPoint;
-        SideLineRow.Visibility = branch != null ? Visibility.Visible : Visibility.Collapsed;
         if (branch != null) SideLineText.Text = $"Side line from {MoveLabel(branch)}";
-        VariationPanel.Visibility = others.Count > 0 || branch != null ? Visibility.Visible : Visibility.Collapsed;
+        VariationPanel.Visibility = branch != null ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private static string MoveLabel(MoveNode n) => $"{n.MoveNumber}{(n.Side == Color.White ? "." : "…")} {n.San}";
@@ -185,7 +175,12 @@ public sealed partial class AnalysisPage : Page
         ShowLine(parent);
     }
 
-    private void MoveList_PlySelected(object? sender, int ply) => ShowPly(ply);
+    /// <summary>A move picked in the list: on the line shown, just go there; otherwise switch to its line.</summary>
+    private void MoveList_NodeSelected(object? sender, MoveNode node)
+    {
+        if (node.Ply < _line.Count && ReferenceEquals(_line[node.Ply], node)) ShowPly(node.Ply);
+        else ShowLine(node, animate: true);
+    }
 
     private void StepPly(int delta)
     {
@@ -202,13 +197,13 @@ public sealed partial class AnalysisPage : Page
         bool forwardOne = ply == current + 1;
         _viewPly = ply == count ? -1 : ply;
         ShowBoard(animate: forwardOne);
-        MoveList.Highlight(ply);
+        MoveList.Highlight(CurrentNode);
         UpdateVariations();
     }
 
     private void Refresh(bool animate)
     {
-        MoveList.SetMoves(_game.Moves, _viewPly < 0 ? _game.Moves.Count : _viewPly);
+        MoveList.SetTree(_tree, CurrentNode);
         ShowBoard(animate);
         UpdateVariations();
     }
@@ -273,7 +268,8 @@ public sealed partial class AnalysisPage : Page
                 },
                 VerticalAlignment = VerticalAlignment.Top,
             };
-            var text = new TextBlock { Text = moves, TextWrapping = TextWrapping.Wrap, FontSize = 13, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis };
+            // One line each (the full line is in the tooltip), so the move list keeps room on small windows.
+            var text = new TextBlock { Text = moves, TextWrapping = TextWrapping.NoWrap, FontSize = 13, TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center };
             Grid.SetColumn(text, 1);
             row.Children.Add(chip);
             row.Children.Add(text);
@@ -288,7 +284,7 @@ public sealed partial class AnalysisPage : Page
                 Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
                 BorderThickness = new Thickness(0),
             };
-            ToolTipService.SetToolTip(button, "Play this move");
+            ToolTipService.SetToolTip(button, $"{moves}\nClick to play the first move.");
             button.Click += (_, _) => Board_MoveRequested(this, new BoardMoveEventArgs(first, false));
             Lines.Children.Add(button);
         }
@@ -315,6 +311,7 @@ public sealed partial class AnalysisPage : Page
     private void EngineSwitch_Toggled(object sender, RoutedEventArgs e)
     {
         if (!IsLoaded) return;
+        if (!EngineSwitch.IsOn) Lines.MinHeight = 0; // no lines to make room for
         ShowBoard(animate: false);
     }
 
