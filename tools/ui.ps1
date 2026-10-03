@@ -13,7 +13,8 @@ param(
     [string]$Moves,
     [switch]$Flipped,
     [int]$Depth = 12,
-    [int]$DelayMs = 350
+    [int]$DelayMs = 350,
+    [int]$ProcessId = 0
 )
 
 $ErrorActionPreference = 'Stop'
@@ -30,7 +31,8 @@ if (-not ('GambitUi.Native' -as [type])) {
 }
 [GambitUi.Native]::SetProcessDpiAwarenessContext([IntPtr](-4)) | Out-Null
 
-$proc = Get-Process Gambit -ErrorAction Stop | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1
+. (Join-Path $PSScriptRoot 'gambit-window.ps1')
+$proc = Get-GambitProcess $ProcessId
 $hwnd = $proc.MainWindowHandle
 $root = [System.Windows.Automation.AutomationElement]::FromHandle($hwnd)
 $TreeScope = [System.Windows.Automation.TreeScope]

@@ -7,7 +7,7 @@
 #>
 param(
     [string]$Out = (Join-Path ([IO.Path]::GetTempPath()) 'gambit-shot.png'),
-    [string]$ProcessName = 'Gambit',
+    [int]$ProcessId = 0,
     [int]$Width = 0,
     [int]$Height = 0,
     [ValidateSet('Print', 'Screen')]
@@ -30,8 +30,8 @@ if (-not ('GambitShot.Win' -as [type])) {
 }
 
 [GambitShot.Win]::SetProcessDpiAwarenessContext([IntPtr](-4)) | Out-Null  # per-monitor v2
-$proc = Get-Process $ProcessName -ErrorAction Stop | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1
-if (-not $proc) { throw "No visible window for process '$ProcessName'." }
+. (Join-Path $PSScriptRoot 'gambit-window.ps1')
+$proc = Get-GambitProcess $ProcessId
 $h = $proc.MainWindowHandle
 
 if ($Width -gt 0 -and $Height -gt 0) {

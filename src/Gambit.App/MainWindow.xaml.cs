@@ -31,8 +31,10 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        Title = AppInfo.DisplayName;
-        TitleText.Text = AppInfo.DisplayName;
+        // A test profile is labeled so it can't be mistaken for the real one (by the user or by
+        // the tools/ scripts, which only drive windows titled "... (test profile)").
+        Title = AppPaths.IsTestProfile ? $"{AppInfo.DisplayName} (test profile)" : AppInfo.DisplayName;
+        TitleText.Text = AppPaths.IsTestProfile ? $"{AppInfo.DisplayName} — test profile" : AppInfo.DisplayName;
         ArchBadge.Text = AppInfo.Architecture;
 
         ExtendsContentIntoTitleBar = true;
@@ -149,6 +151,17 @@ public sealed partial class MainWindow : Window
         SoundService.Play(GameSound.Win);
         Helpers.Delay.Run(DispatcherQueue, TimeSpan.FromSeconds(5), ShowNextAchievement);
     }
+
+    /// <summary>Puts this window behind all others without activating it (test-profile runs).</summary>
+    public void SendToBack()
+    {
+        IntPtr hwnd = Win32Interop.GetWindowFromWindowId(AppWindow.Id);
+        const uint NoSize = 0x0001, NoMove = 0x0002, NoActivate = 0x0010;
+        SetWindowPos(hwnd, new IntPtr(1) /* HWND_BOTTOM */, 0, 0, 0, 0, NoSize | NoMove | NoActivate);
+    }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool SetWindowPos(IntPtr hWnd, IntPtr insertAfter, int x, int y, int cx, int cy, uint flags);
 
     private void SizeAndCenter()
     {

@@ -138,7 +138,7 @@
           "fen": "r4rk1/ppp2ppp/5n2/8/4P3/3Q4/PP3PPP/1B4K1 w - - 0 1",
           "arrows": ["f6h7"],
           "highlights": ["f6", "h7"],
-          "text": "White's queen and bishop are lined up at h7, and only the knight on f6 guards it. When one piece is doing all the defending, capture it, chase it away, or lure it off — and what it guarded falls."
+          "text": "White's queen and bishop are lined up at h7 (once White's own e4 pawn gets out of the way), and only the knight on f6 guards it. When one piece is doing all the defending, capture it, chase it away, or lure it off — and what it guarded falls."
         },
         {
           "kind": "moves",
@@ -182,7 +182,7 @@
           "fen": "8/4k3/8/8/8/8/bPP5/2K5 w - - 0 1",
           "highlights": ["a2"],
           "arrows": ["a2g8"],
-          "text": "A piece with no safe squares is trapped: you can attack it at your leisure. Black's bishop grabbed the a2 pawn, and its only way back out is the long diagonal."
+          "text": "A piece with no safe squares is trapped: you can attack it at your leisure. Black's bishop grabbed the a2 pawn, and its only way back out is the a2–g8 diagonal."
         },
         {
           "kind": "moves",
@@ -209,7 +209,7 @@
           "kind": "moves",
           "fen": "4k3/ppp1pp1p/7q/4N3/8/8/PPP2PPP/3R2K1 w - - 0 1",
           "moves": ["Rd8+", "Kxd8", "Nxf7+", "Ke8", "Nxh6"],
-          "text": "Sacrifice to bring the king to d8, then fork it with the queen.",
+          "text": "Sacrifice to bring the king to d8, then fork king and queen with the knight.",
           "hint": "Give up the rook with check on d8.",
           "success": "The rook was bait: the king took it, and the knight fork won the queen."
         }

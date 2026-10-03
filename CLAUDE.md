@@ -52,14 +52,19 @@ The user works on this PC while sessions run — and sometimes plays Gambit itse
 the app repeatedly**, and before driving it with UI Automation check that the user isn't using it
 (e.g. it's on a page you didn't open, or a game you didn't start); if they are, stop and verify
 through tests instead.
-* **Test in a sandbox profile:** `./build.ps1 run -DataDir artifacts/qa-profile` (sets
-  `GAMBIT_DATA_DIR`), so test games, puzzle attempts and settings never land in the user's real
-  profile (`%LOCALAPPDATA%\Gambit`).
+* **Test in a sandbox profile, Debug build:** `./build.ps1 run -Configuration Debug -DataDir artifacts/qa-profile`
+  (sets `GAMBIT_DATA_DIR`), so test games, puzzle attempts and settings never land in the user's
+  real profile (`%LOCALAPPDATA%\Gambit`). The user's desktop shortcut runs the Release build in
+  `src/Gambit.App/bin/ARM64/Release/...`: while it's open a Release build can't overwrite it, so test
+  with Debug. A test-profile window is titled "Gambit (test profile)", opens behind other windows
+  without taking focus, and is the only window the tools/ scripts drive (`-ProcessId` overrides).
 * After UI changes, read the log (`<data dir>/logs/gambit-<date>.log`): unhandled UI exceptions are
   logged and swallowed, so a page that throws while navigating simply doesn't open.
 * `tools/ui.ps1` drives the app via UI Automation without the mouse: `invoke -Name "Play"`,
   `board -Moves "e2e4,g1f3"` (board squares are invokable elements `sq-e4`), `list`.
   `tools/ui-scroll.ps1 -Percent 100` scrolls the current page.
+* Lessons: `dotnet run tools/lesson-moves.cs > artifacts/lesson-moves.json`, then
+  `./tools/play-lessons.ps1 -From tactics/fork -Count 10 [-Shots dir]` plays them start to finish.
 * `tools/screenshot-quiet.ps1 -Out x.png` captures an on-screen window in place (never moves it);
   a minimized one is restored behind other windows, captured and re-minimized. (`tools/screenshot.ps1` is the foreground version.)
 * Read state through UIA by AutomationId (x:Name), e.g. `StatusText`, `CodeText`, `FeedbackText`.

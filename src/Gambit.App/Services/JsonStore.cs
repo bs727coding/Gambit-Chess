@@ -10,10 +10,13 @@ namespace Gambit.App.Services;
 /// </summary>
 public static class AppPaths
 {
+    private static readonly string? Custom = Environment.GetEnvironmentVariable("GAMBIT_DATA_DIR") is { Length: > 0 } dir ? dir : null;
+
     public static string Root { get; } = Directory.CreateDirectory(
-        Environment.GetEnvironmentVariable("GAMBIT_DATA_DIR") is { Length: > 0 } custom
-            ? custom
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Gambit")).FullName;
+        Custom ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Gambit")).FullName;
+
+    /// <summary>Running on a throwaway profile (GAMBIT_DATA_DIR): the title bar says so.</summary>
+    public static bool IsTestProfile => Custom != null;
 
     public static string Settings => Path.Combine(Root, "settings.json");
     public static string Profile => Path.Combine(Root, "profile.json");

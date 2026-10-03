@@ -21,18 +21,21 @@ natively on Arm64.
 
 **Priority (from the user, 2026-10-02): a functional, clean, correct app over bot tuning.**
 
-1. **QA pass, remaining:** play through a few of the newer lessons in the sandbox profile; the
-   pages themselves were checked in light and dark and at the minimum window size (see the log).
-2. **Puzzles, later:** opening-specific practice (Lichess `OpeningTags` are dropped by the import
-   today), a link to the source game on lichess.org.
-3. **Clean-up:** move `GamePage`'s game-flow logic (local / online / spectator / hot-seat,
-   premoves, rematch) into a testable view model; share the board-settings code duplicated across
-   four pages.
-4. **Online:** stays local for now (the user's call, 2026-10-02); hosting is ready for when they
-   want it (Fly.io: four commands, docs/ONLINE.md). Later: accounts/sign-in, friends list, chat.
-5. **Polish:** keyboard play on the board, Narrator pass, inline variations in the analysis move
-   list, localization; MSIX packaging if wanted (`./build.ps1 install` covers local install).
-6. **Parked unless asked:** bot ladder tuning (BOT-CALIBRATION.md), lessons on zwischenzug /
+1. **In progress (the user's list, 2026-10-03), in this order:**
+   a. move `GamePage`'s game-flow logic (local / online / spectator / hot-seat, premoves, rematch)
+      into a testable view model; share the board-settings code duplicated across four pages;
+   b. analysis board: show variations inline in the move list;
+   c. puzzles: practice by opening (keep Lichess `OpeningTags` in the import);
+   d. a faster engine (benchmark first; bot strength must not change unmeasured);
+   e. first-run onboarding (name, experience level → suggested bot and starting puzzle rating).
+2. **Accessibility (not yet asked for):** keyboard play on the board, a Narrator pass.
+3. **Online:** stays local for now (the user's call, 2026-10-02); hosting is ready for when they
+   want it (Fly.io: four commands, docs/ONLINE.md). Before real users: accounts/sign-in, a
+   database instead of ratings.json, abandonment/cheating/name moderation, backups, code signing
+   and an update path.
+4. **Polish:** localization; MSIX packaging if wanted (`./build.ps1 install` covers local install);
+   a link from a puzzle to its source game on lichess.org.
+5. **Parked unless asked:** bot ladder tuning (BOT-CALIBRATION.md), lessons on zwischenzug /
    X-ray / triangulation.
 
 ## Known issues / notes
@@ -130,3 +133,11 @@ natively on Arm64.
   patterns, tactics, game phases); names for every Lichess theme; Puzzle Rush no longer falls back
   to the easiest puzzles once it passes the hardest. Tests check rating and theme coverage.
   Verified in the app: today's daily puzzle (Lichess #wNt3h) solved end to end, theme practice.
+* Lessons played through in the app (`tools/play-lessons.ps1`, new): all 38 lessons of Tactics,
+  Openings, Endgames and Mates finish with three stars. Fixed: quiz answers were cut off (no
+  wrapping); keyboard focus fell to "All lessons" when Continue disabled itself, so a second Enter
+  left the lesson (focus now follows the step); three inaccurate lesson texts (removing the
+  defender, trapped piece, decoy).
+* Test windows: a test-profile window is titled "Gambit (test profile)", opens behind other windows
+  without focus (the user's keystrokes once landed in one), and is the only window the tools/
+  scripts will drive.

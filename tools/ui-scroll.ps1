@@ -5,11 +5,12 @@
     ./tools/ui-scroll.ps1 -Percent 100   # bottom
     ./tools/ui-scroll.ps1 -Percent 0     # top
 #>
-param([double]$Percent = 100)
+param([double]$Percent = 100, [int]$ProcessId = 0)
 
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
-$proc = Get-Process Gambit -ErrorAction Stop | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1
+. (Join-Path $PSScriptRoot 'gambit-window.ps1')
+$proc = Get-GambitProcess $ProcessId
 $root = [System.Windows.Automation.AutomationElement]::FromHandle($proc.MainWindowHandle)
 $cond = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::IsScrollPatternAvailableProperty, $true)
 $best = $null

@@ -8,7 +8,8 @@
 param(
     [string]$Out = (Join-Path ([IO.Path]::GetTempPath()) 'gambit-shot.png'),
     [int]$Width = 1500,
-    [int]$Height = 950
+    [int]$Height = 950,
+    [int]$ProcessId = 0
 )
 
 $ErrorActionPreference = 'Stop'
@@ -29,7 +30,8 @@ if (-not ('GambitOff.Win' -as [type])) {
 '@
 }
 [GambitOff.Win]::SetProcessDpiAwarenessContext([IntPtr](-4)) | Out-Null
-$proc = Get-Process Gambit -ErrorAction Stop | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1
+. (Join-Path $PSScriptRoot 'gambit-window.ps1')
+$proc = Get-GambitProcess $ProcessId
 $h = $proc.MainWindowHandle
 $wasMinimized = [GambitOff.Win]::IsIconic($h)
 

@@ -31,6 +31,16 @@ public partial class App : Application
         Settings = new SettingsService();
         Profile = new ProfileService();
         Window = new MainWindow();
-        Window.Activate();
+        if (AppPaths.IsTestProfile)
+        {
+            // Test runs (tools/ scripts) open behind the user's windows without taking focus, so
+            // nothing the user types lands in them.
+            Window.AppWindow.Show(activateWindow: false);
+            Window.SendToBack();
+        }
+        else
+        {
+            Window.Activate();
+        }
     }
 }

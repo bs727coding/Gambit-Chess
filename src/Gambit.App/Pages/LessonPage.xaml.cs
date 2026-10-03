@@ -97,6 +97,19 @@ public sealed partial class LessonPage : Page
         RestartButton.Visibility = _step.Kind is StepKind.Moves or StepKind.Stars ? Visibility.Visible : Visibility.Collapsed;
         UpdateMarkers();
         UpdateContinue();
+        FocusStep();
+    }
+
+    /// <summary>
+    /// Keeps keyboard focus where the next action is: the board or the answers while a step is open,
+    /// Continue once it's done. (Left alone, focus falls from the disabled Continue button to
+    /// "All lessons", and the next Enter leaves the lesson.)
+    /// </summary>
+    private void FocusStep()
+    {
+        if (_stepDone) ContinueButton.Focus(FocusState.Programmatic);
+        else if (_step?.Kind == StepKind.Quiz && Choices.Children.FirstOrDefault() is Control first) first.Focus(FocusState.Programmatic);
+        else Board.Focus(FocusState.Programmatic);
     }
 
     private void UpdateMarkers()
@@ -215,11 +228,12 @@ public sealed partial class LessonPage : Page
             int choice = i;
             var button = new Button
             {
-                Content = _step.Choices[i],
+                Content = new TextBlock { Text = _step.Choices[i], TextWrapping = TextWrapping.Wrap },
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 HorizontalContentAlignment = HorizontalAlignment.Left,
                 Padding = new Thickness(14, 8, 14, 8),
             };
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, _step.Choices[i]);
             button.Click += (_, _) =>
             {
                 if (_stepDone) return;
@@ -245,6 +259,7 @@ public sealed partial class LessonPage : Page
         ShowFeedback(true, message);
         UpdateMarkers();
         UpdateContinue();
+        FocusStep();
     }
 
     private void ShowFeedback(bool good, string text)
