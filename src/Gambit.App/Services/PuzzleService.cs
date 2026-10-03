@@ -20,6 +20,8 @@ public sealed class PuzzleProfile
     public int DailyStreak { get; set; }
     public HashSet<string> Seen { get; set; } = [];
     public Dictionary<string, ThemeStat> Themes { get; set; } = [];
+    /// <summary>Attempts by opening (display name, as on the Puzzles page).</summary>
+    public Dictionary<string, ThemeStat> Openings { get; set; } = [];
     public List<RatingPoint> History { get; set; } = [];
 
     public Glicko2Rating Glicko => new(Rating, Deviation, Volatility);
@@ -38,6 +40,7 @@ public enum PuzzleMode
     Rated,
     Daily,
     Theme,
+    Opening,
     Rush3,
     Rush5,
     Survival,
@@ -67,10 +70,10 @@ public sealed class PuzzleService
         _ => ("Grandmaster", 2100, 2700),
     };
 
-    /// <summary>An unseen puzzle close to the player's rating (window widens if needed).</summary>
-    public Puzzle? NextRated(string? theme = null)
+    /// <summary>An unseen puzzle close to the player's rating (window widens if needed), optionally of one theme or opening.</summary>
+    public Puzzle? NextRated(string? theme = null, string? opening = null)
     {
-        var pool = All.Where(p => theme == null || p.HasTheme(theme)).ToList();
+        var pool = All.Where(p => (theme == null || p.HasTheme(theme)) && (opening == null || p.OpeningName == opening)).ToList();
         if (pool.Count == 0) return null;
         double target = Profile.Rating;
         foreach (int window in new[] { 100, 200, 350, 600, 1200, 5000 })
@@ -183,13 +186,16 @@ public sealed class PuzzleService
         {
             p.CurrentStreak = 0;
         }
-        foreach (string theme in puzzle.Themes)
-        {
-            if (!p.Themes.TryGetValue(theme, out ThemeStat? stat)) p.Themes[theme] = stat = new ThemeStat();
-            stat.Attempts++;
-            if (solved) stat.Solved++;
-        }
+        foreach (string theme in puzzle.Themes) Count(p.Themes, theme, solved);
+        if (puzzle.OpeningName is string opening) Count(p.Openings, opening, solved);
         App.Profile.Save();
         AchievementService.Instance.CheckProfile();
+    }
+
+    private static void Count(Dictionary<string, ThemeStat> stats, string key, bool solved)
+    {
+        if (!stats.TryGetValue(key, out ThemeStat? stat)) stats[key] = stat = new ThemeStat();
+        stat.Attempts++;
+        if (solved) stat.Solved++;
     }
 }

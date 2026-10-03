@@ -61,6 +61,7 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 - [x] Puzzle Rush: 3 min, 5 min, Survival (3 strikes); best scores
 - [x] Daily puzzle (deterministic by date) and streak tracking
 - [x] Progression: puzzle "ranks"/tiers by rating, per-theme practice and per-theme stats
+- [x] Practice by opening (Lichess opening tags; 25 openings with ≥ 50 puzzles each, with stats)
 
 ## Session 4 — Lessons I: framework + fundamentals + tactics
 

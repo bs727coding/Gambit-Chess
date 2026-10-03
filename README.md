@@ -13,7 +13,8 @@ lessons, review your games, earn achievements, and play online against friends.
   mate in 2"), accuracy for both sides, eval graph, best-move and refutation arrows.
 * **Puzzles** — about 21,000 puzzles from the Lichess puzzle database, rated 400 to 3000: rated
   (Glicko-2) with ranks, Puzzle Rush (3 min / 5 min / Survival), a daily puzzle with streaks, and
-  practice by 49 themes (mate patterns, forks, pins, skewers, deflection, endgame types…).
+  practice by 49 themes (mate patterns, forks, pins, skewers, deflection, endgame types…) or by
+  opening (25 openings, from the Sicilian to the King's Gambit).
 * **Lessons** — 5 courses, 49 interactive lessons: how pieces move (with star-collecting
   mini-games), checkmate patterns, tactics, openings (Italian, Ruy Lopez, Scotch, Sicilian,
   French, Caro-Kann, Queen's Gambit, London, King's Indian, English) and endgames (two-bishop and bishop-knight mates, opposition, key squares, Lucena, Philidor…).

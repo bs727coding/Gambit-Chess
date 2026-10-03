@@ -10,21 +10,20 @@ natively on Arm64.
 | Toolchain | .NET SDK 10.0.401 Arm64 (machine-wide). Windows App SDK 2.5.1 via NuGet. No Visual Studio needed. |
 | Gambit.Core | Board, legal movegen (perft-verified, also king-less lesson positions), FEN/SAN/UCI/PGN (incl. variations), Game + draw rules, `MoveTree`, clock, Glicko-2, sessions (`IGameSession`), premove rules, openings (~150, embedded TSV), puzzles (embedded CSV), lessons (embedded JSON) |
 | Gambit.Engine | PVS + TT + QS/SEE + null-move + LMR + MultiPV; PeSTO eval; 13 bots with opening books; `GameReviewer` (parallel, move classes, accuracy) |
-| Gambit.App | Home, Play (bots, pass-and-play, online), Game (clocks, premoves, hints, takebacks, resume after restart, sounds, online rematch), Game Review (with plain-language explanations), Analysis (engine lines, position editor, variations), Puzzles (rated, Rush, Survival, daily, themes), Learn (5 courses / 49 lessons), Online lobby, Profile (stats, rating chart, openings, ~50 achievements), Settings (themes, pieces, sounds, premoves) |
+| Gambit.App | Home, Play (bots, pass-and-play, online), Game (clocks, premoves, hints, takebacks, resume after restart, sounds, online rematch), Game Review (with plain-language explanations), Analysis (engine lines, position editor, variations), Puzzles (rated, Rush, Survival, daily, themes, openings), Learn (5 courses / 49 lessons), Online lobby, Profile (stats, rating chart, openings, ~50 achievements), Settings (themes, pieces, sounds, premoves) |
 | Online | `Gambit.Server` (ASP.NET Core + SignalR, authoritative, rematches, spectators, rate limits), `Gambit.Online.Client` (`RemoteGameSession`), Dockerfile, docs/ONLINE.md; `./build.ps1 server` for LAN play |
 | Tools | `import_lichess_puzzles.py`, `Gambit.PuzzleGen` (experiments), `Gambit.BotArena` (ladder measurement), `Gambit.OnlineBot` (plays online, accepts rematches), `ui.ps1`, `ui-scroll.ps1`, `screenshot-quiet.ps1` |
-| Content | 20,928 puzzles from the Lichess puzzle DB (CC0; `tools/import_lichess_puzzles.py`): 400–1,100 per 100-point band from 400 to 2999, 49 practice themes with ≥ 120 each; 49 lessons; tactic/mate solutions audited by the engine in tests |
+| Content | 21,162 puzzles from the Lichess puzzle DB (CC0; `tools/import_lichess_puzzles.py`): 400–1,100 per 100-point band from 400 to 2999, 49 practice themes with ≥ 120 each, 25 practice openings with ≥ 50 each; 49 lessons; tactic/mate solutions audited by the engine in tests |
 | Install | `./build.ps1 install` → `%LOCALAPPDATA%\Programs\Gambit` + Start menu shortcut (tested into a scratch folder; not installed for real, the user decides) |
-| Tests | 128 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
+| Tests | 135 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
 
 ## Next steps
 
 **Priority (from the user, 2026-10-02): a functional, clean, correct app over bot tuning.**
 
 1. **In progress (the user's list, 2026-10-03), in this order:**
-   a. puzzles: practice by opening (keep Lichess `OpeningTags` in the import);
-   b. a faster engine (benchmark first; bot strength must not change unmeasured);
-   c. first-run onboarding (name, experience level → suggested bot and starting puzzle rating).
+   a. a faster engine (benchmark first; bot strength must not change unmeasured);
+   b. first-run onboarding (name, experience level → suggested bot and starting puzzle rating).
 2. **Accessibility (not yet asked for):** keyboard play on the board, a Narrator pass.
 3. **Online:** stays local for now (the user's call, 2026-10-02); hosting is ready for when they
    want it (Fly.io: four commands, docs/ONLINE.md). Before real users: accounts/sign-in, a
@@ -39,15 +38,14 @@ natively on Arm64.
 
 * Engine speed is modest (~0.7M nodes/s single-threaded). Ideas: incremental eval, pawn hash,
   staged movegen, cheaper SEE.
-* `GamePage` keeps its logic in code-behind; consider a view model if it grows further.
 * Online accounts are guest tokens (secret in settings). No sign-in, no moderation yet.
 * UI tests: `tools/ui.ps1` drives the app through UI Automation. Board squares are invokable
   elements (`sq-e4`), so moves can be played without the mouse:
   `./tools/ui.ps1 invoke -Name "Play"`, `./tools/ui.ps1 board -Moves "e2e4,g1f3"`.
   **The user plays Gambit while sessions run** — check it isn't in use before driving it, and
-  test in a sandbox profile (`./build.ps1 run -DataDir artifacts/qa-profile`).
-* The user's real profile still holds a few test games from session 2 (played before the sandbox
-  existed); ask before cleaning them up.
+  test in a sandbox profile (`./build.ps1 run -Configuration Debug -DataDir artifacts/qa-profile`).
+* The user's real profile was reset to a clean slate on 2026-10-03 at their request (backup in
+  `%LOCALAPPDATA%\Gambit-backup-2026-10-03`); appearance and gameplay settings were kept.
 * api.nuget.org has an unreachable CDN edge from this network (see CLAUDE.md); restores still work.
 * Windows PowerShell 5.1 mangles UTF-8 in `Get-Content`/`Set-Content` (see CLAUDE.md) — edit
   files with the Edit/Write tools, `sed` or Python.
@@ -152,3 +150,10 @@ natively on Arm64.
   Both move lists now keep the current move centered (a rebuilt list scrolled before it had its
   final size), engine lines take one line each (full line in the tooltip) and the engine card
   keeps its height between moves, so the move list stops jumping.
+* Puzzles by opening: the import keeps each puzzle's opening family (Lichess `OpeningTags`) and
+  tops up the 24 most common to ≥ 80 puzzles (21,162 puzzles in all). The Puzzles page has a
+  "Practice by opening" section (25 openings with ≥ 50 puzzles, named as in the opening book:
+  "Queen's Gambit Declined", "Petrov's Defense"); practice is rated like theme practice, tiles show
+  your success rate, and a solved puzzle names its opening. Tests cover the CSV column, the names
+  and the coverage. Verified in the app: a Sicilian puzzle (Lichess #dA7r3) solved, rated and
+  counted on its tile.

@@ -65,11 +65,37 @@ public class PuzzleTests
     [Fact]
     public void Csv_round_trip()
     {
-        var p = new Puzzle("abc1234", Position.StartFen, ["e2e4", "e7e5"], 1234, ["opening", "short"]);
+        var p = new Puzzle("abc1234", Position.StartFen, ["e2e4", "e7e5"], 1234, ["opening", "short"], "Kings_Pawn_Game");
         Puzzle? back = Puzzle.FromCsv(p.ToCsv());
         Assert.NotNull(back);
         Assert.Equal(p.Moves, back!.Moves);
         Assert.Equal(p.Themes, back.Themes);
         Assert.Equal(1234, back.Rating);
+        Assert.Equal("Kings_Pawn_Game", back.Opening);
+        Assert.Equal("King's Pawn Game", back.OpeningName);
+
+        Puzzle? none = Puzzle.FromCsv((p with { Opening = null }).ToCsv());
+        Assert.Null(none!.Opening);
+        Assert.Null(none.OpeningName);
+        Assert.Null(Puzzle.FromCsv("abc1234,8/8/8/8/8/8/8/8 w - - 0 1,e2e4 e7e5,1234,short")!.Opening); // older five-column lines
+    }
+
+    [Theory]
+    [InlineData("Queens_Gambit_Declined", "Queen's Gambit Declined")]
+    [InlineData("Caro-Kann_Defense", "Caro-Kann Defense")]
+    [InlineData("Kings_Gambit_Accepted", "King's Gambit Accepted")]
+    [InlineData("Grunfeld_Defense", "Grünfeld Defense")]
+    [InlineData("Russian_Game", "Petrov's Defense")]
+    [InlineData("Some_Unknown_Opening", "Some Unknown Opening")]
+    public void Opening_tags_read_as_book_names(string tag, string name) => Assert.Equal(name, PuzzleOpenings.Name(tag));
+
+    [Fact]
+    public void Common_openings_have_plenty_of_puzzles()
+    {
+        IReadOnlyList<(string Name, int Count)> openings = PuzzleCatalog.Openings(minimum: 50);
+        Assert.True(openings.Count >= 20, $"only {openings.Count} openings with 50+ puzzles");
+        Assert.Contains(openings, o => o.Name == "Sicilian Defense");
+        Assert.DoesNotContain(openings, o => o.Name.Contains('_'));
+        Assert.Equal(openings.OrderByDescending(o => o.Count).Select(o => o.Name), openings.Select(o => o.Name));
     }
 }

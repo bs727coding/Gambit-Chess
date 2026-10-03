@@ -1,16 +1,23 @@
+using System.Globalization;
 using System.Reflection;
+using System.Text;
 using Gambit.Core.Board;
 using Gambit.Core.Notation;
+using Gambit.Core.Openings;
 
 namespace Gambit.Core.Puzzles;
 
 /// <summary>
 /// A tactics puzzle in the Lichess format: <see cref="Fen"/> is the position <em>before</em> the
 /// opponent's setup move; <see cref="Moves"/> = [setup, solution1, reply1, solution2, ...] in UCI.
-/// The solver plays the side to move after the setup move.
+/// The solver plays the side to move after the setup move. <see cref="Opening"/> is the opening
+/// family of the game it came from (a Lichess tag such as "Sicilian_Defense"), if known.
 /// </summary>
-public sealed record Puzzle(string Id, string Fen, IReadOnlyList<string> Moves, int Rating, IReadOnlyList<string> Themes)
+public sealed record Puzzle(string Id, string Fen, IReadOnlyList<string> Moves, int Rating, IReadOnlyList<string> Themes, string? Opening = null)
 {
+    /// <summary>The opening's display name ("Queen's Gambit Declined"), or null.</summary>
+    public string? OpeningName => Opening == null ? null : PuzzleOpenings.Name(Opening);
+
     /// <summary>Number of moves the solver has to find.</summary>
     public int SolutionLength => Moves.Count / 2;
 
@@ -27,14 +34,15 @@ public sealed record Puzzle(string Id, string Fen, IReadOnlyList<string> Moves, 
 
     public bool HasTheme(string theme) => Themes.Contains(theme, StringComparer.OrdinalIgnoreCase);
 
-    public string ToCsv() => $"{Id},{Fen},{string.Join(' ', Moves)},{Rating},{string.Join(' ', Themes)}";
+    public string ToCsv() => $"{Id},{Fen},{string.Join(' ', Moves)},{Rating},{string.Join(' ', Themes)},{Opening}";
 
+    /// <summary>Reads id,fen,moves,rating,themes[,opening].</summary>
     public static Puzzle? FromCsv(string line)
     {
         string[] p = line.Split(',');
         if (p.Length < 5 || !int.TryParse(p[3], out int rating)) return null;
         return new Puzzle(p[0], p[1], p[2].Split(' ', StringSplitOptions.RemoveEmptyEntries), rating,
-            p[4].Split(' ', StringSplitOptions.RemoveEmptyEntries));
+            p[4].Split(' ', StringSplitOptions.RemoveEmptyEntries), p.Length > 5 && p[5].Length > 0 ? p[5] : null);
     }
 
     /// <summary>Checks every move is legal and the line has a setup move plus at least one solution move.</summary>
@@ -159,6 +167,34 @@ public static class PuzzleThemes
     public static string Name(string theme) => Names.TryGetValue(theme, out string? n) ? n : theme;
 }
 
+/// <summary>Display names for the Lichess opening tags on puzzles, spelled as in the opening book.</summary>
+public static class PuzzleOpenings
+{
+    private static readonly Lazy<Dictionary<string, string>> BookNames = new(() =>
+    {
+        var names = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (Opening opening in OpeningBook.All)
+        {
+            string family = opening.Name.Split(':')[0].Trim();
+            names.TryAdd(Key(family), family);
+        }
+        names[Key("Russian Game")] = "Petrov's Defense"; // the same opening under its more familiar name
+        return names;
+    });
+
+    /// <summary>"Kings_Gambit_Accepted" → "King's Gambit Accepted" (underscores become spaces if the book doesn't know it).</summary>
+    public static string Name(string tag) => BookNames.Value.TryGetValue(Key(tag), out string? name) ? name : tag.Replace('_', ' ');
+
+    /// <summary>Letters only, accents dropped, lower case: "Grünfeld Defense" and "Grunfeld_Defense" meet.</summary>
+    private static string Key(string text)
+    {
+        var sb = new StringBuilder(text.Length);
+        foreach (char c in text.Normalize(NormalizationForm.FormD))
+            if (char.IsLetter(c)) sb.Append(char.ToLower(c, CultureInfo.InvariantCulture));
+        return sb.ToString();
+    }
+}
+
 /// <summary>The built-in puzzle collection (embedded puzzles.csv).</summary>
 public static class PuzzleCatalog
 {
@@ -173,8 +209,20 @@ public static class PuzzleCatalog
 
     public static IReadOnlyList<Puzzle> All => Loaded.Value;
 
+    private static readonly Lazy<Dictionary<string, int>> OpeningCounts = new(() =>
+    {
+        var counts = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (Puzzle p in Loaded.Value)
+            if (p.OpeningName is string name) counts[name] = counts.GetValueOrDefault(name) + 1;
+        return counts;
+    });
+
     /// <summary>How many puzzles carry each theme.</summary>
     public static int CountWithTheme(string theme) => Counts.Value.GetValueOrDefault(theme);
+
+    /// <summary>Openings (display names) with at least <paramref name="minimum"/> puzzles, most first.</summary>
+    public static IReadOnlyList<(string Name, int Count)> Openings(int minimum) =>
+        [.. OpeningCounts.Value.Where(kv => kv.Value >= minimum).OrderByDescending(kv => kv.Value).Select(kv => (kv.Key, kv.Value))];
 
     public static Puzzle? Get(string id) => Loaded.Value.FirstOrDefault(p => p.Id == id);
 

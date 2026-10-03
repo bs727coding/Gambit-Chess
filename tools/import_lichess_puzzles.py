@@ -10,9 +10,12 @@ Download the database from https://database.lichess.org/#puzzles (lichess_db_puz
 * quality first: well-established ratings, popular and much-played puzzles; looser tiers only
   fill bands the strict tier can't (the very easy and very hard ends);
 * variety: at most one puzzle per source game and no two puzzles with the same start position;
-* every theme on the Puzzles page gets at least MIN_PER_THEME puzzles (topped up if needed).
+* every theme on the Puzzles page gets at least MIN_PER_THEME puzzles (topped up if needed);
+* the most common openings (Lichess OpeningTags, family only) get at least MIN_PER_OPENING each,
+  for practice by opening.
 
-The output uses Gambit's CSV format (the Lichess one minus a few columns): id,fen,moves,rating,themes.
+The output uses Gambit's CSV format (the Lichess one minus a few columns):
+id,fen,moves,rating,themes,opening (the opening family tag, e.g. Sicilian_Defense, or empty).
 """
 import csv
 import random
@@ -23,6 +26,16 @@ from compression import zstd
 
 SEED = 2026
 MIN_PER_THEME = 120
+MIN_PER_OPENING = 80
+
+# The most common opening families among good Lichess puzzles (OpeningTags' first tag).
+PRACTICE_OPENINGS = [
+    "Sicilian_Defense", "French_Defense", "Queens_Pawn_Game", "Caro-Kann_Defense", "Italian_Game",
+    "Scandinavian_Defense", "Queens_Gambit_Declined", "English_Opening", "Ruy_Lopez", "Indian_Defense",
+    "Scotch_Game", "Philidor_Defense", "Zukertort_Opening", "Kings_Gambit_Accepted", "Four_Knights_Game",
+    "Pirc_Defense", "Modern_Defense", "Vienna_Game", "Russian_Game", "Kings_Pawn_Game", "Bishops_Opening",
+    "Slav_Defense", "Kings_Indian_Defense", "Queens_Gambit_Accepted",
+]
 
 # Themes offered as practice on the Puzzles page (keep in sync with PuzzlesPage.ThemeGroups).
 PRACTICE_THEMES = [
@@ -107,7 +120,9 @@ def main(source: str, target: str) -> None:
     rng = random.Random(SEED)
     by_band = {}   # (band, tier) -> Reservoir
     by_theme = {}  # (theme, tier) -> Reservoir
+    by_opening = {}  # (opening family, tier) -> Reservoir
     practice = set(PRACTICE_THEMES)
+    openings = set(PRACTICE_OPENINGS)
     opener = zstd.open if source.endswith(".zst") else open
     total = 0
     with opener(source, "rt", encoding="utf-8", newline="") as f:
@@ -125,7 +140,8 @@ def main(source: str, target: str) -> None:
             if t == 0:
                 continue
             m = GAME_ID.search(row[8])
-            item = (row[0], row[1], row[2], rating, row[7], m.group(1) if m else row[0])
+            family = row[9].split()[0] if len(row) > 9 and row[9] else ""
+            item = (row[0], row[1], row[2], rating, row[7], m.group(1) if m else row[0], family)
             key = (band, t)
             if key not in by_band:
                 by_band[key] = Reservoir(4 * want, rng)
@@ -136,6 +152,11 @@ def main(source: str, target: str) -> None:
                     if tkey not in by_theme:
                         by_theme[tkey] = Reservoir(3 * MIN_PER_THEME, rng)
                     by_theme[tkey].add(item)
+            if family in openings:
+                okey = (family, t)
+                if okey not in by_opening:
+                    by_opening[okey] = Reservoir(3 * MIN_PER_OPENING, rng)
+                by_opening[okey].add(item)
 
     chosen, games, starts = {}, set(), set()
 
@@ -177,18 +198,33 @@ def main(source: str, target: str) -> None:
                     have += 1
                     theme_counts.update(item[4].split())
 
+    opening_counts = Counter(item[6] for item in chosen.values() if item[6])
+    for family in PRACTICE_OPENINGS:
+        have = opening_counts[family]
+        for t in (1, 2, 3):
+            pool = list(by_opening[(family, t)].items) if (family, t) in by_opening else []
+            rng.shuffle(pool)
+            for item in pool:
+                if have >= MIN_PER_OPENING:
+                    break
+                if take(item):
+                    have += 1
+                    theme_counts.update(item[4].split())
+        opening_counts[family] = have
+
     puzzles = sorted(chosen.values(), key=lambda p: (p[3], p[0]))
     with open(target, "w", encoding="utf-8", newline="\n") as out:
         out.write("# Puzzles from the Lichess puzzle database (https://database.lichess.org, CC0),\n")
         out.write("# selected by tools/import_lichess_puzzles.py.\n")
-        out.write("id,fen,moves,rating,themes\n")
-        for pid, fen, moves, rating, themes, _ in puzzles:
-            out.write(f"{pid},{fen},{moves},{rating},{themes}\n")
+        out.write("id,fen,moves,rating,themes,opening\n")
+        for pid, fen, moves, rating, themes, _, family in puzzles:
+            out.write(f"{pid},{fen},{moves},{rating},{themes},{family}\n")
 
     print(f"read {total:,} puzzles, wrote {len(puzzles):,} to {target}")
     per_band = Counter(p[3] // 100 * 100 for p in puzzles)
     print("per band:", " ".join(f"{b}:{per_band[b]}" for b in sorted(per_band)))
     print("practice themes:", " ".join(f"{t}={theme_counts[t]}" for t in PRACTICE_THEMES))
+    print("practice openings:", " ".join(f"{o}={opening_counts[o]}" for o in PRACTICE_OPENINGS))
 
 
 if __name__ == "__main__":

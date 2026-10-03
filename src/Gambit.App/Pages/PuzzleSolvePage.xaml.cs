@@ -13,11 +13,15 @@ using Microsoft.UI.Xaml.Navigation;
 
 namespace Gambit.App.Pages;
 
-public sealed record PuzzleRequest(PuzzleMode Mode, string? Theme = null);
+/// <summary>What to solve: a mode, plus the theme or opening (display name) for practice.</summary>
+public sealed record PuzzleRequest(PuzzleMode Mode, string? Theme = null, string? Opening = null);
 
-/// <summary>Solves puzzles: rated, daily, by theme, and Puzzle Rush (3 min, 5 min, survival).</summary>
+/// <summary>Solves puzzles: rated, daily, by theme or opening, and Puzzle Rush (3 min, 5 min, survival).</summary>
 public sealed partial class PuzzleSolvePage : Page
 {
+    /// <summary>Evaluation and length tags, not worth showing with the solution.</summary>
+    private static readonly HashSet<string> HiddenThemes = ["crushing", "advantage", "equality", "oneMove", "short", "long", "veryLong"];
+
     private PuzzleRequest _request = new(PuzzleMode.Rated);
     private Puzzle? _puzzle;
     private Game? _game;
@@ -72,6 +76,7 @@ public sealed partial class PuzzleSolvePage : Page
         {
             PuzzleMode.Daily => ("Daily puzzle", DateTime.Now.ToString("dddd, MMMM d")),
             PuzzleMode.Theme => (PuzzleThemes.Name(_request.Theme ?? ""), "Theme practice — your rating still counts"),
+            PuzzleMode.Opening => (_request.Opening ?? "Openings", "Positions from games in this opening — your rating still counts"),
             PuzzleMode.Rush3 => ("Puzzle Rush · 3 min", "Solve as many as you can. Three strikes and you're out."),
             PuzzleMode.Rush5 => ("Puzzle Rush · 5 min", "Solve as many as you can. Three strikes and you're out."),
             PuzzleMode.Survival => ("Puzzle Survival", "No clock — keep going until your third mistake."),
@@ -97,6 +102,7 @@ public sealed partial class PuzzleSolvePage : Page
         {
             PuzzleMode.Daily => PuzzleService.Instance.Daily(DateOnly.FromDateTime(DateTime.Now)),
             PuzzleMode.Theme => PuzzleService.Instance.NextRated(_request.Theme),
+            PuzzleMode.Opening => PuzzleService.Instance.NextRated(opening: _request.Opening),
             _ when IsRush => _rushIndex < _ladder.Count ? _ladder[_rushIndex++] : null,
             _ => PuzzleService.Instance.NextRated(),
         };
@@ -232,6 +238,7 @@ public sealed partial class PuzzleSolvePage : Page
         {
             case PuzzleMode.Rated:
             case PuzzleMode.Theme:
+            case PuzzleMode.Opening:
                 return PuzzleService.Instance.RecordRated(_puzzle, solved);
             case PuzzleMode.Daily:
                 PuzzleService.Instance.RecordDaily(DateOnly.FromDateTime(DateTime.Now), solved);
@@ -299,7 +306,7 @@ public sealed partial class PuzzleSolvePage : Page
 
     private void Next_Click(object sender, RoutedEventArgs e)
     {
-        if (!_finished && !_recorded && _puzzle != null && _index > 0 && _request.Mode is PuzzleMode.Rated or PuzzleMode.Theme)
+        if (!_finished && !_recorded && _puzzle != null && _index > 0 && _request.Mode is PuzzleMode.Rated or PuzzleMode.Theme or PuzzleMode.Opening)
             Fail(); // skipping a rated puzzle counts as a miss
         LoadNext();
     }
@@ -406,7 +413,7 @@ public sealed partial class PuzzleSolvePage : Page
         }
         PuzzleRating.Text = reveal && _puzzle != null ? _puzzle.Rating.ToString() : "?";
         ThemesText.Text = reveal && _puzzle != null
-            ? string.Join(" · ", _puzzle.Themes.Where(t => t is not ("crushing" or "advantage" or "oneMove" or "short" or "long")).Select(PuzzleThemes.Name))
+            ? string.Join(" · ", _puzzle.Themes.Where(t => !HiddenThemes.Contains(t)).Select(PuzzleThemes.Name).Append(_puzzle.OpeningName).OfType<string>())
             : "Themes are revealed after you solve it.";
     }
 

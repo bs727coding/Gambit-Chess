@@ -7,10 +7,14 @@ using Microsoft.UI.Xaml.Navigation;
 
 namespace Gambit.App.Pages;
 
-/// <summary>Puzzle hub: rating and rank, rated puzzles, daily puzzle, Puzzle Rush, theme practice.</summary>
+/// <summary>Puzzle hub: rating and rank, rated puzzles, daily puzzle, Puzzle Rush, theme and opening practice.</summary>
 public sealed partial class PuzzlesPage : Page
 {
-    public PuzzlesPage() => InitializeComponent();
+    public PuzzlesPage()
+    {
+        InitializeComponent();
+        Helpers.Ui.StretchTiles(OpeningGrid, 200);
+    }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
@@ -53,6 +57,7 @@ public sealed partial class PuzzlesPage : Page
         BestSurvival.Text = p.BestSurvival > 0 ? $"Best {p.BestSurvival}" : "—";
 
         BuildThemes(p);
+        BuildOpenings(p);
         SourceNote.Text = "Puzzles come from the Lichess puzzle database (CC0): positions from real games, each rated by how players fared with it.";
     }
 
@@ -76,11 +81,25 @@ public sealed partial class PuzzlesPage : Page
         }
     }
 
+    /// <summary>The openings with enough puzzles, most common first.</summary>
+    private void BuildOpenings(PuzzleProfile p)
+    {
+        OpeningGrid.Children.Clear();
+        foreach ((string name, int count) in PuzzleCatalog.Openings(minimum: 50))
+            OpeningGrid.Children.Add(Tile(name, count, p.Openings.GetValueOrDefault(name), new PuzzleRequest(PuzzleMode.Opening, Opening: name)));
+        OpeningSection.Visibility = OpeningGrid.Children.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     private static Button ThemeTile(string theme, int count, PuzzleProfile p)
     {
         p.Themes.TryGetValue(theme, out ThemeStat? stat);
+        return Tile(PuzzleThemes.Name(theme), count, stat, new PuzzleRequest(PuzzleMode.Theme, theme));
+    }
+
+    private static Button Tile(string title, int count, ThemeStat? stat, PuzzleRequest request)
+    {
         var stack = new StackPanel { Spacing = 2 };
-        stack.Children.Add(new TextBlock { Text = PuzzleThemes.Name(theme), FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
+        stack.Children.Add(new TextBlock { Text = title, FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
         string puzzles = count == 1 ? "1 puzzle" : $"{count:N0} puzzles";
         stack.Children.Add(new TextBlock
         {
@@ -99,8 +118,8 @@ public sealed partial class PuzzlesPage : Page
             Margin = new Thickness(0, 0, 8, 8),
             Padding = new Thickness(14, 8, 14, 8),
         };
-        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, $"Practice {PuzzleThemes.Name(theme)}");
-        button.Click += (_, _) => Start(new PuzzleRequest(PuzzleMode.Theme, theme));
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, $"Practice {title}");
+        button.Click += (_, _) => Start(request);
         return button;
     }
 

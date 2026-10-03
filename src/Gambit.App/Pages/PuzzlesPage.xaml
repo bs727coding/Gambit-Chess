@@ -119,6 +119,12 @@
             <TextBlock Text="Practice by theme" Style="{StaticResource SectionHeaderStyle}" />
             <StackPanel x:Name="ThemeGroupsPanel" Spacing="16" />
 
+            <StackPanel x:Name="OpeningSection">
+                <TextBlock Text="Practice by opening" Style="{StaticResource SectionHeaderStyle}" />
+                <TextBlock Text="Positions from real games that began with each opening." Style="{StaticResource SecondaryTextStyle}" Margin="0,0,0,8" />
+                <VariableSizedWrapGrid x:Name="OpeningGrid" Orientation="Horizontal" ItemWidth="200" ItemHeight="70" />
+            </StackPanel>
+
             <TextBlock x:Name="SourceNote" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Margin="0,16,0,0" TextWrapping="Wrap" />
         </StackPanel>
     </ScrollViewer>
