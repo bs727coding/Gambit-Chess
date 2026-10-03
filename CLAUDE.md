@@ -68,6 +68,9 @@ through tests instead.
   `board -Moves "e2e4,g1f3"` (board squares are invokable elements `sq-e4`), `type -Name "Your name" -Text "Sam"`, `list`.
 * A new, empty data dir opens on the welcome screen (onboarding); finish or `invoke -Name "Skip"` it
   first. Profiles with any games, puzzles or lessons never see it.
+* File dialogs (Settings → back up / restore): `tools/file-dialog.ps1 -Path <full path>` fills in the
+  Save/Open dialog the test window opened. Always give a full path under artifacts/: the dialog
+  starts in the user's (OneDrive) Documents, and one test backup once landed there.
   `tools/ui-scroll.ps1 -Percent 100` scrolls the current page.
 * Lessons: `dotnet run tools/lesson-moves.cs > artifacts/lesson-moves.json`, then
   `./tools/play-lessons.ps1 -From tactics/fork -Count 10 [-Shots dir]` plays them start to finish.

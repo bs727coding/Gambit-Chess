@@ -22,6 +22,12 @@ public static class AppPaths
     public static string Profile => Path.Combine(Root, "profile.json");
     public static string Games { get; } = Directory.CreateDirectory(Path.Combine(Root, "games")).FullName;
     public static string Logs { get; } = Directory.CreateDirectory(Path.Combine(Root, "logs")).FullName;
+
+    /// <summary>
+    /// Set once the data folder was restored or reset and the app is restarting: saves are skipped,
+    /// so the old state still in memory can't write over the new files.
+    /// </summary>
+    public static bool Frozen { get; set; }
 }
 
 /// <summary>Small helper for atomic JSON load/save with sensible defaults when files are missing or corrupt.</summary>
@@ -53,6 +59,7 @@ public static class JsonStore
 
     public static void Save<T>(string path, T value)
     {
+        if (AppPaths.Frozen) return;
         string tmp = path + ".tmp";
         File.WriteAllText(tmp, JsonSerializer.Serialize(value, Options));
         File.Move(tmp, path, overwrite: true);

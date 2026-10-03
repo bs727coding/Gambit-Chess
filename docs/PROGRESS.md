@@ -15,7 +15,7 @@ natively on Arm64.
 | Tools | `import_lichess_puzzles.py`, `Gambit.PuzzleGen` (experiments), `Gambit.BotArena` (ladder measurement), `Gambit.OnlineBot` (plays online, accepts rematches), `ui.ps1`, `ui-scroll.ps1`, `screenshot-quiet.ps1` |
 | Content | 21,162 puzzles from the Lichess puzzle DB (CC0; `tools/import_lichess_puzzles.py`): 400–1,100 per 100-point band from 400 to 2999, 49 practice themes with ≥ 120 each, 25 practice openings with ≥ 50 each; 49 lessons; tactic/mate solutions audited by the engine in tests |
 | Install | `./build.ps1 install` → `%LOCALAPPDATA%\Programs\Gambit` + Start menu shortcut (tested into a scratch folder; not installed for real, the user decides) |
-| Tests | 140 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
+| Tests | 145 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
 
 ## Next steps
 
@@ -24,10 +24,9 @@ The user's list of 2026-10-03 is done (QA pass, GamePage view model, inline vari
 by opening, faster engine, onboarding) and the "Left" tooltip bug is fixed (confirmed by the user).
 
 Proposed to the user on 2026-10-03, in this order (waiting for their pick):
-1. **Single-player polish:** progress tools in Settings (reset / back up / restore; the user
-   needed a reset once already); spaced repetition for the opening drills; a multi-threaded
-   analysis board (bots stay single-threaded and unchanged); a link from a puzzle to its source
-   game on lichess.org.
+1. **Single-player polish (the user's pick, in progress):** progress tools in Settings ✔; spaced
+   repetition for the opening drills; a multi-threaded analysis board (bots stay single-threaded
+   and unchanged). The puzzle source link was dropped (the user's call).
 2. **Server ready to go online, built and tested locally (not deployed):** accounts and sign-in
    instead of guest tokens, a database instead of ratings.json, handling for abandoned games, name
    moderation, backups. Hosting itself is ready (Fly.io, docs/ONLINE.md).
@@ -186,3 +185,13 @@ Proposed to the user on 2026-10-03, in this order (waiting for their pick):
   shows the first shortcut's key as a tooltip wherever the pointer rests; those pages now hide it
   (`KeyboardAcceleratorPlacementMode.Hidden`). The keys still work; the move buttons keep their
   own tooltips. Present since the first app version.
+* Progress tools in Settings ("Your progress"): back up to a zip (profile, games, unfinished game,
+  settings; never the online sign-in token), restore from one (keeps the current token), and reset.
+  Restore and reset first save an automatic copy in `<data>/backups` (newest ten kept), then the
+  app restarts itself; saves are switched off meanwhile (`AppPaths.Frozen`) so nothing in memory
+  writes over the new files. Saved games are found by file name when a profile from another
+  computer stores paths that don't exist here. Logic in `Gambit.ViewModels/ProgressBackup` (5
+  tests, incl. no writes outside the data folder). Verified in the app through the real file
+  dialogs (`tools/file-dialog.ps1`, new): back up, reset (restart → welcome screen), restore
+  (restart → 6 games back). A test backup first landed in the user's OneDrive Documents (the
+  dialog's default folder); it was moved out at once, and the tool now refuses bare file names.

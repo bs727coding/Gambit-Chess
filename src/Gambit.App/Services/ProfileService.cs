@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Gambit.Core.Board;
 using Gambit.Core.Games;
 using Gambit.Core.Notation;
@@ -27,6 +28,22 @@ public sealed class GameRecord
     public string TimeControl { get; set; } = "-";
     public string? Opening { get; set; }
     public string PgnFile { get; set; } = "";
+
+    /// <summary>
+    /// The PGN file, or null if it is gone. Profiles store full paths, so a profile restored from a
+    /// backup made on another computer finds its games by file name in this data folder.
+    /// </summary>
+    [JsonIgnore]
+    public string? PgnPath
+    {
+        get
+        {
+            if (PgnFile.Length == 0) return null;
+            if (File.Exists(PgnFile)) return PgnFile;
+            string local = Path.Combine(AppPaths.Games, Path.GetFileName(PgnFile));
+            return File.Exists(local) ? local : null;
+        }
+    }
 }
 
 /// <summary>Per-bot record for the stats page and bot unlock progression.</summary>

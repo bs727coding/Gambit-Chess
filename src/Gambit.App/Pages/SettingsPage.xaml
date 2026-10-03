@@ -181,6 +181,49 @@
                 </StackPanel>
                 <ToggleSwitch x:Name="SoundSwitch" Grid.Column="2" MinWidth="0" Toggled="Switch_Toggled" AutomationProperties.Name="Sounds" />
             </Grid>
+            <TextBlock Text="Your progress" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,20,0,6" />
+            <Grid Style="{StaticResource SettingRowStyle}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <FontIcon Glyph="&#xE74E;" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="Back up" />
+                    <TextBlock Text="Save your games, ratings, puzzle and lesson progress, achievements and settings to a file" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                </StackPanel>
+                <Button Grid.Column="2" Content="Back up…" VerticalAlignment="Center" MinWidth="120" Click="Backup_Click" AutomationProperties.Name="Back up progress" />
+            </Grid>
+            <Grid Style="{StaticResource SettingRowStyle}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <FontIcon Glyph="&#xE81C;" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="Restore from a backup" />
+                    <TextBlock Text="Replace your progress with a backup file. A copy of your current progress is saved first, and Gambit restarts." Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                </StackPanel>
+                <Button Grid.Column="2" Content="Restore…" VerticalAlignment="Center" MinWidth="120" Click="Restore_Click" AutomationProperties.Name="Restore progress from a backup" />
+            </Grid>
+            <Grid Style="{StaticResource SettingRowStyle}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <FontIcon Glyph="&#xE74D;" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="Reset progress" />
+                    <TextBlock Text="Start over: delete your games, ratings, puzzle and lesson progress and achievements. Settings stay, and a backup is saved first." Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                </StackPanel>
+                <Button Grid.Column="2" Content="Reset…" VerticalAlignment="Center" MinWidth="120" Click="Reset_Click" AutomationProperties.Name="Reset all progress" />
+            </Grid>
+            <TextBlock x:Name="DataStatus" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       TextWrapping="Wrap" Margin="4,4,0,0" Visibility="Collapsed" />
+
             <TextBlock Text="About" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,20,0,6" />
             <Grid Style="{StaticResource SettingRowStyle}">
                 <Grid.ColumnDefinitions>

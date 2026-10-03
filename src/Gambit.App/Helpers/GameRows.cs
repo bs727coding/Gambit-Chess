@@ -63,7 +63,7 @@ public static class GameRows
         Grid.SetColumn(chip, 2);
         grid.Children.Add(chip);
 
-        if (File.Exists(g.PgnFile))
+        if (g.PgnPath is string pgnPath)
         {
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             var review = new Button
@@ -77,7 +77,7 @@ public static class GameRows
             {
                 try
                 {
-                    if (ReviewRequest.FromPgnFile(g.PgnFile, g.PlayerColor) is ReviewRequest req) App.Window.Navigate(typeof(ReviewPage), req);
+                    if (ReviewRequest.FromPgnFile(pgnPath, g.PlayerColor) is ReviewRequest req) App.Window.Navigate(typeof(ReviewPage), req);
                 }
                 catch (Exception ex)
                 {
@@ -94,7 +94,7 @@ public static class GameRows
             };
             ToolTipService.SetToolTip(open, "Open in analysis board");
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(open, "Open in analysis board");
-            open.Click += (_, _) => App.Window.Navigate(typeof(AnalysisPage), new AnalysisRequest(PgnFile: g.PgnFile), "analysis");
+            open.Click += (_, _) => App.Window.Navigate(typeof(AnalysisPage), new AnalysisRequest(PgnFile: pgnPath), "analysis");
             Grid.SetColumn(open, 3);
             grid.Children.Add(open);
         }

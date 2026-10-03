@@ -3,11 +3,15 @@ using Gambit.App.Helpers;
 using Gambit.App.Services;
 using Gambit.App.Theming;
 using Gambit.Core.Board;
+using Gambit.ViewModels;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
+using Windows.Storage;
+using Windows.Storage.Pickers;
+using WinRT.Interop;
 
 namespace Gambit.App.Pages;
 
@@ -140,6 +144,112 @@ public sealed partial class SettingsPage : Page
         s.SoundEnabled = SoundSwitch.IsOn;
         if (!soundWasOn && s.SoundEnabled) SoundService.Play(GameSound.Move);
         ApplyPreview();
+    }
+
+    // ------------------------------------------------------------------ your progress
+
+    private async void Backup_Click(object sender, RoutedEventArgs e)
+    {
+        App.Profile.Save();
+        App.Settings.Save();
+        var picker = new FileSavePicker
+        {
+            SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+            SuggestedFileName = $"Gambit backup {DateTime.Now:yyyy-MM-dd}",
+        };
+        picker.FileTypeChoices.Add("Gambit backup", new List<string> { ".zip" });
+        InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(App.Window));
+        StorageFile? file = await picker.PickSaveFileAsync();
+        if (file == null) return;
+        try
+        {
+            ProgressBackup.Create(AppPaths.Root, file.Path, AppInfo.Version);
+            Log.Info("Progress backed up");
+            ShowDataStatus($"Saved a backup to {file.Path}.");
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"Backup failed: {ex.Message}");
+            ShowDataStatus($"The backup failed: {ex.Message}");
+        }
+    }
+
+    private async void Restore_Click(object sender, RoutedEventArgs e)
+    {
+        var picker = new FileOpenPicker { SuggestedStartLocation = PickerLocationId.DocumentsLibrary };
+        picker.FileTypeFilter.Add(".zip");
+        InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(App.Window));
+        StorageFile? file = await picker.PickSingleFileAsync();
+        if (file == null) return;
+
+        BackupInfo? info = ProgressBackup.Read(file.Path, out string? problem);
+        if (info == null)
+        {
+            ShowDataStatus(problem ?? "That file can't be restored.");
+            return;
+        }
+        string games = info.Games == 1 ? "1 game" : $"{info.Games} games";
+        var dialog = new ContentDialog
+        {
+            Title = "Restore this backup?",
+            Content = new TextBlock
+            {
+                Text = $"This backup is from {info.Created.LocalDateTime:MMMM d, yyyy, h:mm tt} and has {games}. It replaces your current " +
+                       "progress and settings. Your current progress is saved to a backup first, and Gambit restarts to finish.",
+                TextWrapping = TextWrapping.Wrap,
+            },
+            PrimaryButtonText = "Restore and restart",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close,
+        };
+        if (await Dialogs.ShowAsync(dialog, XamlRoot) != ContentDialogResult.Primary) return;
+        ReplaceProgress("before restore", dir => ProgressBackup.Restore(file.Path, dir));
+    }
+
+    private async void Reset_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new ContentDialog
+        {
+            Title = "Reset all progress?",
+            Content = new TextBlock
+            {
+                Text = "This deletes your games, bot records, ratings, puzzle and lesson progress and achievements, and Gambit starts " +
+                       "over with the welcome screen. Your settings stay. A backup of your progress is saved first, in the backups " +
+                       "folder inside the data folder.",
+                TextWrapping = TextWrapping.Wrap,
+            },
+            PrimaryButtonText = "Reset and restart",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close,
+        };
+        if (await Dialogs.ShowAsync(dialog, XamlRoot) != ContentDialogResult.Primary) return;
+        ReplaceProgress("before reset", ProgressBackup.Reset);
+    }
+
+    /// <summary>Saves an automatic backup, changes the data folder, then restarts the app.</summary>
+    private void ReplaceProgress(string reason, Action<string> change)
+    {
+        try
+        {
+            App.Profile.Save();
+            App.Settings.Save();
+            ProgressBackup.SaveAutomaticCopy(AppPaths.Root, reason, AppInfo.Version);
+            change(AppPaths.Root);
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"Progress change ({reason}) failed: {ex.Message}");
+            ShowDataStatus($"That didn't work: {ex.Message}");
+            return;
+        }
+        Log.Info($"Progress replaced ({reason})");
+        App.Restart();
+    }
+
+    private void ShowDataStatus(string text)
+    {
+        DataStatus.Text = text;
+        DataStatus.Visibility = Visibility.Visible;
     }
 
     private void OpenData_Click(object sender, RoutedEventArgs e)

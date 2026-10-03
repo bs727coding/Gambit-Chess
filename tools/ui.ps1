@@ -75,7 +75,16 @@ switch ($Action) {
         }
     }
     'invoke' {
-        $el = Find-Element
+        # Prefer a match that can be invoked (a button can share its name with a nearby label).
+        $el = $null
+        foreach ($cand in $root.FindAll($TreeScope::Descendants, [System.Windows.Automation.Condition]::TrueCondition)) {
+            $cur = $cand.Current
+            $hit = ($AutomationId -and $cur.AutomationId -eq $AutomationId) -or ($Name -and $cur.Name -eq $Name -and -not $cur.IsOffscreen)
+            if (-not $hit) { continue }
+            $ps = $cand.GetSupportedPatterns()
+            if ($ps -contains [System.Windows.Automation.InvokePattern]::Pattern -or $ps -contains [System.Windows.Automation.SelectionItemPattern]::Pattern -or $ps -contains [System.Windows.Automation.TogglePattern]::Pattern) { $el = $cand; break }
+        }
+        if (-not $el) { $el = Find-Element }
         $patterns = $el.GetSupportedPatterns()
         if ($patterns -contains [System.Windows.Automation.InvokePattern]::Pattern) {
             $el.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()

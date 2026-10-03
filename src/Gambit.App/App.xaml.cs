@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Gambit.App.Services;
 using Microsoft.UI.Xaml;
 
@@ -24,6 +25,25 @@ public partial class App : Application
     public static SettingsService Settings { get; private set; } = null!;
     public static ProfileService Profile { get; private set; } = null!;
     public static MainWindow Window { get; private set; } = null!;
+
+    /// <summary>
+    /// Starts a new copy of the app (same data folder) and closes this one. Used after the data folder
+    /// was restored or reset, so nothing left in memory writes over it.
+    /// </summary>
+    public static void Restart()
+    {
+        AppPaths.Frozen = true;
+        Log.Info("Restarting");
+        try
+        {
+            Process.Start(new ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false });
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Restarting failed", ex);
+        }
+        Current.Exit();
+    }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
