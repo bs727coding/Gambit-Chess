@@ -76,6 +76,9 @@ public sealed class PlayerProfile
 
     /// <summary>The level chosen on the welcome screen (null if skipped, or a profile from before it).</summary>
     public ExperienceLevel? Experience { get; set; }
+
+    /// <summary>Opening review schedule, by line id ("openings/italian#2").</summary>
+    public Dictionary<string, ReviewState> Reviews { get; set; } = [];
 }
 
 /// <summary>Best result for one lesson (key = "course/lesson").</summary>
@@ -182,6 +185,15 @@ public sealed class ProfileService
         Save();
         Changed?.Invoke(this, EventArgs.Empty);
     }
+
+    /// <summary>This profile's opening review schedule: lines of finished opening lessons, soonest first.</summary>
+    public IReadOnlyList<(ReviewLine Line, DateOnly Due)> ReviewSchedule() => OpeningReview.Schedule(Profile.Reviews, LessonFinishedOn);
+
+    /// <summary>Opening lines due for review today.</summary>
+    public IReadOnlyList<ReviewLine> DueReviews() => OpeningReview.Due(Profile.Reviews, LessonFinishedOn, DateOnly.FromDateTime(DateTime.Now));
+
+    private DateOnly? LessonFinishedOn(string key) =>
+        Profile.Lessons.TryGetValue(key, out LessonResult? r) ? DateOnly.FromDateTime(r.CompletedAt.LocalDateTime) : null;
 
     /// <summary>The bot to suggest next: the weakest unbeaten one at or above the player's starting level.</summary>
     public BotProfile NextBot() => Onboarding.NextBot(Profile.Experience, id => RecordAgainst(id).Wins > 0);

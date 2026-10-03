@@ -54,7 +54,7 @@
                             <FontIcon Glyph="&#xE7BE;" Foreground="White" FontSize="18" />
                         </Border>
                         <TextBlock Text="Lessons" Style="{StaticResource SubtitleTextBlockStyle}" FontSize="18" />
-                        <TextBlock Text="Interactive lessons: the basics, checkmates, tactics, openings and endgames." Style="{StaticResource SecondaryTextStyle}" />
+                        <TextBlock x:Name="LessonsCardText" Text="Interactive lessons: the basics, checkmates, tactics, openings and endgames." Style="{StaticResource SecondaryTextStyle}" />
                     </StackPanel>
                 </Button>
 

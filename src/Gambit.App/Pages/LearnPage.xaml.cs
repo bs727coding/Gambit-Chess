@@ -1,6 +1,7 @@
 using Gambit.App.Helpers;
 using Gambit.App.Services;
 using Gambit.Core.Lessons;
+using Gambit.ViewModels;
 using Microsoft.UI;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
@@ -10,10 +11,11 @@ using Microsoft.UI.Xaml.Navigation;
 
 namespace Gambit.App.Pages;
 
-/// <summary>Course map: every course with its lessons, progress and stars.</summary>
+/// <summary>Course map: the opening review, then every course with its lessons, progress and stars.</summary>
 public sealed partial class LearnPage : Page
 {
     private string? _continueKey;
+    private IReadOnlyList<ReviewLine> _due = [];
 
     public LearnPage() => InitializeComponent();
 
@@ -32,6 +34,38 @@ public sealed partial class LearnPage : Page
 
         CourseList.Children.Clear();
         foreach (Course course in LessonCatalog.Courses) CourseList.Children.Add(BuildCourse(course, progress));
+        UpdateReview();
+    }
+
+    /// <summary>The opening review card: shown once an opening lesson is finished.</summary>
+    private void UpdateReview()
+    {
+        DateOnly today = DateOnly.FromDateTime(DateTime.Now);
+        IReadOnlyList<(ReviewLine Line, DateOnly Due)> schedule = App.Profile.ReviewSchedule();
+        ReviewCard.Visibility = schedule.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        if (schedule.Count == 0) return;
+
+        if (LessonCatalog.Courses.FirstOrDefault(c => c.Id == "openings") is Course openings) ReviewBadge.Background = Ui.Brush(openings.Color);
+        _due = App.Profile.DueReviews();
+        string lines = schedule.Count == 1 ? "1 line" : $"{schedule.Count} lines";
+        if (_due.Count > 0)
+        {
+            ReviewText.Text = _due.Count == 1
+                ? $"1 line from your opening lessons is due. Lines you know come back less and less often ({lines} in rotation)."
+                : $"{_due.Count} lines from your opening lessons are due. Lines you know come back less and less often ({lines} in rotation).";
+            ReviewButtonText.Text = _due.Count == 1 ? "Review 1 line" : $"Review {_due.Count} lines";
+            ReviewButton.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            ReviewText.Text = $"All caught up: {lines} in rotation. The next one is due {OpeningReview.When(schedule[0].Due, today)}.";
+            ReviewButton.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private void Review_Click(object sender, RoutedEventArgs e)
+    {
+        if (_due.Count > 0) App.Window.Navigate(typeof(LessonPage), new OpeningReviewRequest(_due), "learn");
     }
 
     private static FrameworkElement BuildCourse(Course course, Dictionary<string, LessonResult> progress)

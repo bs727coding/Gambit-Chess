@@ -10,12 +10,12 @@ natively on Arm64.
 | Toolchain | .NET SDK 10.0.401 Arm64 (machine-wide). Windows App SDK 2.5.1 via NuGet. No Visual Studio needed. |
 | Gambit.Core | Board, legal movegen (perft-verified, also king-less lesson positions), FEN/SAN/UCI/PGN (incl. variations), Game + draw rules, `MoveTree`, clock, Glicko-2, sessions (`IGameSession`), premove rules, openings (~150, embedded TSV), puzzles (embedded CSV), lessons (embedded JSON) |
 | Gambit.Engine | PVS + TT + QS/SEE + null-move + LMR + MultiPV; PeSTO eval; 13 bots with opening books; `GameReviewer` (parallel, move classes, accuracy) |
-| Gambit.App | Welcome screen (first run), Home, Play (bots, pass-and-play, online), Game (clocks, premoves, hints, takebacks, resume after restart, sounds, online rematch), Game Review (with plain-language explanations), Analysis (engine lines, position editor, variations), Puzzles (rated, Rush, Survival, daily, themes, openings), Learn (5 courses / 49 lessons), Online lobby, Profile (stats, rating chart, openings, ~50 achievements), Settings (themes, pieces, sounds, premoves) |
+| Gambit.App | Welcome screen (first run), Home, Play (bots, pass-and-play, online), Game (clocks, premoves, hints, takebacks, resume after restart, sounds, online rematch), Game Review (with plain-language explanations), Analysis (engine lines, position editor, variations), Puzzles (rated, Rush, Survival, daily, themes, openings), Learn (5 courses / 49 lessons, opening review), Online lobby, Profile (stats, rating chart, openings, ~50 achievements), Settings (themes, pieces, sounds, premoves) |
 | Online | `Gambit.Server` (ASP.NET Core + SignalR, authoritative, rematches, spectators, rate limits), `Gambit.Online.Client` (`RemoteGameSession`), Dockerfile, docs/ONLINE.md; `./build.ps1 server` for LAN play |
 | Tools | `import_lichess_puzzles.py`, `Gambit.PuzzleGen` (experiments), `Gambit.BotArena` (ladder measurement), `Gambit.OnlineBot` (plays online, accepts rematches), `ui.ps1`, `ui-scroll.ps1`, `screenshot-quiet.ps1` |
 | Content | 21,162 puzzles from the Lichess puzzle DB (CC0; `tools/import_lichess_puzzles.py`): 400–1,100 per 100-point band from 400 to 2999, 49 practice themes with ≥ 120 each, 25 practice openings with ≥ 50 each; 49 lessons; tactic/mate solutions audited by the engine in tests |
 | Install | `./build.ps1 install` → `%LOCALAPPDATA%\Programs\Gambit` + Start menu shortcut (tested into a scratch folder; not installed for real, the user decides) |
-| Tests | 145 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
+| Tests | 153 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
 
 ## Next steps
 
@@ -25,7 +25,7 @@ by opening, faster engine, onboarding) and the "Left" tooltip bug is fixed (conf
 
 Proposed to the user on 2026-10-03, in this order (waiting for their pick):
 1. **Single-player polish (the user's pick, in progress):** progress tools in Settings ✔; spaced
-   repetition for the opening drills; a multi-threaded analysis board (bots stay single-threaded
+   repetition for the opening drills ✔; a multi-threaded analysis board (bots stay single-threaded
    and unchanged). The puzzle source link was dropped (the user's call).
 2. **Server ready to go online, built and tested locally (not deployed):** accounts and sign-in
    instead of guest tokens, a database instead of ratings.json, handling for abandoned games, name
@@ -195,3 +195,12 @@ Proposed to the user on 2026-10-03, in this order (waiting for their pick):
   dialogs (`tools/file-dialog.ps1`, new): back up, reset (restart → welcome screen), restore
   (restart → 6 games back). A test backup first landed in the user's OneDrive Documents (the
   dialog's default folder); it was moved out at once, and the tool now refuses bare file names.
+* Opening review (spaced repetition): the 15 multi-move drills of the opening lessons are review
+  lines. Finishing a lesson puts its lines in box 1 (due the next day); a clean review (no
+  mistake, no hint) moves a line up a box (3, 7, 14, 30, 60, 120 days), a slip sends it back to
+  tomorrow. Learn shows an "Opening review" card (due count or "all caught up, next due …"); the
+  session runs on the lesson page in review mode and saves each line as it is finished (a restart
+  can't wipe a slip, a line is never counted twice). Home's Lessons card mentions due lines.
+  Schedule in `Gambit.ViewModels/OpeningReview` (8 tests). Verified in the app with backdated
+  lessons: three lines (one with a deliberate mistake → "comes back tomorrow"), a clean first
+  review (→ "in 3 days", box 2), the summary dialog and both cards.

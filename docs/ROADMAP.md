@@ -82,7 +82,8 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 - [~] **Endgames**: K+Q, K+R, two-bishop and bishop+knight mates, opposition, key squares, square rule, Lucena,
       Philidor, wrong bishop (rook-pawn draws), rooks behind passed pawns ✔ — triangulation
       still to write; the B+N lesson teaches the corner rule, not the full W manoeuvre
-- [~] Opening trainer: "play the line" drills in each opening lesson ✔ — spaced repetition still to do
+- [x] Opening trainer: "play the line" drills in each opening lesson, reviewed with spaced repetition
+      (Learn → Opening review: Leitner boxes, 1 → 120 days)
 
 ## Session 6 — Profile: statistics, achievements, themes
 

@@ -4,6 +4,7 @@ using Gambit.App.Services;
 using Gambit.Core.Board;
 using Gambit.Core.Lessons;
 using Gambit.Core.Notation;
+using Gambit.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -11,7 +12,13 @@ using Microsoft.UI.Xaml.Navigation;
 
 namespace Gambit.App.Pages;
 
-/// <summary>Plays one lesson step by step: explanations, star-collecting games, move tasks and quizzes.</summary>
+/// <summary>Opens the lesson page as an opening review: one due line per step.</summary>
+public sealed record OpeningReviewRequest(IReadOnlyList<ReviewLine> Lines);
+
+/// <summary>
+/// Plays one lesson step by step: explanations, star-collecting games, move tasks and quizzes. Also
+/// runs opening reviews (<see cref="OpeningReviewRequest"/>), recording each line as it is finished.
+/// </summary>
 public sealed partial class LessonPage : Page
 {
     private Course? _course;
@@ -25,6 +32,13 @@ public sealed partial class LessonPage : Page
     private int _generation;
     private readonly List<int> _remainingTargets = [];
 
+    // Opening review: the lines, and how the current one is going (a restart doesn't wipe a slip).
+    private IReadOnlyList<ReviewLine>? _review;
+    private int _stepMistakes;
+    private bool _stepHinted;
+    private bool _stepRecorded;
+    private int _cleanLines;
+
     public LessonPage()
     {
         InitializeComponent();
@@ -34,14 +48,27 @@ public sealed partial class LessonPage : Page
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
+        _review = null;
         if (e.Parameter is string key && LessonCatalog.Find(key) is var (course, lesson))
         {
             _course = course;
             _lesson = lesson;
-            _mistakes = 0;
-            ApplySettings();
-            ShowStep(0);
         }
+        else if (e.Parameter is OpeningReviewRequest { Lines.Count: > 0 } request)
+        {
+            _review = request.Lines;
+            _course = new Course("review", "Opening review", "", "", "", []);
+            _lesson = new Lesson("review", "Opening review", "", [.. request.Lines.Select(l => l.Step)]) { Key = "review" };
+            _cleanLines = 0;
+        }
+        else
+        {
+            return;
+        }
+        _mistakes = 0;
+        ResetStepRecord();
+        ApplySettings();
+        ShowStep(0);
     }
 
     protected override void OnNavigatedFrom(NavigationEventArgs e)
@@ -60,7 +87,7 @@ public sealed partial class LessonPage : Page
         _stepDone = false;
 
         CourseTitle.Text = _course.Title;
-        LessonTitle.Text = _lesson.Title;
+        LessonTitle.Text = _review != null ? _review[index].Lesson.Title : _lesson.Title;
         StepProgress.Value = (double)index / _lesson.Steps.Count;
         StepCounter.Text = $"{index + 1} / {_lesson.Steps.Count}";
         StepText.Text = _step.Text;
@@ -132,7 +159,8 @@ public sealed partial class LessonPage : Page
         if (_lesson == null) return;
         bool last = _stepIndex == _lesson.Steps.Count - 1;
         ContinueButton.IsEnabled = _stepDone;
-        ContinueText.Text = !last ? "Continue" : LessonCatalog.Next(_lesson.Key) == null ? "Finish" : "Finish lesson";
+        ContinueText.Text = _review != null ? (last ? "Finish review" : "Next line")
+            : !last ? "Continue" : LessonCatalog.Next(_lesson.Key) == null ? "Finish" : "Finish lesson";
     }
 
     // ------------------------------------------------------------------ interactions
@@ -189,6 +217,7 @@ public sealed partial class LessonPage : Page
         if (!correct)
         {
             _mistakes++;
+            _stepMistakes++;
             SoundService.Play(GameSound.Illegal);
             ShowFeedback(false, "Not quite — try again.");
             return;
@@ -200,7 +229,7 @@ public sealed partial class LessonPage : Page
         if (goalMet || _moveIndex >= step.Moves.Count)
         {
             Board.Interaction = BoardInteraction.None;
-            CompleteStep(step.Success ?? "Well done!");
+            CompleteStep(_review != null ? RecordReview() : step.Success ?? "Well done!");
             return;
         }
 
@@ -252,6 +281,32 @@ public sealed partial class LessonPage : Page
         }
     }
 
+    /// <summary>Saves the finished review line's result; returns the feedback to show.</summary>
+    private string RecordReview()
+    {
+        bool clean = _stepMistakes == 0 && !_stepHinted;
+        if (_review == null || _stepRecorded) return clean ? "Correct!" : "Line complete.";
+        _stepRecorded = true;
+        if (clean) _cleanLines++;
+
+        DateOnly today = DateOnly.FromDateTime(DateTime.Now);
+        ReviewLine line = _review[_stepIndex];
+        Dictionary<string, ReviewState> reviews = App.Profile.Profile.Reviews;
+        ReviewState state = OpeningReview.Record(reviews.GetValueOrDefault(line.Id), clean, today);
+        reviews[line.Id] = state;
+        App.Profile.Save();
+        return clean
+            ? $"Perfect. This line comes back {OpeningReview.When(state.Due, today)}."
+            : "Line complete. It comes back tomorrow, to make it stick.";
+    }
+
+    private void ResetStepRecord()
+    {
+        _stepMistakes = 0;
+        _stepHinted = false;
+        _stepRecorded = false;
+    }
+
     private void CompleteStep(string message)
     {
         _stepDone = true;
@@ -297,6 +352,7 @@ public sealed partial class LessonPage : Page
     private void Hint_Click(object sender, RoutedEventArgs e)
     {
         if (_step == null || _stepDone) return;
+        _stepHinted = true;
         var green = Ui.ParseColor("#81B64C", 220);
         if (_step.Kind == StepKind.Moves && _moveIndex < _step.Moves.Count && San.TryParse(_pos, _step.Moves[_moveIndex], out Move m))
         {
@@ -314,10 +370,12 @@ public sealed partial class LessonPage : Page
         if (_lesson == null || !_stepDone) return;
         if (_stepIndex + 1 < _lesson.Steps.Count)
         {
+            ResetStepRecord();
             ShowStep(_stepIndex + 1);
             return;
         }
-        FinishLesson();
+        if (_review != null) FinishReview();
+        else FinishLesson();
     }
 
     private async void FinishLesson()
@@ -343,6 +401,31 @@ public sealed partial class LessonPage : Page
         ContentDialogResult r = await Dialogs.ShowAsync(dialog, XamlRoot);
         if (r == ContentDialogResult.Primary && next != null) App.Window.Navigate(typeof(LessonPage), next.Value.Lesson.Key, "learn");
         else App.Window.Navigate(typeof(LearnPage), null, "learn");
+    }
+
+    private async void FinishReview()
+    {
+        if (_review == null) return;
+        SoundService.Play(GameSound.Win);
+        AchievementService.Instance.CheckProfile();
+        int total = _review.Count;
+        string summary = (total, _cleanLines) switch
+        {
+            (1, 1) => "No slips. The line comes back a little later next time.",
+            (1, _) => "There was a slip, so the line comes back tomorrow.",
+            (_, 0) => $"Each of the {total} lines had a slip, so they all come back tomorrow.",
+            _ when _cleanLines == total => $"All {total} lines without a slip. Each comes back a little later next time.",
+            _ => $"{_cleanLines} of {total} lines without a slip. The others come back tomorrow.",
+        };
+        var dialog = new ContentDialog
+        {
+            Title = "Review complete",
+            Content = summary,
+            CloseButtonText = "Back to Learn",
+            DefaultButton = ContentDialogButton.Close,
+        };
+        await Dialogs.ShowAsync(dialog, XamlRoot);
+        App.Window.Navigate(typeof(LearnPage), null, "learn");
     }
 
     private void Back_Click(object sender, RoutedEventArgs e) => App.Window.Navigate(typeof(LearnPage), null, "learn");

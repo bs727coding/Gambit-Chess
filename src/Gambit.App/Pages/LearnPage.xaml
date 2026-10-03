@@ -19,6 +19,26 @@
                     </StackPanel>
                 </Button>
             </Grid>
+            <Border x:Name="ReviewCard" Style="{StaticResource CardStyle}" Padding="20" Margin="0,12,0,0" Visibility="Collapsed">
+                <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border x:Name="ReviewBadge" Width="48" Height="48" CornerRadius="24" Background="#6A1B9A">
+                        <FontIcon Glyph="&#xE81C;" FontSize="20" Foreground="White" />
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Opening review" FontSize="20" FontWeight="SemiBold" />
+                        <TextBlock x:Name="ReviewText" Opacity="0.75" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Button x:Name="ReviewButton" Grid.Column="2" Style="{StaticResource AccentButtonStyle}" VerticalAlignment="Center"
+                            Padding="16,8" Click="Review_Click" AutomationProperties.Name="Review openings">
+                        <TextBlock x:Name="ReviewButtonText" Text="Review" />
+                    </Button>
+                </Grid>
+            </Border>
             <StackPanel x:Name="CourseList" Spacing="16" Margin="0,12,0,0" />
             <InfoBar IsOpen="True" IsClosable="False" Severity="Informational" Margin="0,8,0,0"
                      Title="Tip"

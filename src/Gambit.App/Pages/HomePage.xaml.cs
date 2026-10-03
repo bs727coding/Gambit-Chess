@@ -38,6 +38,10 @@ public sealed partial class HomePage : Page
         PuzzleCardText.Text = pz.Attempts == 0
             ? "Rated tactics, Puzzle Rush and a daily puzzle."
             : $"Puzzle rating {Math.Round(pz.Rating):0} · {pz.Solved} solved. Keep the streak going!";
+        int due = App.Profile.DueReviews().Count;
+        LessonsCardText.Text = due == 0
+            ? "Interactive lessons: the basics, checkmates, tactics, openings and endgames."
+            : due == 1 ? "1 opening line to review today." : $"{due} opening lines to review today.";
         StatGames.Text = p.GamesPlayed.ToString();
         StatRecord.Text = $"{p.Wins} · {p.Losses} · {p.Draws}";
         BotProfile? best = BotRoster.Bots.Where(b => App.Profile.RecordAgainst(b.Id).Wins > 0).LastOrDefault();
