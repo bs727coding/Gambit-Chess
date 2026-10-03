@@ -10,21 +10,6 @@ using WColor = Windows.UI.Color;
 
 namespace Gambit.App.Helpers;
 
-/// <summary>Parameters for starting a game from the Play page.</summary>
-public sealed record GameSetup(BotProfile? Bot, Color HumanColor, TimeControl TimeControl, bool AllowTakebacks, string? StartFen = null)
-{
-    /// <summary>An online game (the session is a RemoteGameSession).</summary>
-    public bool IsOnline { get; init; }
-
-    /// <summary>Watching someone else's online game: no moves, nothing recorded in the profile.</summary>
-    public bool IsSpectating { get; init; }
-
-    public bool IsHotSeat => Bot == null && !IsOnline;
-
-    /// <summary>The result is shown neutrally ("White wins") instead of "You won".</summary>
-    public bool IsNeutralView => IsHotSeat || IsSpectating;
-}
-
 public static class Ui
 {
     public static WColor ParseColor(string hex, byte alpha = 255)

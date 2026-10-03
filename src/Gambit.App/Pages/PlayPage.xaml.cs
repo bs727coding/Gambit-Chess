@@ -3,6 +3,7 @@ using Gambit.App.Services;
 using Gambit.Core.Board;
 using Gambit.Core.Games;
 using Gambit.Engine.Bots;
+using Gambit.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;

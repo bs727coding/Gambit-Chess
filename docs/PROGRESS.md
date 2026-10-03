@@ -15,19 +15,17 @@ natively on Arm64.
 | Tools | `import_lichess_puzzles.py`, `Gambit.PuzzleGen` (experiments), `Gambit.BotArena` (ladder measurement), `Gambit.OnlineBot` (plays online, accepts rematches), `ui.ps1`, `ui-scroll.ps1`, `screenshot-quiet.ps1` |
 | Content | 20,928 puzzles from the Lichess puzzle DB (CC0; `tools/import_lichess_puzzles.py`): 400–1,100 per 100-point band from 400 to 2999, 49 practice themes with ≥ 120 each; 49 lessons; tactic/mate solutions audited by the engine in tests |
 | Install | `./build.ps1 install` → `%LOCALAPPDATA%\Programs\Gambit` + Start menu shortcut (tested into a scratch folder; not installed for real, the user decides) |
-| Tests | 118 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
+| Tests | 128 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
 
 ## Next steps
 
 **Priority (from the user, 2026-10-02): a functional, clean, correct app over bot tuning.**
 
 1. **In progress (the user's list, 2026-10-03), in this order:**
-   a. move `GamePage`'s game-flow logic (local / online / spectator / hot-seat, premoves, rematch)
-      into a testable view model; share the board-settings code duplicated across four pages;
-   b. analysis board: show variations inline in the move list;
-   c. puzzles: practice by opening (keep Lichess `OpeningTags` in the import);
-   d. a faster engine (benchmark first; bot strength must not change unmeasured);
-   e. first-run onboarding (name, experience level → suggested bot and starting puzzle rating).
+   a. analysis board: show variations inline in the move list;
+   b. puzzles: practice by opening (keep Lichess `OpeningTags` in the import);
+   c. a faster engine (benchmark first; bot strength must not change unmeasured);
+   d. first-run onboarding (name, experience level → suggested bot and starting puzzle rating).
 2. **Accessibility (not yet asked for):** keyboard play on the board, a Narrator pass.
 3. **Online:** stays local for now (the user's call, 2026-10-02); hosting is ready for when they
    want it (Fly.io: four commands, docs/ONLINE.md). Before real users: accounts/sign-in, a
@@ -141,3 +139,10 @@ natively on Arm64.
 * Test windows: a test-profile window is titled "Gambit (test profile)", opens behind other windows
   without focus (the user's keystrokes once landed in one), and is the only window the tools/
   scripts will drive.
+* Game page restructured: its game flow moved into `GameViewModel` in the new UI-free project
+  `src/Gambit.ViewModels` (with `GameSetup`, `SavedGame` and `IGameHost`, implemented by the app's
+  `GameHost`). GamePage went from ~800 to ~400 lines of rendering, dialogs and toasts. 10 new tests
+  (`GameViewModelTests`) cover bot replies and saving, history browsing, takebacks, resigning and
+  recording, pass-and-play, premoves, resuming with the low-time warning, captured material and
+  watching. Five pages now share `board.ApplyUserSettings()`. Checked in the app: a bot game,
+  history, resign dialog, post-game buttons, rematch, and resuming after a restart.

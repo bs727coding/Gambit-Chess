@@ -22,6 +22,7 @@
     <ProjectReference Include="..\..\src\Gambit.Server\Gambit.Server.csproj" />
     <ProjectReference Include="..\..\src\Gambit.Online.Client\Gambit.Online.Client.csproj" />
     <ProjectReference Include="..\..\src\Gambit.Online.Contracts\Gambit.Online.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Gambit.ViewModels\Gambit.ViewModels.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,4 +1,5 @@
 using Gambit.App.Controls;
+using Gambit.App.Helpers;
 using Gambit.App.Services;
 using Gambit.App.Theming;
 using Gambit.Core.Board;
@@ -552,17 +553,7 @@ public sealed partial class AnalysisPage : Page
         LoadFen(pos.ToFen());
     }
 
-    private void ApplySettings()
-    {
-        AppSettings s = App.Settings.Current;
-        if (Board.Theme.Id != s.BoardTheme) Board.Theme = BoardThemes.Get(s.BoardTheme);
-        if (Board.PieceSet.Id != s.PieceSet) Board.PieceSet = PieceSets.Get(s.PieceSet);
-        Board.ShowLegalMoves = s.ShowLegalMoves;
-        Board.ShowCoordinates = s.ShowCoordinates;
-        Board.HighlightLastMove = s.HighlightLastMove;
-        Board.AnimateMoves = s.AnimateMoves;
-        Board.AutoQueen = s.AutoQueen;
-    }
+    private void ApplySettings() => Board.ApplyUserSettings();
 
     private void AddAccelerator(VirtualKey key, Action action)
     {

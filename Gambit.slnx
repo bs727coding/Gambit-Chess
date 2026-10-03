@@ -10,6 +10,7 @@
     <Project Path="src/Gambit.Online.Client/Gambit.Online.Client.csproj" />
     <Project Path="src/Gambit.Online.Contracts/Gambit.Online.Contracts.csproj" />
     <Project Path="src/Gambit.Server/Gambit.Server.csproj" />
+    <Project Path="src/Gambit.ViewModels/Gambit.ViewModels.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Gambit.Tests/Gambit.Tests.csproj" />

@@ -1,31 +1,6 @@
-using Gambit.App.Helpers;
-using Gambit.Core.Board;
-using Gambit.Core.Games;
-using Gambit.Engine.Bots;
+using Gambit.ViewModels;
 
 namespace Gambit.App.Services;
-
-/// <summary>An unfinished game saved to disk so it survives closing the app.</summary>
-public sealed class SavedGame
-{
-    public string? BotId { get; set; }
-    public string HumanColor { get; set; } = "white";
-    public double InitialSeconds { get; set; }
-    public double IncrementSeconds { get; set; }
-    public bool AllowTakebacks { get; set; } = true;
-    public string? StartFen { get; set; }
-    public List<string> Moves { get; set; } = [];
-    public double? WhiteMs { get; set; }
-    public double? BlackMs { get; set; }
-    public DateTimeOffset SavedAt { get; set; } = DateTimeOffset.Now;
-
-    public GameSetup ToSetup()
-    {
-        BotProfile? bot = BotId == null ? null : BotRoster.Bots.FirstOrDefault(b => b.Id == BotId);
-        var tc = new TimeControl(TimeSpan.FromSeconds(InitialSeconds), TimeSpan.FromSeconds(IncrementSeconds));
-        return new GameSetup(bot, HumanColor == "black" ? Color.Black : Color.White, tc, AllowTakebacks, StartFen);
-    }
-}
 
 /// <summary>Persists the game in progress (current-game.json) after every move.</summary>
 public static class ActiveGameStore
@@ -34,22 +9,10 @@ public static class ActiveGameStore
 
     public static bool Exists => File.Exists(FilePath);
 
-    public static void Save(GameSetup setup, Game game, ChessClock? clock)
+    public static void Save(SavedGame saved)
     {
         try
         {
-            var saved = new SavedGame
-            {
-                BotId = setup.Bot?.Id,
-                HumanColor = setup.HumanColor == Color.Black ? "black" : "white",
-                InitialSeconds = setup.TimeControl.Initial.TotalSeconds,
-                IncrementSeconds = setup.TimeControl.Increment.TotalSeconds,
-                AllowTakebacks = setup.AllowTakebacks,
-                StartFen = game.StartsFromStandardPosition ? null : game.StartFen,
-                Moves = game.Moves.Select(m => m.Uci).ToList(),
-                WhiteMs = clock?.Remaining(Color.White).TotalMilliseconds,
-                BlackMs = clock?.Remaining(Color.Black).TotalMilliseconds,
-            };
             JsonStore.Save(FilePath, saved);
         }
         catch (Exception ex)

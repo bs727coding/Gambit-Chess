@@ -1,7 +1,6 @@
 using Gambit.App.Controls;
 using Gambit.App.Helpers;
 using Gambit.App.Services;
-using Gambit.App.Theming;
 using Gambit.Core.Board;
 using Gambit.Core.Games;
 using Gambit.Core.Notation;
@@ -284,15 +283,7 @@ public sealed partial class ReviewPage : Page
         VerdictDetail.Text = detail;
     }
 
-    private void ApplySettings()
-    {
-        AppSettings s = App.Settings.Current;
-        Board.Theme = BoardThemes.Get(s.BoardTheme);
-        Board.PieceSet = PieceSets.Get(s.PieceSet);
-        Board.ShowCoordinates = s.ShowCoordinates;
-        Board.HighlightLastMove = s.HighlightLastMove;
-        Board.AnimateMoves = s.AnimateMoves;
-    }
+    private void ApplySettings() => Board.ApplyUserSettings();
 
     private void Graph_PlySelected(object? sender, int ply) => ShowPly(ply);
     private void MoveList_PlySelected(object? sender, int ply) => ShowPly(ply);

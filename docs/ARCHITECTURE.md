@@ -28,11 +28,16 @@ src/
     Search/                 Iterative deepening PVS, TT, quiescence + SEE, pruning/reductions, MultiPV
     Bots/                   BotProfile (strength knobs), BotRoster (13 bots), BotMoveProvider
     Review/                 GameReviewer (parallel analysis, move classes, accuracy)
+  Gambit.ViewModels/        net10.0 — page logic without UI types, unit-tested: GameViewModel
+                            (game flow for GamePage), GameSetup, SavedGame; IGameHost is what it
+                            needs from the app (profile, saved game, sounds)
   Gambit.App/               WinUI 3 desktop app (net10.0-windows10.0.26100.0, unpackaged, self-contained)
     Controls/               ChessBoardControl (+ UI Automation peers per square), MoveListView,
                             PlayerBar, EvalBar, EvalGraph, RatingChart
-    Pages/                  One page per area (code-behind; CommunityToolkit.Mvvm for settings/models)
-    Services/               Settings, Profile, Sound, Puzzles, Achievements, Online, ActiveGameStore
+    Pages/                  One page per area. GamePage renders GameViewModel; the simpler pages keep
+                            their logic in code-behind (CommunityToolkit.Mvvm for settings/models)
+    Services/               Settings, Profile, Sound, Puzzles, Achievements, Online, ActiveGameStore,
+                            GameHost (IGameHost for the game view model)
     Theming/                Board themes, piece sets (vector geometry)
   Gambit.Online.Contracts/  DTOs + strongly typed SignalR hub interfaces (protocol version)
   Gambit.Online.Client/     OnlineClient (SignalR) + RemoteGameSession : IGameSession
@@ -46,16 +51,17 @@ tools/                      PuzzleGen, BotArena, OnlineBot, ui.ps1 (UI Automatio
                             icon/sound generators
 ```
 
-Dependency direction: `App → Engine → Core`, `App → Online.Client → Core + Contracts`,
-`Server → Core + Contracts`. `Gambit.Core` never references UI, Windows APIs, or the engine.
+Dependency direction: `App → ViewModels → Engine + Online.Client → Core (+ Contracts)`,
+`Server → Core + Contracts`. `Gambit.Core` never references UI, Windows APIs, or the engine;
+`Gambit.ViewModels` references no UI framework, so tests drive it directly.
 
 ## The game-session seam
 
 ```
                      ┌───────────────────────────────┐
-  GamePage           │ IGameSession                  │  Game, White/Black, Clock,
-  (board, clocks,  ──►  MovePlayed / GameEnded /      │  TrySubmitMove, Resign, OfferDraw,
-   move list)        │  StateReset / DrawOffer… events│  Takeback, RespondToDraw …
+  GamePage ──►       │ IGameSession                  │  Game, White/Black, Clock,
+  GameViewModel ──►  │  MovePlayed / GameEnded /      │  TrySubmitMove, Resign, OfferDraw,
+  (flow + state)     │  StateReset / DrawOffer… events│  Takeback, RespondToDraw …
                      └──────────┬────────────────────┘
             ┌───────────────────┼───────────────────────────┐
    LocalGameSession       LocalGameSession            RemoteGameSession
@@ -63,15 +69,15 @@ Dependency direction: `App → Engine → Core`, `App → Online.Client → Core
    (bot on one side)       sides local)               (server validates with Gambit.Core)
 ```
 
-* The page never asks "is this a bot game?". It asks the session which side the local user may move
-  (`IsLocalSide`), submits moves, and reacts to events. Online-only extras (rating changes,
-  rematches) are read from `RemoteGameSession` directly.
+* `GameViewModel` never asks "is this a bot game?". It asks the session which side the local user
+  may move (`IsLocalSide`), submits moves, and reacts to events; the page renders the view model.
+  Online-only extras (rating changes, rematches) are read from `RemoteGameSession` directly.
 * `IMoveProvider` is all a bot needs to implement; the engine's `BotMoveProvider` is one.
 * Moves cross the wire as **UCI strings + ply number** (idempotent, easy to validate and resync).
 * The server is authoritative: it replays moves through `Gambit.Core.Game`; clients apply moves
   optimistically and resync from the move list if the server disagrees. Server clocks decide flags.
-* Premoves are a board/page feature: the board remembers squares, and the page turns them into a
-  legal move (`Premoves.Resolve`) when the opponent's move arrives — sessions are unaware of them.
+* Premoves are a board/page feature: the board remembers squares, and the view model turns them
+  into a legal move (`Premoves.Resolve`) when the opponent's move arrives — sessions are unaware of them.
 * Ratings use `Glicko2` from Core, so local puzzle ratings and online ratings behave the same.
 
 ## Engine notes

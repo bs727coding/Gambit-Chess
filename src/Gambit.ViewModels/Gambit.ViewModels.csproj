@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- UI-framework-neutral view models (game flow, state the pages render), unit-tested in
+       tests/Gambit.Tests. The WinUI pages bind to these and keep only rendering and dialogs. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Gambit.ViewModels</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Gambit.Core\Gambit.Core.csproj" />
+    <ProjectReference Include="..\Gambit.Engine\Gambit.Engine.csproj" />
+    <ProjectReference Include="..\Gambit.Online.Client\Gambit.Online.Client.csproj" />
+  </ItemGroup>
+
+</Project>

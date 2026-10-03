@@ -34,6 +34,7 @@
     <ProjectReference Include="..\Gambit.Core\Gambit.Core.csproj" />
     <ProjectReference Include="..\Gambit.Engine\Gambit.Engine.csproj" />
     <ProjectReference Include="..\Gambit.Online.Client\Gambit.Online.Client.csproj" />
+    <ProjectReference Include="..\Gambit.ViewModels\Gambit.ViewModels.csproj" />
   </ItemGroup>
 
 </Project>

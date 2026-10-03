@@ -1,7 +1,6 @@
 using Gambit.App.Controls;
 using Gambit.App.Helpers;
 using Gambit.App.Services;
-using Gambit.App.Theming;
 using Gambit.Core.Board;
 using Gambit.Core.Lessons;
 using Gambit.Core.Notation;
@@ -348,15 +347,5 @@ public sealed partial class LessonPage : Page
 
     private void Back_Click(object sender, RoutedEventArgs e) => App.Window.Navigate(typeof(LearnPage), null, "learn");
 
-    private void ApplySettings()
-    {
-        AppSettings s = App.Settings.Current;
-        Board.Theme = BoardThemes.Get(s.BoardTheme);
-        if (Board.PieceSet.Id != s.PieceSet) Board.PieceSet = PieceSets.Get(s.PieceSet);
-        Board.ShowLegalMoves = s.ShowLegalMoves;
-        Board.ShowCoordinates = s.ShowCoordinates;
-        Board.HighlightLastMove = s.HighlightLastMove;
-        Board.AnimateMoves = s.AnimateMoves;
-        Board.AutoQueen = s.AutoQueen;
-    }
+    private void ApplySettings() => Board.ApplyUserSettings();
 }

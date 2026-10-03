@@ -78,6 +78,7 @@ src/Gambit.App              WinUI 3 app (unpackaged, self-contained, win-arm64/x
 src/Gambit.Online.Contracts net10.0  protocol DTOs + hub interfaces (bump OnlineProtocol.Version on breaking changes)
 src/Gambit.Online.Client    net10.0  OnlineClient (SignalR) + RemoteGameSession : IGameSession
 src/Gambit.Server           ASP.NET Core + SignalR, authoritative GameManager (Dockerfile at repo root)
+src/Gambit.ViewModels       net10.0  page logic without UI types (GameViewModel for GamePage), unit-tested
 tests/Gambit.Tests          xUnit — perft, notation, rules, engine, content validation, online end-to-end
 tools/                      Lichess puzzle import, PuzzleGen, BotArena, OnlineBot, ui.ps1, screenshots, sound/icon generators
 docs/                       ROADMAP.md, PROGRESS.md, ARCHITECTURE.md, ONLINE.md
@@ -85,8 +86,10 @@ docs/                       ROADMAP.md, PROGRESS.md, ARCHITECTURE.md, ONLINE.md
 
 * `Gambit.Core` and `Gambit.Engine` stay platform-neutral (no Windows/UI references).
 * Squares are ints, a1 = 0 … h8 = 63. `Move` is a 16-bit struct (from | to << 6 | flag << 12).
-* The game page talks only to `IGameSession` (`LocalGameSession` or `RemoteGameSession`). Never
-  special-case the opponent type in UI code beyond `GameSetup.IsOnline` cosmetics.
+* The game page renders `GameViewModel`, which talks only to `IGameSession` (`LocalGameSession` or
+  `RemoteGameSession`). Never special-case the opponent type beyond `GameSetup.IsOnline` cosmetics;
+  game-flow changes go in the view model, with a test in `GameViewModelTests`.
+* Boards take the user's settings through `board.ApplyUserSettings()` (Helpers/BoardSettings.cs).
 * Content (openings TSV, puzzles CSV, lessons JSON) is embedded in Core and validated by tests —
   add content, run `./build.ps1 test`.
 * App: theme resources in XAML; in code-built UI use `Ui.AccentBrush` / `Ui.NeutralFill` and leave
