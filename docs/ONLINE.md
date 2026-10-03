@@ -35,13 +35,54 @@ Pick one:
   server, and connect to `http://<your-tailscale-ip>:5080`.
 * **Port forwarding:** forward TCP 5080 on your router to the server PC and give friends your
   public IP. Prefer the cloud options below for anything long-running.
-* **Cloud (recommended for a public server):** the repo has a `Dockerfile`.
-  * Azure Container Apps: `az containerapp up --name gambit --source . --ingress external --target-port 8080`
-  * Fly.io: `fly launch` (choose internal port 8080), then `fly deploy`
-  * Any Docker host: `docker build -t gambit-server .` and `docker run -p 8080:8080 -v gambit-data:/data gambit-server`
-
-  These give you an `https://…` address — enter it in the app. WebSockets work on all three.
+* **Cloud (recommended for a public server):** the repo has a `Dockerfile` and a `fly.toml`.
   You need your own account with the provider; nothing is deployed automatically.
+
+### Hosting rules that matter
+
+1. **Run exactly one instance.** Games, clocks, seeks and challenge codes live in the server's
+   memory. Two instances would split players between them, so turn off autoscaling and
+   scale-to-zero (scaling to zero would also end every game in progress).
+2. **Give it a persistent volume at `/data`.** Ratings (`ratings.json`) and the PGN archive are
+   written there; without a volume they reset whenever the container is replaced.
+3. **Set `ASPNETCORE_FORWARDEDHEADERS_ENABLED=true` behind the host's proxy**, so the per-IP
+   connection limit sees real client addresses instead of the proxy's.
+4. WebSockets must be allowed (they are on all the options below). Health check: `GET /health`.
+
+### Fly.io (simplest)
+
+```
+fly auth login
+# edit `app` in fly.toml (names are global), then:
+fly launch --copy-config --no-deploy
+fly volumes create gambit_data --size 1
+fly deploy --ha=false
+```
+
+`fly.toml` already encodes the rules above (one machine that never auto-stops, the `/data` volume,
+forwarded headers, a `/health` check). The app is then at `https://<app>.fly.dev`.
+
+### Azure Container Apps
+
+```
+az login
+az containerapp up --name gambit --resource-group gambit --location eastus --source . --ingress external --target-port 8080 --env-vars ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
+az containerapp update --name gambit --resource-group gambit --min-replicas 1 --max-replicas 1
+```
+
+The second command is essential (Container Apps scales between zero and several replicas by
+default). For ratings that survive restarts, add an Azure Files share mounted at `/data`
+(Microsoft's guide: *Use storage mounts in Azure Container Apps*).
+
+### Any Docker host
+
+```
+docker build -t gambit-server .
+docker run -d --restart unless-stopped -p 8080:8080 -v gambit-data:/data gambit-server
+```
+
+Put a TLS reverse proxy (Caddy, nginx) in front for an `https://` address, with WebSockets enabled
+and forwarded headers on.
 
 ## Configuration
 

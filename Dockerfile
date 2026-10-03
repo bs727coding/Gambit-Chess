@@ -16,5 +16,5 @@ ENV ASPNETCORE_URLS=http://+:8080 \
     GAMBIT_DATA=/data
 VOLUME /data
 EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=5s CMD wget -qO- http://localhost:8080/health || exit 1
+# No HEALTHCHECK: the aspnet image has no curl/wget. Hosts probe GET /health themselves (see fly.toml).
 ENTRYPOINT ["dotnet", "Gambit.Server.dll"]

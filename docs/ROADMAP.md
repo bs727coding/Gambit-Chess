@@ -104,8 +104,9 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 
 ## Session 8 — Hosting & distribution
 
-- [x] Dockerfile + config; deploy to a host with WebSockets (Azure Container Apps / App Service,
-      Fly.io or similar — **you** create the account and sign in; Claude prepares scripts + docs)
+- [x] Dockerfile + `fly.toml` + hosting guide (one instance, `/data` volume, forwarded headers);
+      deploy to Fly.io / Azure Container Apps / any Docker host — **you** create the account and
+      sign in; Claude prepares config + docs
 - [~] Rate limiting ✔, health check ✔, console logging ✔ — production DB (PostgreSQL), TLS/domain still to do
 - [~] Per-user install with Start menu shortcut (`./build.ps1 install`) ✔, app icon ✔ — MSIX packaging + signing, versioning, auto-update still to do
 - [~] Online polish: spectating ✔ — friends list, game history sync still to do

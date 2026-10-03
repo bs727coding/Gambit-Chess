@@ -30,8 +30,9 @@ natively on Arm64.
    it appends) or, with the user's OK, the Lichess CC0 puzzle DB (~250 MB download).
 4. **Analysis board:** show variations inline in the move list (today: one line at a time plus
    "Also tried here" and side-line actions).
-5. **Online / Session 8:** accounts/sign-in, PostgreSQL, deploy to the user's cloud account (needs
-   the user), friends list, MSIX packaging + signing, auto-update.
+5. **Online / Session 8:** deploying needs the user's cloud account — with Fly.io it's four
+   commands (docs/ONLINE.md, `fly.toml`). Then accounts/sign-in, PostgreSQL, friends list, MSIX
+   packaging + signing, auto-update.
 6. **Polish:** keyboard play on the board, Narrator pass, localization, light-theme screenshot review.
 
 ## Known issues / notes
@@ -93,5 +94,7 @@ natively on Arm64.
 * `tools/Gambit.BotArena` and the first ladder measurement (docs/BOT-CALIBRATION.md); bots now
   convert won endgames (low-end draws fell from ~50% to ~1%).
 * Puzzles 564 → 689 (two passes with stronger bots) with unique ids. Fixed a double-encoded PROGRESS.md (PowerShell 5.1).
+* Hosting: `fly.toml` and a rewritten hosting guide (exactly one instance, persistent `/data`,
+  forwarded headers); removed the Dockerfile's `wget` health check (the aspnet image has no wget).
 * The user was playing Gambit during the session; `screenshot-quiet.ps1` no longer moves an
   on-screen window, and CLAUDE.md says to check before driving the app.
