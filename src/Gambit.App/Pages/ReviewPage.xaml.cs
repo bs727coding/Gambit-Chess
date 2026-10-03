@@ -253,13 +253,16 @@ public sealed partial class ReviewPage : Page
                 };
                 bool showBest = r.Class is MoveClass.Good or MoveClass.Inaccuracy or MoveClass.Mistake or MoveClass.Miss or MoveClass.Blunder;
                 string detail = $"Evaluation {Searcher.FormatScore(r.EvalBefore)} → {Searcher.FormatScore(r.EvalAfter)}";
-                if (showBest && r.BestSan.Length > 0) detail = $"Best was {r.BestSan} ({Searcher.FormatScore(r.BestEval)}). " + detail;
-                if (r.Class == MoveClass.Great) detail = "The only move that keeps the advantage. " + detail;
-                if (r.Class == MoveClass.Brilliant) detail = "A sound sacrifice. " + detail;
+                // "Best was …" unless the explanation already names the better move.
+                if (showBest && r.BestSan.Length > 0 && r.Explanation?.Contains(r.BestSan, StringComparison.Ordinal) != true)
+                    detail = $"Best was {r.BestSan} ({Searcher.FormatScore(r.BestEval)}). " + detail;
+                if (r.Explanation != null) detail = r.Explanation + " " + detail;
                 SetVerdict(symbol, hex, title, detail);
 
                 if (showBest && !r.BestMove.IsNone)
                     markers.Add(BoardMarker.Arrow(r.BestMove.From, r.BestMove.To, Ui.ParseColor("#81B64C", 210)));
+                if (!r.Refutation.IsNone)
+                    markers.Add(BoardMarker.Arrow(r.Refutation.From, r.Refutation.To, Ui.ParseColor("#E15241", 200))); // the punishing reply
                 markers.Add(BoardMarker.Square(r.Move.Move.To, Ui.ParseColor(hex, 230)));
             }
         }

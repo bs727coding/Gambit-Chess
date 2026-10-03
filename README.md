@@ -9,7 +9,8 @@ lessons, review your games, earn achievements, and play online against friends.
 * **Play vs 13 bots** (Acorn ≈250 → Monolith, full strength) with personalities and opening books;
   clocks, premoves, hints, takebacks, draw offers, resignation, pass-and-play, and resume after restarting.
 * **Game Review** — every position analysed in parallel on all cores: Brilliant/Great/Best …
-  Mistake/Blunder classifications, accuracy for both sides, eval graph, best-move arrows.
+  Mistake/Blunder classifications with plain-language reasons ("this hangs your knight", "allows
+  mate in 2"), accuracy for both sides, eval graph, best-move and refutation arrows.
 * **Puzzles** — rated (Glicko-2) with ranks, Puzzle Rush (3 min / 5 min / Survival), a daily puzzle
   with streaks, and practice by theme (mates, forks, pins, discovered attacks, sacrifices…).
 * **Lessons** — 5 courses, 49 interactive lessons: how pieces move (with star-collecting

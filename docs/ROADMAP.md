@@ -115,6 +115,7 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 
 - Stronger engine (NNUE-style eval, multithreaded search); even out the bot ladder with
   `tools/Gambit.BotArena` (first measurement in docs/BOT-CALIBRATION.md)
-- Opening explorer, coach explanations ("why was this a blunder?"), endgame tablebase (syzygy) probing
+- Opening explorer, endgame tablebase (syzygy) probing; richer coach explanations (Game Review
+  already explains hung pieces, allowed/missed mates and forks)
 - Accessibility pass (Narrator, keyboard-only play, high contrast), localization
 - Cloud sync of profile, web/mobile client reusing `Gambit.Core`

@@ -22,7 +22,11 @@ public enum MoveClass
     Blunder,
 }
 
-/// <summary>The verdict on one move. Evaluations are centipawns from White's point of view.</summary>
+/// <summary>
+/// The verdict on one move. Evaluations are centipawns from White's point of view.
+/// <see cref="Explanation"/> says why in plain language (key moments only); <see cref="Refutation"/>
+/// is the opponent's best reply when the move was a mistake.
+/// </summary>
 public sealed record MoveReview(
     int Ply,
     GameMove Move,
@@ -34,7 +38,9 @@ public sealed record MoveReview(
     int BestEval,
     double WinBefore,
     double WinAfter,
-    double Accuracy)
+    double Accuracy,
+    string? Explanation = null,
+    Move Refutation = default)
 {
     public Color Side => Move.Side;
 
@@ -65,7 +71,8 @@ public sealed class GameReviewer
     public int MaxDepth { get; init; } = 18;
     public int Workers { get; init; } = Math.Max(1, Environment.ProcessorCount - 2);
 
-    private readonly record struct Analysis(int Score, Move Best, int SecondScore, bool HasSecond, int LegalCount);
+    /// <summary>Score is clamped for win chances; RawScore keeps mate distances (side to move's view).</summary>
+    private readonly record struct Analysis(int Score, Move Best, int SecondScore, bool HasSecond, int LegalCount, int RawScore);
 
     public Task<GameReview> ReviewAsync(Game game, IProgress<double>? progress = null, CancellationToken ct = default) =>
         Task.Run(() => Review(game, progress, ct), ct);
@@ -114,7 +121,11 @@ public sealed class GameReviewer
             if (cls is MoveClass.Best or MoveClass.Great or MoveClass.Brilliant or MoveClass.Book or MoveClass.Forced) accuracy = Math.Max(accuracy, 99);
 
             string bestSan = a.Best.IsNone ? "" : San.Format(before, a.Best);
-            reviews.Add(new MoveReview(i + 1, gm, cls, curve[i], curve[i + 1], a.Best, bestSan, sign * a.Score, winBefore, winAfter, accuracy));
+            Analysis next = results[i + 1];
+            string? why = MoveExplainer.Explain(cls, before, gm.Move, a.Best, a.RawScore, positions[i + 1], next.Best, next.RawScore);
+            Move refutation = cls is MoveClass.Inaccuracy or MoveClass.Mistake or MoveClass.Blunder ? next.Best : Move.None;
+            reviews.Add(new MoveReview(i + 1, gm, cls, curve[i], curve[i + 1], a.Best, bestSan, sign * a.Score, winBefore, winAfter, accuracy,
+                why, refutation));
         }
 
         return new GameReview(reviews, curve, SideAccuracy(reviews, Color.White), SideAccuracy(reviews, Color.Black));
@@ -123,8 +134,8 @@ public sealed class GameReviewer
     private Analysis Analyze(Searcher searcher, Position pos, CancellationToken ct)
     {
         int legal = MoveGenerator.LegalMoves(pos).Count;
-        if (legal == 0) return new Analysis(TerminalScore(pos), Move.None, 0, false, 0);
-        if (pos.IsInsufficientMaterial()) return new Analysis(0, MoveGenerator.LegalMoves(pos)[0], 0, false, legal);
+        if (legal == 0) return new Analysis(TerminalScore(pos), Move.None, 0, false, 0, TerminalScore(pos));
+        if (pos.IsInsufficientMaterial()) return new Analysis(0, MoveGenerator.LegalMoves(pos)[0], 0, false, legal, 0);
 
         searcher.Reset();
         var limits = new SearchLimits
@@ -136,7 +147,7 @@ public sealed class GameReviewer
         };
         SearchResult r = searcher.Search(pos, limits, ct);
         bool hasSecond = r.Lines.Count > 1;
-        return new Analysis(Clamp(r.Score), r.BestMove, hasSecond ? Clamp(r.Lines[1].Score) : 0, hasSecond, legal);
+        return new Analysis(Clamp(r.Score), r.BestMove, hasSecond ? Clamp(r.Lines[1].Score) : 0, hasSecond, legal, r.Score);
     }
 
     private static MoveClass Classify(Game game, int index, Position before, GameMove gm, Analysis a,
