@@ -18,7 +18,7 @@ public sealed class BotMoveProvider : IMoveProvider
     /// Bump when the move-choice logic changes: calibration results (tools/Gambit.BotArena) are
     /// fingerprinted with it, so games from older logic stop counting.
     /// </summary>
-    public const int Revision = 2;
+    public const int Revision = 3;
 
     /// <summary>Advantage (cp, bot's view) from which a bot plays its best move in an endgame.</summary>
     private const int ConvertMargin = 500;
@@ -88,6 +88,7 @@ public sealed class BotMoveProvider : IMoveProvider
         {
             double score = Math.Clamp(lines[i].Score, -1500, 1500);
             if (Profile.EvalNoise > 0) score += Gaussian() * Profile.EvalNoise;
+            score += BotStyles.Bonus(Profile.Style, pos, lines[i].Move);
             noisy[i] = score;
             best = Math.Max(best, score);
         }

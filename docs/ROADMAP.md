@@ -40,7 +40,7 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 ## Session 2 — Play experience & analysis
 
 - [x] Time controls (bullet/blitz/rapid/classical/unlimited) with clocks + flagging
-- [~] Bot personalities: opening book per bot ✔, avatars ✔, chat lines ✔ — distinct play styles still to do
+- [x] Bot personalities: opening book per bot, avatars, chat lines, play styles (aggressive / solid / tricky)
 - [x] Opening book (curated SAN lines → hash table), opening name detection (ECO subset)
 - [x] Game review: engine pass over finished games; move classes (Brilliant, Great, Best, Excellent,
       Good, Book, Inaccuracy, Mistake, Miss, Blunder); accuracy %; eval graph; key moments

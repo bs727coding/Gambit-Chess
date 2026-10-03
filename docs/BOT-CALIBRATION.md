@@ -78,6 +78,24 @@ step), and bot-vs-bot gaps overstate gaps against people. Before a big retune it
 real results: the profile already keeps per-bot win/loss records, so a player's record against
 neighbouring bots shows whether a step feels like a cliff.
 
+## Revision 3: play styles (2026-10-02)
+
+Bots that sample among candidate moves now add a style bonus first (`BotStyles`): Aggressive
+bots like checks, captures and king pressure; Solid bots castle, trade evenly and keep their pawn
+shelter; Tricky bots create threats against loose or more valuable pieces. Ten minutes on the
+styled bots, ~1,030 games per step, shows the ladder's shape unchanged within the margins:
+
+| Step | Games | Stronger bot scores | Measured gap (±95%) | Revision 2 |
+|---|---|---|---|---|
+| Dash → Ember | 1029 | 95% (+978 =1 −50) | +515 ± 49 | +526 |
+| Ember → Flint | 1029 | 89% (+916 =5 −108) | +368 ± 34 | +393 |
+| Flint → Gale | 1028 | 90% (+913 =15 −100) | +373 ± 35 | +355 |
+| Gale → Harbor | 1028 | 87% (+880 =30 −118) | +331 ± 32 | +470 |
+| Harbor → Iris | 1028 | 95% (+959 =41 −28) | +522 ± 50 | +504 |
+
+(Depth-limited bots move in tens of milliseconds, so these pairs get many games quickly; the
+time-limited top bots — Jade and up — are what make full-ladder runs slow.)
+
 ## What it means
 
 * **The middle of the ladder has cliffs.** From Dash (800) to Kestrel (2200) every step measures

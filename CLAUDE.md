@@ -36,7 +36,9 @@ session short at any moment, so **checkpoint often**).
   adds a BOM and `Get-Content` without `-Encoding utf8` reads UTF-8 as ANSI (mangles —, →, ≥).
 
 **Network quirk:** one of api.nuget.org's CDN IPs is unreachable from this machine (TCP timeouts of
-21 s). Restores usually still succeed (build.ps1 retries). If NuGet fails repeatedly, switch
+21 s). Restores usually still succeed (build.ps1 retries), but a restore can stall for a long time:
+when no packages changed, `dotnet test tests/Gambit.Tests/Gambit.Tests.csproj --no-restore` skips it
+(~15 s for the whole suite). If NuGet fails repeatedly, switch
 `NuGet.config` to the v2 endpoint noted in that file. winget cannot refresh its source here either —
 download Microsoft installers directly from builds.dotnet.microsoft.com and verify hashes.
 

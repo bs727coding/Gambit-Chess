@@ -87,7 +87,14 @@ public sealed partial class PlayPage : Page
         DetailAvatar.Children.Clear();
         DetailAvatar.Children.Add(Ui.Avatar(b.Monogram, b.Color, 72));
         DetailName.Text = b.Name;
-        DetailRating.Text = b.IsMaxStrength ? "Full engine strength" : $"Rating ≈ {b.Rating}";
+        // A style only shows in play for bots that choose among several candidate moves.
+        string style = b.Style == BotStyle.Balanced || b.Candidates <= 1 || b.Temperature <= 0 ? "" : b.Style switch
+        {
+            BotStyle.Aggressive => " · Aggressive: loves checks and attacks",
+            BotStyle.Solid => " · Solid: safety first",
+            _ => " · Tricky: likes to set threats",
+        };
+        DetailRating.Text = (b.IsMaxStrength ? "Full engine strength" : $"Rating ≈ {b.Rating}") + style;
         DetailTagline.Text = $"“{b.Tagline}”";
         DetailBio.Text = b.Bio;
         DetailRecord.Text = card.RecordText == "Not played yet" ? "You haven't played this bot yet." : $"Your record: {card.RecordText}";
