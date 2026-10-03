@@ -526,12 +526,32 @@ public sealed partial class GamePage : Page
         ResignButton.IsEnabled = live && playing && _session!.Game.Moves.Count > 0;
         DrawButton.Visibility = ResignButton.Visibility = playing ? Visibility.Visible : Visibility.Collapsed;
         TakebackButton.Visibility = _setup?.AllowTakebacks == false ? Visibility.Collapsed : Visibility.Visible;
+        LayoutGameActions(over: _session?.Game.IsOver == true);
         HintButton.IsEnabled = live && _setup?.IsOnline != true && _viewPly < 0 && !_session!.IsOpponentThinking && _session.IsLocalSide(_session.Game.SideToMove);
 
         int count = _session?.Game.Moves.Count ?? 0;
         int ply = _viewPly < 0 ? count : _viewPly;
         FirstButton.IsEnabled = PrevButton.IsEnabled = ply > 0;
         NextButton.IsEnabled = LastButton.IsEnabled = ply < count;
+    }
+
+    /// <summary>
+    /// Gives each visible game action an equal column (no gap where Undo is hidden online). The row
+    /// disappears once the game is over: the post-game buttons take its place.
+    /// </summary>
+    private void LayoutGameActions(bool over)
+    {
+        Button[] visible = [.. new[] { TakebackButton, DrawButton, ResignButton }.Where(b => b.Visibility == Visibility.Visible)];
+        GameActions.Visibility = over || visible.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+        bool laidOut = GameActions.ColumnDefinitions.Count == visible.Length
+            && visible.Select((b, i) => Grid.GetColumn(b) == i).All(ok => ok);
+        if (laidOut) return;
+        GameActions.ColumnDefinitions.Clear();
+        for (int i = 0; i < visible.Length; i++)
+        {
+            GameActions.ColumnDefinitions.Add(new ColumnDefinition());
+            Grid.SetColumn(visible[i], i);
+        }
     }
 
     private string OpponentDisplayName()

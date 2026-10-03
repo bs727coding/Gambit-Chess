@@ -116,6 +116,8 @@
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock x:Name="DetailName" Style="{StaticResource SubtitleTextBlockStyle}" />
                             <TextBlock x:Name="DetailRating" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="DetailStyle" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       TextWrapping="Wrap" Visibility="Collapsed" />
                         </StackPanel>
                     </Grid>
                     <TextBlock x:Name="DetailTagline" FontStyle="Italic" TextWrapping="Wrap" />

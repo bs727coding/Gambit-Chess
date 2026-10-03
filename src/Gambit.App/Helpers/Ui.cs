@@ -107,4 +107,37 @@ public static class Ui
         if (ago.TotalDays < 7) return $"{(int)ago.TotalDays} d ago";
         return when.ToString("MMM d, yyyy");
     }
+
+    /// <summary>
+    /// Keeps a wrap grid's tiles filling the width of its parent panel (no ragged gap on the right):
+    /// as many columns of at least <paramref name="minWidth"/> as fit, sharing the width equally.
+    /// The parent is measured, not the grid: a wrap grid is only as wide as its tiles, so sizing
+    /// from its own width would ratchet down. The parent is looked up once the grid is loaded
+    /// (while a page is still being built, <see cref="FrameworkElement.Parent"/> is null).
+    /// </summary>
+    public static void StretchTiles(VariableSizedWrapGrid grid, double minWidth)
+    {
+        FrameworkElement? parent = null;
+        void Fit()
+        {
+            if (parent == null) return;
+            Thickness pad = parent switch { StackPanel s => s.Padding, Grid g => g.Padding, Border b => b.Padding, _ => default };
+            double available = parent.ActualWidth - pad.Left - pad.Right - grid.Margin.Left - grid.Margin.Right;
+            if (available <= 0) return;
+            int columns = Math.Max(1, (int)(available / minWidth));
+            // 2 px of slack: layout rounding to physical pixels can leave the grid a fraction of a
+            // pixel narrower than computed here, which would wrap the last column.
+            double width = Math.Floor((available - 2) / columns);
+            if (grid.ItemWidth != width) grid.ItemWidth = width;
+        }
+        grid.Loaded += (_, _) =>
+        {
+            if (parent == null && VisualTreeHelper.GetParent(grid) is FrameworkElement p)
+            {
+                parent = p;
+                parent.SizeChanged += (_, _) => Fit();
+            }
+            Fit();
+        };
+    }
 }

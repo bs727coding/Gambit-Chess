@@ -3,11 +3,17 @@ using System.Text.Json.Serialization;
 
 namespace Gambit.App.Services;
 
-/// <summary>Where Gambit keeps its data: %LOCALAPPDATA%\Gambit (per Windows user, unpackaged app).</summary>
+/// <summary>
+/// Where Gambit keeps its data: %LOCALAPPDATA%\Gambit (per Windows user, unpackaged app). Setting the
+/// GAMBIT_DATA_DIR environment variable points the app at another folder, e.g. a throwaway profile
+/// for testing that leaves the real one untouched.
+/// </summary>
 public static class AppPaths
 {
     public static string Root { get; } = Directory.CreateDirectory(
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Gambit")).FullName;
+        Environment.GetEnvironmentVariable("GAMBIT_DATA_DIR") is { Length: > 0 } custom
+            ? custom
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Gambit")).FullName;
 
     public static string Settings => Path.Combine(Root, "settings.json");
     public static string Profile => Path.Combine(Root, "profile.json");

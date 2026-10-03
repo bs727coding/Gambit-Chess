@@ -12,7 +12,11 @@ namespace Gambit.App.Pages;
 
 public sealed partial class ProfilePage : Page
 {
-    public ProfilePage() => InitializeComponent();
+    public ProfilePage()
+    {
+        InitializeComponent();
+        Ui.StretchTiles(AchievementGrid, 250);
+    }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
@@ -79,7 +83,8 @@ public sealed partial class ProfilePage : Page
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             row.Children.Add(new TextBlock { Text = grp.Key, FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
-            var stats = new TextBlock { Text = $"{grp.Count()} games · {w}W {d}D {l}L", Opacity = 0.75 };
+            string games = grp.Count() == 1 ? "1 game" : $"{grp.Count()} games";
+            var stats = new TextBlock { Text = $"{games} · {w}W · {l}L · {d}D", Opacity = 0.75 };
             Grid.SetColumn(stats, 1);
             row.Children.Add(stats);
             OpeningsList.Children.Add(row);
@@ -153,7 +158,7 @@ public sealed partial class ProfilePage : Page
 
         var text = new TextBlock
         {
-            Text = rec.Games == 0 ? "Not played" : $"{rec.Wins}W  {rec.Draws}D  {rec.Losses}L",
+            Text = rec.Games == 0 ? "Not played" : $"{rec.Wins}W · {rec.Losses}L · {rec.Draws}D",
             Opacity = 0.75,
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center,

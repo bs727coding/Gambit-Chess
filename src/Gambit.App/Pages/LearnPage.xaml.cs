@@ -23,7 +23,7 @@ public sealed partial class LearnPage : Page
         Dictionary<string, LessonResult> progress = App.Profile.Profile.Lessons;
         var all = LessonCatalog.AllLessons.ToList();
         int done = all.Count(l => progress.ContainsKey(l.Key));
-        Subtitle.Text = $"Interactive lessons from the basics to classic tactics · {done} of {all.Count} completed";
+        Subtitle.Text = $"Basics, checkmates, tactics, openings and endgames · {done} of {all.Count} completed";
 
         Lesson? next = all.FirstOrDefault(l => !progress.ContainsKey(l.Key));
         _continueKey = next?.Key;
@@ -119,6 +119,7 @@ public sealed partial class LearnPage : Page
             number++;
         }
         stack.Children.Add(lessons);
+        Ui.StretchTiles(lessons, 240);
         card.Child = stack;
         return card;
     }

@@ -21,13 +21,11 @@ natively on Arm64.
 
 **Priority (from the user, 2026-10-02): a functional, clean, correct app over bot tuning.**
 
-1. **QA pass of every page in the running app** (Home, Play, Game, Review, Analysis, Puzzles,
-   puzzle trainer, Learn, lesson player, Online, Profile, Settings) in light and dark theme and at
-   a narrow window size; fix what turns up. Not yet seen on screen: Game Review explanations and
-   red refutation arrow, the bot style line on the Play page, the premove highlight, the newer
-   lessons played through. Needs the screen — agree a time with the user.
-2. **Puzzles:** only 19 puzzles are rated 1600+, so improving players will run out. Best fix: the
-   Lichess CC0 puzzle DB (~250 MB download — ask first), embedding a curated ~20k subset.
+1. **Puzzles (in progress):** only 19 puzzles are rated 1600+, so improving players will run out.
+   The Lichess CC0 puzzle DB is downloaded (`artifacts/lichess_db_puzzle.csv.zst`, approved by the
+   user); embed a curated ~20k subset spread over ratings 400–3000 and themes, credit Lichess.
+2. **QA pass, remaining:** play through a few of the newer lessons in the sandbox profile; the
+   pages themselves were checked in light and dark and at the minimum window size (see the log).
 3. **Clean-up:** move `GamePage`'s game-flow logic (local / online / spectator / hot-seat,
    premoves, rematch) into a testable view model; share the board-settings code duplicated across
    four pages.
@@ -49,7 +47,10 @@ natively on Arm64.
 * UI tests: `tools/ui.ps1` drives the app through UI Automation. Board squares are invokable
   elements (`sq-e4`), so moves can be played without the mouse:
   `./tools/ui.ps1 invoke -Name "Play"`, `./tools/ui.ps1 board -Moves "e2e4,g1f3"`.
-  **The user plays Gambit while sessions run** — check it isn't in use before driving it.
+  **The user plays Gambit while sessions run** — check it isn't in use before driving it, and
+  test in a sandbox profile (`./build.ps1 run -DataDir artifacts/qa-profile`).
+* The user's real profile still holds a few test games from session 2 (played before the sandbox
+  existed); ask before cleaning them up.
 * api.nuget.org has an unreachable CDN edge from this network (see CLAUDE.md); restores still work.
 * Windows PowerShell 5.1 mangles UTF-8 in `Get-Content`/`Set-Content` (see CLAUDE.md) — edit
   files with the Edit/Write tools, `sed` or Python.
@@ -107,3 +108,21 @@ natively on Arm64.
   forwarded headers); removed the Dockerfile's `wget` health check (the aspnet image has no wget).
 * The user was playing Gambit during the session; `screenshot-quiet.ps1` no longer moves an
   on-screen window, and CLAUDE.md says to check before driving the app.
+* The user asked to step back from bot tuning: priorities are now a functional, clean, correct app.
+* QA pass of every page in the running app (sandbox profile via `GAMBIT_DATA_DIR` /
+  `./build.ps1 run -DataDir`), light and dark, default and minimum window size. Fixed:
+  * achievement toast that never hid (its timer was garbage-collected before firing; new
+    `Helpers.Delay` keeps one-shot timers alive; also used by lessons and puzzles);
+  * see-through toasts on the game and analysis pages (now solid with a border);
+  * Game Review panel overflowing at the default size (move counts in two groups);
+  * post-game buttons: Rematch on its own row; the in-game Undo/Draw/Resign row hides when the
+    game ends and lays out only its visible buttons (no gap where Undo is hidden online);
+  * truncated labels ("Take back" → "Undo", "Tournament green" theme tile), plurals ("1 move",
+    "1 puzzle", "1 game"), aborted games shown as "Aborted" rather than a loss;
+  * bot play style shown on the Play page; puzzle "Skip" no longer styled as the main action;
+  * tile grids (lessons, puzzle themes, achievements, online time controls) stretch to fill the
+    width instead of leaving a ragged gap; Profile records use the same W · L · D order as Play.
+  * A first version of the tile stretching threw while pages were built (Puzzles, Learn, Online and
+    Profile would not open) — caught from the app log and fixed before committing; CLAUDE.md now
+    says to read the log after UI changes.
+* Lichess puzzle database downloaded for the puzzle import (next step).

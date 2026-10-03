@@ -19,6 +19,7 @@ public sealed partial class OnlinePage : Page
     public OnlinePage()
     {
         InitializeComponent();
+        Ui.StretchTiles(SeekGrid, 100);
         foreach (string tc in TimeControls)
         {
             var button = new Button

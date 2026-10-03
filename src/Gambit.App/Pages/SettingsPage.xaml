@@ -63,7 +63,7 @@
                             <TextBlock Text="Board theme" />
                             <TextBlock Text="Square colors and highlights" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         </StackPanel>
-                        <VariableSizedWrapGrid x:Name="ThemeSwatches" Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" ItemWidth="104" ItemHeight="96" />
+                        <VariableSizedWrapGrid x:Name="ThemeSwatches" Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" ItemWidth="120" ItemHeight="104" />
                     </Grid>
                 </StackPanel>
 

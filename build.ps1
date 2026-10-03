@@ -5,6 +5,7 @@
     ./build.ps1            # build everything (Debug)
     ./build.ps1 test       # run unit tests
     ./build.ps1 run        # build and launch the app
+    ./build.ps1 run -DataDir artifacts/test-profile   # launch with a throwaway profile (your real data untouched)
     ./build.ps1 publish    # self-contained Release build in ./artifacts/<rid>
     ./build.ps1 perft      # quick move-generator speed check
     ./build.ps1 server     # run the online play server on port 5080 (all network interfaces)
@@ -18,6 +19,7 @@ param(
     [string]$Configuration = '',
     [string]$Runtime = '',
     [string]$InstallDir = '',
+    [string]$DataDir = '',
     [switch]$NoShortcut
 )
 
@@ -103,6 +105,11 @@ switch ($Command) {
         $exe = Get-ChildItem (Join-Path $root "src\Gambit.App\bin\$platform\$Configuration") -Recurse -Filter 'Gambit.exe' |
             Sort-Object LastWriteTime -Descending | Select-Object -First 1
         if (-not $exe) { throw 'Gambit.exe not found after build.' }
+        if ($DataDir) {
+            # The app reads GAMBIT_DATA_DIR at startup (Services/JsonStore.cs); child processes inherit it.
+            $env:GAMBIT_DATA_DIR = (New-Item -ItemType Directory -Force -Path $DataDir).FullName
+            Write-Host "Using data folder $env:GAMBIT_DATA_DIR"
+        }
         Write-Host "Launching $($exe.FullName)"
         Start-Process $exe.FullName
     }

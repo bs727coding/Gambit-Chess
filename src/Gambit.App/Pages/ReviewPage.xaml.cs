@@ -161,22 +161,29 @@ public sealed partial class ReviewPage : Page
         CountsGrid.Children.Clear();
         CountsGrid.RowDefinitions.Clear();
         CountsGrid.ColumnDefinitions.Clear();
-        CountsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        CountsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        CountsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        // Two groups of five rows ("white count | class | black count") keep the card short enough
+        // for the move list and buttons to fit on a laptop-sized window.
+        for (int group = 0; group < 2; group++)
+        {
+            if (group == 1) CountsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(12) });
+            CountsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            CountsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            CountsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        }
+        for (int r = 0; r < 5; r++) CountsGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
         MoveClass[] shown = [MoveClass.Brilliant, MoveClass.Great, MoveClass.Best, MoveClass.Excellent, MoveClass.Good,
             MoveClass.Book, MoveClass.Inaccuracy, MoveClass.Mistake, MoveClass.Miss, MoveClass.Blunder];
-        int row = 0;
-        foreach (MoveClass cls in shown)
+        for (int i = 0; i < shown.Length; i++)
         {
+            MoveClass cls = shown[i];
+            int row = i % 5, column = i < 5 ? 0 : 4;
             int w = _review!.Count(Color.White, cls), b = _review.Count(Color.Black, cls);
-            CountsGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             var (symbol, hex, label) = Styles[cls];
 
             var wt = new TextBlock { Text = w.ToString(), HorizontalAlignment = HorizontalAlignment.Right, Opacity = w == 0 ? 0.35 : 1, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
             var bt = new TextBlock { Text = b.ToString(), HorizontalAlignment = HorizontalAlignment.Left, Opacity = b == 0 ? 0.35 : 1, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
-            var mid = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, HorizontalAlignment = HorizontalAlignment.Center, Width = 120 };
+            var mid = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, HorizontalAlignment = HorizontalAlignment.Center, Width = 104 };
             mid.Children.Add(new Border
             {
                 Width = 16,
@@ -188,14 +195,14 @@ public sealed partial class ReviewPage : Page
             mid.Children.Add(new TextBlock { Text = label, FontSize = 12, Opacity = 0.85 });
 
             Grid.SetRow(wt, row);
+            Grid.SetColumn(wt, column);
             Grid.SetRow(mid, row);
-            Grid.SetColumn(mid, 1);
+            Grid.SetColumn(mid, column + 1);
             Grid.SetRow(bt, row);
-            Grid.SetColumn(bt, 2);
+            Grid.SetColumn(bt, column + 2);
             CountsGrid.Children.Add(wt);
             CountsGrid.Children.Add(mid);
             CountsGrid.Children.Add(bt);
-            row++;
         }
     }
 

@@ -126,7 +126,7 @@ public sealed partial class PuzzleSolvePage : Page
         Board.SetPosition(_game.Position);
         UpdateRatingCard(reveal: false, delta: null);
         NextButton.Visibility = IsRush || _request.Mode == PuzzleMode.Daily ? Visibility.Collapsed : Visibility.Visible;
-        NextText.Text = "Skip";
+        SetNextButton(skip: true);
         SetStatus("", "#5C6BC0", "Watch the opponent's move…", "");
 
         After(550, gen, () =>
@@ -212,7 +212,7 @@ public sealed partial class PuzzleSolvePage : Page
         SetStatus("", "#81B64C", _failed ? "Solved — after a slip" : "Puzzle solved!", _failed ? "No rating gain this time." : "Nicely done.");
         UpdateRatingCard(reveal: true, delta);
         NextButton.Visibility = _request.Mode == PuzzleMode.Daily ? Visibility.Collapsed : Visibility.Visible;
-        NextText.Text = "Next puzzle";
+        SetNextButton(skip: false);
     }
 
     private void Fail()
@@ -242,6 +242,13 @@ public sealed partial class PuzzleSolvePage : Page
                 PuzzleService.Instance.RecordUnrated(_puzzle, solved);
                 return null;
         }
+    }
+
+    /// <summary>"Skip" is a quiet button while solving; afterwards it becomes the accented "Next puzzle".</summary>
+    private void SetNextButton(bool skip)
+    {
+        NextText.Text = skip ? "Skip" : "Next puzzle";
+        NextButton.Style = (Style)Application.Current.Resources[skip ? "DefaultButtonStyle" : "AccentButtonStyle"];
     }
 
     // ------------------------------------------------------------------ buttons
@@ -277,7 +284,7 @@ public sealed partial class PuzzleSolvePage : Page
             _index++;
         }
         UpdateRatingCard(reveal: true, null);
-        NextText.Text = "Next puzzle";
+        SetNextButton(skip: false);
         NextButton.Visibility = _request.Mode == PuzzleMode.Daily ? Visibility.Collapsed : Visibility.Visible;
     }
 
@@ -415,15 +422,10 @@ public sealed partial class PuzzleSolvePage : Page
 
     private void After(int ms, int generation, Action action)
     {
-        var timer = DispatcherQueue.CreateTimer();
-        timer.Interval = TimeSpan.FromMilliseconds(ms);
-        timer.IsRepeating = false;
-        timer.Tick += (t, _) =>
+        Delay.Run(DispatcherQueue, TimeSpan.FromMilliseconds(ms), () =>
         {
-            t.Stop();
             if (generation == _generation) action();
-        };
-        timer.Start();
+        });
     }
 
     private void ApplySettings()

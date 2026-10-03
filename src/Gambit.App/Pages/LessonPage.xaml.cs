@@ -195,12 +195,8 @@ public sealed partial class LessonPage : Page
         // Scripted reply.
         Board.Interaction = BoardInteraction.None;
         int gen = _generation;
-        var timer = DispatcherQueue.CreateTimer();
-        timer.Interval = TimeSpan.FromMilliseconds(500);
-        timer.IsRepeating = false;
-        timer.Tick += (t, _) =>
+        Delay.Run(DispatcherQueue, TimeSpan.FromMilliseconds(500), () =>
         {
-            t.Stop();
             if (gen != _generation || _step != step) return;
             if (San.TryParse(_pos, step.Moves[_moveIndex], out Move reply))
             {
@@ -208,8 +204,7 @@ public sealed partial class LessonPage : Page
                 _moveIndex++;
             }
             Board.Interaction = _pos.SideToMove == Color.White ? BoardInteraction.White : BoardInteraction.Black;
-        };
-        timer.Start();
+        });
     }
 
     private void BuildChoices()

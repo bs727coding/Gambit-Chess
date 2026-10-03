@@ -16,7 +16,11 @@ public sealed partial class PuzzlesPage : Page
         "sacrifice", "backRankMate", "smotheredMate", "promotion", "opening", "middlegame", "endgame",
     ];
 
-    public PuzzlesPage() => InitializeComponent();
+    public PuzzlesPage()
+    {
+        InitializeComponent();
+        Helpers.Ui.StretchTiles(ThemeGrid, 200);
+    }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
@@ -73,11 +77,12 @@ public sealed partial class PuzzlesPage : Page
 
             var stack = new StackPanel { Spacing = 2 };
             stack.Children.Add(new TextBlock { Text = PuzzleThemes.Name(theme), FontWeight = FontWeights.SemiBold });
+            string puzzles = count == 1 ? "1 puzzle" : $"{count:N0} puzzles";
             stack.Children.Add(new TextBlock
             {
                 Text = stat is { Attempts: > 0 }
-                    ? $"{count} puzzles · {100.0 * stat.Solved / stat.Attempts:0}% solved"
-                    : $"{count} puzzles",
+                    ? $"{puzzles} · {100.0 * stat.Solved / stat.Attempts:0}% solved"
+                    : puzzles,
                 FontSize = 12,
                 Opacity = 0.7,
             });

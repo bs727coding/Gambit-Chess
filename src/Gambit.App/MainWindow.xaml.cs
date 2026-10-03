@@ -147,15 +147,7 @@ public sealed partial class MainWindow : Window
         }));
         AchievementToast.Visibility = Visibility.Visible;
         SoundService.Play(GameSound.Win);
-        var timer = DispatcherQueue.CreateTimer();
-        timer.Interval = TimeSpan.FromSeconds(5);
-        timer.IsRepeating = false;
-        timer.Tick += (t, _) =>
-        {
-            t.Stop();
-            ShowNextAchievement();
-        };
-        timer.Start();
+        Helpers.Delay.Run(DispatcherQueue, TimeSpan.FromSeconds(5), ShowNextAchievement);
     }
 
     private void SizeAndCenter()

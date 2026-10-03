@@ -32,9 +32,10 @@ public static class GameRows
         var text = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
         string rating = g.OpponentRating is int r && bot is { IsMaxStrength: false } ? $" ({r})" : bot?.IsMaxStrength == true ? " (Max)" : "";
         text.Children.Add(new TextBlock { Text = $"vs {g.Opponent}{rating}", FontWeight = FontWeights.SemiBold });
+        string moves = g.Moves == 1 ? "1 move" : $"{g.Moves} moves";
         text.Children.Add(new TextBlock
         {
-            Text = $"{g.Termination} · {g.Moves} moves · {g.TimeControl}{(g.Opening is string o ? " · " + o : "")} · {Ui.RelativeTime(g.PlayedAt)}",
+            Text = $"{g.Termination} · {moves} · {g.TimeControl}{(g.Opening is string o ? " · " + o : "")} · {Ui.RelativeTime(g.PlayedAt)}",
             Opacity = 0.7,
             FontSize = 12,
             TextTrimming = TextTrimming.CharacterEllipsis,
@@ -42,8 +43,11 @@ public static class GameRows
         Grid.SetColumn(text, 1);
         grid.Children.Add(text);
 
+        // Aborted games are stored as draws but don't count as one.
+        bool aborted = g.Termination.StartsWith("Game aborted", StringComparison.Ordinal);
         var (label, color) = g.Outcome switch
         {
+            _ when aborted => ("Aborted", ColorHelper.FromArgb(255, 110, 110, 110)),
             "win" => ("Win", ColorHelper.FromArgb(255, 46, 125, 50)),
             "loss" => ("Loss", ColorHelper.FromArgb(255, 198, 40, 40)),
             _ => (g.PlayerColor == "both" ? g.Result : "Draw", ColorHelper.FromArgb(255, 110, 110, 110)),
