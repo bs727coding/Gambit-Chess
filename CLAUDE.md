@@ -34,6 +34,8 @@ session short at any moment, so **checkpoint often**).
 * Bot ladder: `dotnet run -c Release --project tools/Gambit.BotArena -- <minutes> artifacts/arena.csv <ids,...>`
   (see docs/BOT-CALIBRATION.md; bump `BotMoveProvider.Revision` when bot move choice changes)
 * Sounds: `python tools/gen_sounds.py`; icon: `tools/make-icon.ps1`.
+* `python` here is the Microsoft Store build: its view of `%LOCALAPPDATA%` is virtualized (it once
+  reported the real `Gambit\settings.json` as missing). Touch the user's profile with PowerShell.
 * Edit files with the Edit/Write tools, `sed` or Python — in Windows PowerShell 5.1 `Set-Content -Encoding utf8`
   adds a BOM and `Get-Content` without `-Encoding utf8` reads UTF-8 as ANSI (mangles —, →, ≥).
 
