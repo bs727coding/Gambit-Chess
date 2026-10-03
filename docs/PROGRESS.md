@@ -20,20 +20,22 @@ natively on Arm64.
 ## Next steps
 
 **Priority (from the user, 2026-10-02): a functional, clean, correct app over bot tuning.**
+The user's list of 2026-10-03 is done (QA pass, GamePage view model, inline variations, puzzles
+by opening, faster engine, onboarding) and the "Left" tooltip bug is fixed (confirmed by the user).
 
-1. **The user's list of 2026-10-03 is done** (QA pass, GamePage view model, inline variations,
-   puzzles by opening, faster engine, onboarding). The desktop shortcut runs the Release build,
-   which was locked by the user's open window this session: rebuild it (`./build.ps1 run`) once
-   Gambit is closed so the shortcut gets these changes.
-2. **Accessibility (not yet asked for):** keyboard play on the board, a Narrator pass.
-3. **Online:** stays local for now (the user's call, 2026-10-02); hosting is ready for when they
-   want it (Fly.io: four commands, docs/ONLINE.md). Before real users: accounts/sign-in, a
-   database instead of ratings.json, abandonment/cheating/name moderation, backups, code signing
-   and an update path.
-4. **Polish:** localization; MSIX packaging if wanted (`./build.ps1 install` covers local install);
-   a link from a puzzle to its source game on lichess.org.
-5. **Parked unless asked:** bot ladder tuning (BOT-CALIBRATION.md), lessons on zwischenzug /
-   X-ray / triangulation.
+Proposed to the user on 2026-10-03, in this order (waiting for their pick):
+1. **Single-player polish:** progress tools in Settings (reset / back up / restore; the user
+   needed a reset once already); spaced repetition for the opening drills; a multi-threaded
+   analysis board (bots stay single-threaded and unchanged); a link from a puzzle to its source
+   game on lichess.org.
+2. **Server ready to go online, built and tested locally (not deployed):** accounts and sign-in
+   instead of guest tokens, a database instead of ratings.json, handling for abandoned games, name
+   moderation, backups. Hosting itself is ready (Fly.io, docs/ONLINE.md).
+3. **Distribution:** version numbers and an update check, MSIX or a signed installer (buying a
+   signing certificate is the user's call), an x64 build test.
+4. **Parked unless asked:** bot ladder tuning (BOT-CALIBRATION.md), lessons on zwischenzug /
+   X-ray / triangulation, localization, accessibility (keyboard play, Narrator; the user said "no
+   accessibility" when asking for next steps, 2026-10-03).
 
 ## Known issues / notes
 
