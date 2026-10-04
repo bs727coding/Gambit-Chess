@@ -2,20 +2,20 @@
 
 ## Current state (update at every milestone)
 
-Sessions 1–3 and 7 of the roadmap are complete, most of 4–6 and part of 8. The app builds and runs
-natively on Arm64.
+Sessions 1–3 and 7 of the roadmap are complete, most of 4–6 and 8. Version 0.2.0: the app builds
+and runs natively on Arm64 (and x64), with Velopack installers and updates from the server.
 
 | Area | Status |
 |---|---|
 | Toolchain | .NET SDK 10.0.401 Arm64 (machine-wide). Windows App SDK 2.5.1 via NuGet. No Visual Studio needed. |
 | Gambit.Core | Board, legal movegen (perft-verified, also king-less lesson positions), FEN/SAN/UCI/PGN (incl. variations), Game + draw rules, `MoveTree`, clock, Glicko-2, sessions (`IGameSession`), premove rules, openings (~150, embedded TSV), puzzles (embedded CSV), lessons (embedded JSON) |
 | Gambit.Engine | PVS + TT + QS/SEE + null-move + LMR + MultiPV; PeSTO eval; 13 bots with opening books; `GameReviewer` (parallel, move classes, accuracy) |
-| Gambit.App | Welcome screen (first run), Home, Play (bots, pass-and-play, online), Game (clocks, premoves, hints, takebacks, resume after restart, sounds, online rematch), Game Review (with plain-language explanations), Analysis (multi-core engine lines, position editor, variations), Puzzles (rated, Rush, Survival, daily, themes, openings), Learn (5 courses / 49 lessons, opening review), Online lobby, Profile (stats, rating chart, openings, ~50 achievements), Settings (themes, pieces, sounds, premoves) |
+| Gambit.App | Welcome screen (first run), Home, Play (bots, pass-and-play, online), Game (clocks, premoves, hints, takebacks, resume after restart, sounds, online rematch), Game Review (with plain-language explanations), Analysis (multi-core engine lines, position editor, variations), Puzzles (rated, Rush, Survival, daily, themes, openings), Learn (5 courses / 49 lessons, opening review), Online lobby, Profile (stats, rating chart, openings, ~50 achievements), Settings (themes, pieces, sounds, premoves, progress back up / restore / reset, updates); one window per profile |
 | Online | `Gambit.Server` (ASP.NET Core + SignalR, authoritative, rematches, spectators, rate limits; accounts with invite-only sign-up, SQLite `gambit.db`, admin commands), `Gambit.Online.Client` (`RemoteGameSession`, `AccountClient`), Dockerfile, docs/ONLINE.md; `./build.ps1 server` for LAN play |
 | Tools | `import_lichess_puzzles.py`, `Gambit.PuzzleGen` (experiments), `Gambit.BotArena` (ladder measurement), `Gambit.OnlineBot` (plays online, accepts rematches), `ui.ps1`, `ui-scroll.ps1`, `screenshot-quiet.ps1` |
 | Content | 21,162 puzzles from the Lichess puzzle DB (CC0; `tools/import_lichess_puzzles.py`): 400–1,100 per 100-point band from 400 to 2999, 49 practice themes with ≥ 120 each, 25 practice openings with ≥ 50 each; 49 lessons; tactic/mate solutions audited by the engine in tests |
-| Install | `./build.ps1 install` → `%LOCALAPPDATA%\Programs\Gambit` + Start menu shortcut (tested into a scratch folder; not installed for real, the user decides) |
-| Tests | 204 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
+| Install | `./build.ps1 package -ServerUrl …` → Velopack Setup.exe + portable zip + update packages for win-arm64 and win-x64 in `artifacts/releases` (docs/RELEASING.md); the server offers them at `/download` and `/releases`. Not installed on this PC (installer tests are the user's). Developer install: `./build.ps1 install` |
+| Tests | 205 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
 
 ## Next steps
 
@@ -30,9 +30,18 @@ Proposed to the user on 2026-10-03, in this order (waiting for their pick):
    accounts with sign-in and invite-only sign-ups, SQLite, repeat-walkout pauses, name moderation,
    backups. The user chose username + password (no email), SQLite, invite-only. Going live is the
    Fly.io steps in docs/ONLINE.md, when the user wants (their account; they sign in themselves).
-3. **Distribution:** version numbers and an update check, MSIX or a signed installer (buying a
-   signing certificate is the user's call), an x64 build test.
-4. **Parked unless asked:** bot ladder tuning (BOT-CALIBRATION.md), lessons on zwischenzug /
+3. **Distribution: done** (2026-10-03): Velopack installers for Arm64 and x64, updates from the
+   server (delta packages), a `/download` page, version 0.2.0 + CHANGELOG.md, the x64 build tested
+   under emulation, one window per profile. Code signing is the user's call (RELEASING.md).
+4. **With the user** (asked to check by hand on 2026-10-03): the Arm64 Setup.exe (install,
+   shortcuts, uninstall keeps the data), the x64 installer on an Intel/AMD PC, a real online game
+   with a friend on another PC, signing yes/no, deploying the server (Fly.io, their account).
+5. **Candidates found in the 2026-10-03 audit** (not started; the user picks): warn before signing
+   in over plain http:// to a non-local server (passwords travel unencrypted with port forwarding),
+   a way for friends to send a log/bug report (logs stay on their PC), a one-command release
+   upload (instead of sftp, ~400 MB a release), walkout counts that survive a server restart,
+   editable banned-words list (now compiled into `NameRules.cs`).
+6. **Parked unless asked:** bot ladder tuning (BOT-CALIBRATION.md), lessons on zwischenzug /
    X-ray / triangulation, localization, accessibility (keyboard play, Narrator; the user said "no
    accessibility" when asking for next steps, 2026-10-03).
 
@@ -44,6 +53,15 @@ Proposed to the user on 2026-10-03, in this order (waiting for their pick):
   move generation would change move order (and the signature).
 * Online: accounts are username + password, invite-only; no email, so forgotten passwords are reset
   by an admin (`reset-password`). Walkout counts are in memory (a restart forgives).
+* Installers: unsigned (SmartScreen "unknown publisher"), ~100 MB each (self-contained .NET +
+  Windows App SDK; updates are deltas, often < 1 MB). Setup.exe was never run on this PC (it would
+  install and start on the user's real profile), so install/uninstall is unverified here; the
+  update flow was verified with the portable package. Setup puts a "Gambit" shortcut on the
+  desktop, replacing the user's current desktop shortcut to the development build.
+* The x64 build was tested under emulation on the Snapdragon only, and Windows 10 never
+  (`TargetPlatformMinVersion` 10.0.19041).
+* Time-limited bots (Jade and up) get ~1.2x more nodes since the engine speed-up, so they may be a
+  little stronger than BOT-CALIBRATION.md says (not re-measured; bot tuning is parked).
 * UI tests: `tools/ui.ps1` drives the app through UI Automation. Board squares are invokable
   elements (`sq-e4`), so moves can be played without the mouse:
   `./tools/ui.ps1 invoke -Name "Play"`, `./tools/ui.ps1 board -Moves "e2e4,g1f3"`.
@@ -250,3 +268,32 @@ Proposed to the user on 2026-10-03, in this order (waiting for their pick):
   a `restore.db` in the data folder replaces the database at the next start, keeping the old one.
   Tests: admin download (and a member refused), the seven-day rotation, restore at startup. Verified
   in the app against a local server: the admin button saved a 61 KB copy through the real dialog.
+* Group 3 — distribution:
+  * Version 0.2.0 (`Directory.Build.props`), CHANGELOG.md; Settings → About shows the build's commit.
+  * Velopack: `Program.cs` runs its hooks first (`DISABLE_XAML_GENERATED_MAIN`). `./build.ps1 package`
+    publishes win-arm64 and win-x64 and packs each (package id `GambitChess`, not "Gambit":
+    uninstalling deletes `%LOCALAPPDATA%\<id>`, and the data lives in `%LOCALAPPDATA%\Gambit`).
+    Optional signing through `GAMBIT_SIGN_PARAMS` (signtool) or `GAMBIT_TRUSTED_SIGNING` (Azure).
+  * Updates: installed copies check `<server>/releases` 8 s after start; Home shows "Update
+    available" and Settings has an Updates row. `-ServerUrl` builds the server into the app
+    (`AppInfo.HomeServer`): updates come from there, and new profiles connect to it. Updating
+    waits while an online game is in progress (local games are saved after every move).
+  * Server: `releases/` in the data folder is served at `/releases`; `/download` lists the
+    installers (Arm vs Intel/AMD) with the SmartScreen note. Test: an empty page, then the
+    installers, feed and package served with the right types.
+  * **Found by the x64 test: every published copy crashed at startup** ("XAML parsing failed") —
+    `dotnet publish` left out the compiled XAML (`*.xbf`, `Gambit.pri`), so `./build.ps1 publish`
+    and `install` had been broken. `EnableMsixTooling` fixes it (still unpackaged). The x64 build then
+    ran under emulation: analysis at depth 18, a bot game, 21,162 puzzles, a clean log.
+  * Verified end to end with the portable package: 0.2.0 found 0.2.1 on a local server, showed the
+    banner, downloaded, restarted on the same test profile as 0.2.1 and didn't offer it again.
+    vpk made a 0.18 MB delta from the previous release (`artifacts/releases` must be kept).
+  * **One window per data folder** (`SingleInstance`, Windows App SDK `AppInstance`): two copies on
+    one profile each saved their own in-memory settings/profile over the other's (a game recorded in
+    one vanished when the other saved). A second launch now brings the open window forward; a test
+    profile runs alongside the real one; `App.Restart` hands over first. Verified: a second copy on
+    the same test profile exits, one on another profile runs, reset-and-restart still works.
+  * Fixed in passing: a raw NUL byte in `AccountTests.cs` (from an edit script) made git treat the
+    file as binary; Settings showed "ready to install" instead of an update error.
+  * `tools/ui.ps1 value -AutomationId X` reads a text box. Docs: RELEASING.md (new), README
+    (Install), ONLINE.md (downloads and updates, 3 GB Fly volume), CLAUDE.md, ROADMAP, ARCHITECTURE.

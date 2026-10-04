@@ -114,7 +114,10 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 - [~] Rate limiting ✔, health check ✔, console logging ✔, SQLite database ✔, backups (daily copies,
       admin download, restore at startup) ✔, moderation (offensive names, bans that apply at once,
       quick-pairing pauses for repeat walkouts) ✔ — TLS/domain still to do (Fly.io provides TLS)
-- [~] Per-user install with Start menu shortcut (`./build.ps1 install`) ✔, app icon ✔ — MSIX packaging + signing, versioning, auto-update still to do
+- [x] Installers: Velopack Setup.exe for Arm64 and x64 (per user, no admin) ✔, `/download` page on the
+      server ✔, versioning (0.2.0, commit in About, CHANGELOG.md) ✔, auto-update from the server with
+      delta packages ✔, x64 build tested (emulated) ✔, one window per profile ✔, app icon ✔ — code
+      signing is the user's call (costs, docs/RELEASING.md); MSIX not used (needs a trusted certificate)
 - [~] Online polish: spectating ✔ — friends list, game history sync still to do
 
 ## Backlog / stretch

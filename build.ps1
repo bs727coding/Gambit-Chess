@@ -7,6 +7,7 @@
     ./build.ps1 run        # build and launch the app
     ./build.ps1 run -DataDir artifacts/test-profile   # launch with a throwaway profile (your real data untouched)
     ./build.ps1 publish    # self-contained Release build in ./artifacts/<rid>
+    ./build.ps1 package -ServerUrl https://my-gambit.fly.dev   # installers + update packages for Arm64 and x64 PCs in ./artifacts/releases (docs/RELEASING.md)
     ./build.ps1 perft      # quick move-generator speed check
     ./build.ps1 server     # run the online play server on port 5080 (all network interfaces)
     ./build.ps1 server-admin users   # an admin command for that server (invite, users, ban, backup, help, ...)
@@ -16,13 +17,15 @@
 [CmdletBinding(PositionalBinding = $false)]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('build', 'test', 'run', 'publish', 'perft', 'clean', 'server', 'server-admin', 'install', 'uninstall')]
+    [ValidateSet('build', 'test', 'run', 'publish', 'package', 'perft', 'clean', 'server', 'server-admin', 'install', 'uninstall')]
     [string]$Command = 'build',
     [ValidateSet('Debug', 'Release', '')]
     [string]$Configuration = '',
     [string]$Runtime = '',
     [string]$InstallDir = '',
     [string]$DataDir = '',
+    # package/publish: the online server the app is made for (it updates from there; new profiles connect to it)
+    [string]$ServerUrl = '',
     [switch]$NoShortcut,
     # server-admin: the command and its arguments, e.g. ./build.ps1 server-admin invite --uses 3
     [Parameter(ValueFromRemainingArguments = $true)]
@@ -31,7 +34,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 # 'run' and 'publish' default to Release (the engine is ~4x faster optimized); 'build'/'test' to Debug.
-if (-not $Configuration) { $Configuration = if ($Command -in 'run', 'publish') { 'Release' } else { 'Debug' } }
+if (-not $Configuration) { $Configuration = if ($Command -in 'run', 'publish', 'package') { 'Release' } else { 'Debug' } }
 $root = $PSScriptRoot
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
 $env:DOTNET_NOLOGO = '1'
@@ -54,7 +57,9 @@ $shortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'Gambit.lnk'
 
 function Publish-App([string]$out) {
     Restore $app @("-p:Platform=$platform", "-r", $Runtime)
-    Invoke-Dotnet @('publish', $app, '-c', 'Release', "-p:Platform=$platform", '-r', $Runtime, '--self-contained', 'true', '--no-restore', '-o', $out, '-nologo')
+    $publish = @('publish', $app, '-c', 'Release', "-p:Platform=$platform", '-r', $Runtime, '--self-contained', 'true', '--no-restore', '-o', $out, '-nologo')
+    if ($ServerUrl) { $publish += "-p:GambitServerUrl=$($ServerUrl.TrimEnd('/'))" }
+    Invoke-Dotnet $publish
 }
 
 # Only ever delete a folder that holds a Gambit install (never an unrelated directory).
@@ -123,6 +128,34 @@ switch ($Command) {
         $out = Join-Path $root "artifacts\$Runtime"
         Publish-App $out
         Write-Host "Published to $out"
+    }
+    'package' {
+        # Velopack installers, portable zips and update packages for both kinds of Windows PC, in
+        # artifacts\releases. Copy that folder's files to the server's data folder (releases\) to offer
+        # downloads (/download) and updates: docs/RELEASING.md.
+        $version = (Select-Xml -Path (Join-Path $root 'Directory.Build.props') -XPath '//Version').Node.InnerText
+        $releases = Join-Path $root 'artifacts\releases'
+        if (-not $ServerUrl) {
+            Write-Warning 'No -ServerUrl: installed copies will look for updates on the server set on their Online page (default http://localhost:5080).'
+        }
+        Invoke-Dotnet @('tool', 'restore')
+        foreach ($rid in 'win-arm64', 'win-x64') {
+            $Runtime = $rid
+            $platform = if ($rid -eq 'win-arm64') { 'ARM64' } else { 'x64' }
+            $out = Join-Path $root "artifacts\publish\$rid"
+            if (Test-Path $out) { Remove-Item -LiteralPath $out -Recurse -Force }
+            Publish-App $out
+            # The package id must differ from the data folder's name (Gambit): uninstalling deletes %LOCALAPPDATA%\<id>.
+            $pack = @('vpk', 'pack', '--packId', 'GambitChess', '--packVersion', $version, '--packDir', $out, '--mainExe', 'Gambit.exe',
+                '--packTitle', 'Gambit', '--packAuthors', 'Gambit', '--icon', (Join-Path $root 'src\Gambit.App\Assets\Gambit.ico'),
+                '--channel', $rid, '--runtime', $rid, '--outputDir', $releases)
+            # Code signing (optional): GAMBIT_SIGN_PARAMS holds signtool arguments, e.g. '/a /fd sha256 /tr http://timestamp.digicert.com /td sha256'.
+            if ($env:GAMBIT_SIGN_PARAMS) { $pack += @('--signParams', $env:GAMBIT_SIGN_PARAMS) }
+            # Or Azure Trusted Signing: GAMBIT_TRUSTED_SIGNING holds the path of its metadata.json.
+            if ($env:GAMBIT_TRUSTED_SIGNING) { $pack += @('--azureTrustedSignFile', $env:GAMBIT_TRUSTED_SIGNING) }
+            Invoke-Dotnet $pack
+        }
+        Write-Host "Gambit $version packaged in $releases"
     }
     'install' {
         # Per-user install: no admin rights, no certificate, no MSIX. Re-running updates it.

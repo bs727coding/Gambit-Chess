@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- WinUI 3 desktop app. Unpackaged + self-contained so it runs from a folder (MSIX comes in Session 8). -->
+  <!-- WinUI 3 desktop app. Unpackaged + self-contained so it runs from a folder; installers and updates
+       come from Velopack (./build.ps1 package, docs/RELEASING.md). -->
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
@@ -12,22 +13,33 @@
     <RuntimeIdentifiers>win-arm64;win-x64</RuntimeIdentifiers>
     <UseWinUI>true</UseWinUI>
     <WindowsPackageType>None</WindowsPackageType>
+    <!-- Without it, dotnet publish leaves out the compiled XAML (*.xbf) and Gambit.pri, and a published
+         copy crashes at startup ("XAML parsing failed"). No MSIX is made (WindowsPackageType None). -->
+    <EnableMsixTooling>true</EnableMsixTooling>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
     <SelfContained>true</SelfContained>
     <EnableDefaultPageItems>true</EnableDefaultPageItems>
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
     <ApplicationIcon>Assets\Gambit.ico</ApplicationIcon>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Program.cs runs Velopack's install/update hooks before the WinUI startup. -->
+    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2705" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Velopack" Version="1.2.161" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="Assets\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- ./build.ps1 package -ServerUrl https://...: the server installed copies update from (AppInfo.HomeServer). -->
+  <ItemGroup Condition="'$(GambitServerUrl)' != ''">
+    <AssemblyMetadata Include="GambitServerUrl" Value="$(GambitServerUrl)" />
   </ItemGroup>
 
   <ItemGroup>

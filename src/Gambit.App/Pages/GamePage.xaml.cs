@@ -81,6 +81,12 @@ public sealed partial class GamePage : Page
     /// <summary>True while an unfinished game of the user's exists (the Play tab returns to it).</summary>
     public static bool HasActiveGame => _instance?._vm.Session != null ? _instance._vm.HasUnfinishedGame : ActiveGameStore.Exists;
 
+    /// <summary>
+    /// True while the user plays an online game: closing Gambit (an update restarts it) would leave it,
+    /// and it is lost if they aren't back in time. Games against bots are saved after every move.
+    /// </summary>
+    public static bool HasActiveOnlineGame => _instance?._vm is { HasUnfinishedGame: true, Setup.IsOnline: true };
+
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);

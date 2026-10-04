@@ -34,6 +34,7 @@ public partial class App : Application
     {
         AppPaths.Frozen = true;
         Log.Info("Restarting");
+        SingleInstance.Release();
         try
         {
             Process.Start(new ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false });
@@ -62,5 +63,12 @@ public partial class App : Application
         {
             Window.Activate();
         }
+
+        // Installed copies look for a new version on the online server, quietly, once things have settled.
+        Window.DispatcherQueue.TryEnqueue(async () =>
+        {
+            await Task.Delay(TimeSpan.FromSeconds(8));
+            await UpdateService.Instance.CheckAsync();
+        });
     }
 }

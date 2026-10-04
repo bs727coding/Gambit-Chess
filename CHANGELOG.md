@@ -1,0 +1,36 @@
+# Changelog
+
+The version is set in `Directory.Build.props`; [docs/RELEASING.md](docs/RELEASING.md) explains how a
+release goes out.
+
+## 0.2.0 — 2026-10-03
+
+The first version with installers.
+
+**Install and update**
+* Installers for Windows on Arm and for Intel/AMD PCs, and a download page on your server
+  (`/download`).
+* Installed copies update themselves from the server: a banner on Home, and Settings → Updates.
+  Updates download only what changed.
+* Settings → About shows the version and the build's commit.
+* Gambit opens once per profile: starting it again brings the open window forward (two copies could
+  overwrite each other's progress).
+
+**Play and learn**
+* Settings: back up, restore and reset your progress.
+* Opening review: the opening lessons' lines come back on a spaced-repetition schedule.
+* The analysis board searches on several cores (about twice as deep in the same time).
+* Practice puzzles by opening; a faster engine (the bots play the same moves); a welcome screen for
+  new players.
+* Fixed: a "Left" tooltip that stuck to the board during games.
+
+**Online**
+* Accounts with a username and password; invite-only sign-ups; server data in SQLite.
+* Repeated walkouts pause quick pairing; offensive usernames are refused; bans and renames apply
+  at once.
+* Daily server backups, a backup download for admins, and restoring at startup.
+
+## 0.1.0 — 2026-10-02
+
+The first builds: bots from beginner to strong, rated puzzles, lessons, game review, analysis,
+achievements, statistics, themes, and online play through your own server.

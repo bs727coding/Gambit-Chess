@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -17,6 +19,9 @@ public static class AppPaths
 
     /// <summary>Running on a throwaway profile (GAMBIT_DATA_DIR): the title bar says so.</summary>
     public static bool IsTestProfile => Custom != null;
+
+    /// <summary>A short id for this data folder (8 hex digits), for names that must differ per profile.</summary>
+    public static string RootId { get; } = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Root.ToLowerInvariant())))[..8];
 
     public static string Settings => Path.Combine(Root, "settings.json");
     public static string Profile => Path.Combine(Root, "profile.json");

@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
 using Windows.Security.Credentials;
 
 namespace Gambit.App.Services;
@@ -13,8 +11,7 @@ public static class OnlineCredentials
 {
     public sealed record SavedSignIn(string Username, string Token);
 
-    private static readonly string Resource =
-        $"Gambit online ({Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(AppPaths.Root.ToLowerInvariant())))[..8]})";
+    private static readonly string Resource = $"Gambit online ({AppPaths.RootId})";
 
     public static SavedSignIn? Get(string serverUrl)
     {

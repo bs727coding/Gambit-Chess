@@ -25,6 +25,10 @@ session short at any moment, so **checkpoint often**).
 * `./build.ps1` — build everything (Debug)          `./build.ps1 test` — run all tests
 * `./build.ps1 install` / `uninstall` — per-user install + Start menu shortcut (only run when the user asks)
 * `./build.ps1 run` — build (Release) + launch the app  `./build.ps1 publish` — self-contained app in `artifacts/`
+* `./build.ps1 package -ServerUrl <url>` — Velopack installers + update packages for win-arm64 and win-x64 in
+  `artifacts/releases` (`vpk` is a local dotnet tool, `dotnet-tools.json`); docs/RELEASING.md. Keep
+  `artifacts/releases` between releases (delta updates). **Never run a Setup.exe on this PC**: it installs and
+  starts Gambit on the user's real profile — installer tests are the user's.
 * `./build.ps1 server` — online server on :5080 (all interfaces; may trigger a firewall prompt —
   for local testing bind to 127.0.0.1 with `dotnet run --project src/Gambit.Server -c Release --urls http://127.0.0.1:5080`)
 * Puzzles: the bundled set comes from the Lichess puzzle DB (CC0): `python tools/import_lichess_puzzles.py artifacts/lichess_db_puzzle.csv.zst src/Gambit.Core/Puzzles/puzzles.csv`
@@ -85,7 +89,11 @@ through tests instead.
   `./tools/play-lessons.ps1 -From tactics/fork -Count 10 [-Shots dir]` plays them start to finish.
 * `tools/screenshot-quiet.ps1 -Out x.png` captures an on-screen window in place (never moves it);
   a minimized one is restored behind other windows, captured and re-minimized. (`tools/screenshot.ps1` is the foreground version.)
-* Read state through UIA by AutomationId (x:Name), e.g. `StatusText`, `CodeText`, `FeedbackText`.
+* Read state through UIA by AutomationId (x:Name), e.g. `StatusText`, `CodeText`, `FeedbackText`;
+  `tools/ui.ps1 value -AutomationId ServerBox` reads a text box.
+* **One Gambit per data folder:** a second launch on the same profile only brings the open window
+  forward (on a test profile it exits quietly, logging "already open"). Close the old test window
+  before launching a new build, or you'll be testing the old one.
 
 ## Layout & rules
 
@@ -108,6 +116,11 @@ docs/                       ROADMAP.md, PROGRESS.md, ARCHITECTURE.md, ONLINE.md
   `RemoteGameSession`). Never special-case the opponent type beyond `GameSetup.IsOnline` cosmetics;
   game-flow changes go in the view model, with a test in `GameViewModelTests`.
 * Boards take the user's settings through `board.ApplyUserSettings()` (Helpers/BoardSettings.cs).
+* App startup is `src/Gambit.App/Program.cs` (`DISABLE_XAML_GENERATED_MAIN`): Velopack's install/update
+  hooks, then the single-instance check (`Services/SingleInstance.cs`), then WinUI. Keep
+  `EnableMsixTooling` on in the csproj: without it `dotnet publish` drops the compiled XAML and published
+  copies crash at startup.
+* The version lives in `Directory.Build.props` (app and server); note changes in `CHANGELOG.md`.
 * Content (openings TSV, puzzles CSV, lessons JSON) is embedded in Core and validated by tests —
   add content, run `./build.ps1 test`.
 * App: theme resources in XAML; in code-built UI use `Ui.AccentBrush` / `Ui.NeutralFill` and leave

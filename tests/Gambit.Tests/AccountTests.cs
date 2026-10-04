@@ -184,12 +184,36 @@ public sealed class AccountTests : IAsyncLifetime
 
         string file = Path.Combine(_dir, "download.db");
         await using (FileStream out1 = File.Create(file)) await AccountClient.DownloadBackupAsync(_url, owner.Token, out1);
-        Assert.Equal("SQLite format 3 ", System.Text.Encoding.ASCII.GetString(File.ReadAllBytes(file), 0, 16));
+        Assert.Equal("SQLite format 3\0", System.Text.Encoding.ASCII.GetString(File.ReadAllBytes(file), 0, 16));
         var copy = new AccountStore(new ServerDatabase(file), new ServerOptions { DataDirectory = _dir });
         Assert.Equal(new[] { "Boss", "Mel" }, copy.All().Select(a => a.Username).Order());
 
         var refused = await Assert.ThrowsAsync<OnlineAccountException>(() => AccountClient.DownloadBackupAsync(_url, member.Token, Stream.Null));
         Assert.Equal("Only the server's admins can download its database.", refused.Message);
+    }
+
+    [Fact]
+    public async Task The_server_offers_installers_and_the_update_feed()
+    {
+        using var http = new HttpClient { BaseAddress = new Uri(_url) };
+        Assert.Contains("No installers", await http.GetStringAsync("/download"));
+
+        string releases = Path.Combine(_dir, Releases.Folder);
+        await File.WriteAllTextAsync(Path.Combine(releases, "releases.win-x64.json"), """{"Assets":[]}""");
+        await File.WriteAllBytesAsync(Path.Combine(releases, "GambitChess-0.3.0-win-x64-full.nupkg"), [1, 2, 3]);
+        await File.WriteAllBytesAsync(Path.Combine(releases, "GambitChess-win-x64-Setup.exe"), [4, 5]);
+        await File.WriteAllBytesAsync(Path.Combine(releases, "GambitChess-win-arm64-Setup.exe"), [6]);
+
+        string page = await http.GetStringAsync("/download");
+        Assert.Contains("/releases/GambitChess-win-x64-Setup.exe", page);
+        Assert.Contains("Intel or AMD", page);
+        Assert.Contains("Windows on Arm", page);
+
+        using HttpResponseMessage feed = await http.GetAsync("/releases/releases.win-x64.json");
+        Assert.Equal("application/json", feed.Content.Headers.ContentType?.MediaType);
+        using HttpResponseMessage package = await http.GetAsync("/releases/GambitChess-0.3.0-win-x64-full.nupkg");
+        Assert.Equal(new byte[] { 1, 2, 3 }, await package.Content.ReadAsByteArrayAsync());
+        Assert.Equal(System.Net.HttpStatusCode.NotFound, (await http.GetAsync("/releases/GambitChess-9.9.9-win-x64-full.nupkg")).StatusCode);
     }
 
     [Fact]

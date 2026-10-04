@@ -39,7 +39,10 @@ public sealed partial class SettingsPage : Page
         SoundSwitch.IsOn = s.SoundEnabled;
 
         AboutTitle.Text = $"{AppInfo.DisplayName} {AppInfo.Version}";
-        AboutDetails.Text = $"Native {AppInfo.Architecture} build · .NET {Environment.Version} · Windows App SDK · Engine: Gambit search (PVS, PeSTO evaluation)";
+        string commit = AppInfo.Commit.Length > 0 ? $" {AppInfo.Commit}" : "";
+        AboutDetails.Text = $"Native {AppInfo.Architecture} build{commit} · .NET {Environment.Version} · Windows App SDK · Engine: Gambit search (PVS, PeSTO evaluation)";
+        UpdateRow.Visibility = UpdateService.Instance.IsInstalled ? Visibility.Visible : Visibility.Collapsed;
+        ShowUpdateState();
 
         BuildSwatches();
         var pos = Position.FromFen(PreviewFen);
@@ -250,6 +253,45 @@ public sealed partial class SettingsPage : Page
     {
         DataStatus.Text = text;
         DataStatus.Visibility = Visibility.Visible;
+    }
+
+    // ------------------------------------------------------------------ updates
+
+    private void ShowUpdateState(string? note = null)
+    {
+        UpdateService updates = UpdateService.Instance;
+        UpdateButton.IsEnabled = true;
+        UpdateButton.Content = updates.Available != null ? "Update and restart" : "Check for updates";
+        UpdateText.Text = note ?? (updates.Available != null
+            ? $"Version {updates.AvailableVersion} is ready to install. Gambit restarts to finish."
+            : $"New versions come from {UpdateService.Server}.");
+    }
+
+    private async void Update_Click(object sender, RoutedEventArgs e)
+    {
+        UpdateService updates = UpdateService.Instance;
+        UpdateButton.IsEnabled = false;
+        if (updates.Available == null)
+        {
+            UpdateText.Text = "Checking…";
+            await updates.CheckAsync();
+            ShowUpdateState(updates.Available == null ? $"You have the latest version ({AppInfo.Version})." : null);
+            return;
+        }
+        if (UpdateService.WaitReason is string wait)
+        {
+            ShowUpdateState(wait);
+            return;
+        }
+        try
+        {
+            await updates.UpdateAndRestartAsync(percent => DispatcherQueue.TryEnqueue(() => UpdateText.Text = $"Downloading the update… {percent}%"));
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"Update failed: {ex.Message}");
+            ShowUpdateState($"The update didn't work: {ex.Message}");
+        }
     }
 
     private void OpenData_Click(object sender, RoutedEventArgs e)

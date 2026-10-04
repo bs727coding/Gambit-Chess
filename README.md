@@ -33,22 +33,32 @@ lessons, review your games, earn achievements, and play online against friends.
 See [docs/ROADMAP.md](docs/ROADMAP.md) for what's next and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 for how it fits together.
 
+## Install
+
+Get Gambit from your Gambit server's download page (`https://<server>/download`): one installer for
+Windows on Arm PCs, one for Intel/AMD PCs. It installs for your Windows account (no administrator
+rights) and keeps itself up to date from that server. The installers aren't signed yet, so Windows
+may warn about an unknown publisher: choose **More info → Run anyway**. Making installers and
+releasing updates: [docs/RELEASING.md](docs/RELEASING.md).
+
 ## Build and run
 
 Requirements: Windows 11 (Arm64 or x64) and the .NET 10 SDK. Visual Studio is not required.
 
 ```powershell
 ./build.ps1 run       # build (Release) and launch the app
-./build.ps1 install   # install for your user + Start menu shortcut (re-run to update)
+./build.ps1 install   # developer install for your user + Start menu shortcut (re-run to update)
 ./build.ps1 test      # run the unit + integration tests
 ./build.ps1 server    # run the online server on port 5080 for LAN play
 ./build.ps1 publish   # self-contained app in ./artifacts/win-arm64
+./build.ps1 package -ServerUrl https://<server>   # installers + update packages (docs/RELEASING.md)
 ```
 
 `install` copies the self-contained app to `%LOCALAPPDATA%\Programs\Gambit` and adds "Gambit" to
 the Start menu — no admin rights or certificates needed; `./build.ps1 uninstall` removes it. The
 published folder runs without installing .NET or the Windows App SDK. Your data (settings,
-profile, puzzle progress, game archive) lives in `%LOCALAPPDATA%\Gambit` and survives reinstalls.
+profile, puzzle progress, game archive) lives in `%LOCALAPPDATA%\Gambit` and survives reinstalls,
+whichever way Gambit was installed. What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 ## Project layout
 

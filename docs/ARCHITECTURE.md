@@ -36,13 +36,15 @@ src/
                             PlayerBar, EvalBar, EvalGraph, RatingChart
     Pages/                  One page per area. GamePage renders GameViewModel; the simpler pages keep
                             their logic in code-behind (CommunityToolkit.Mvvm for settings/models)
+    Program.cs              Entry point: Velopack install/update hooks, one copy per data folder, WinUI
     Services/               Settings, Profile, Sound, Puzzles, Achievements, Online, ActiveGameStore,
-                            GameHost (IGameHost for the game view model)
+                            GameHost (IGameHost for the game view model), Update (Velopack), SingleInstance
     Theming/                Board themes, piece sets (vector geometry)
   Gambit.Online.Contracts/  DTOs + strongly typed SignalR hub interfaces (protocol version)
   Gambit.Online.Client/     OnlineClient (SignalR) + RemoteGameSession : IGameSession
   Gambit.Server/            ASP.NET Core + SignalR: GameManager (rooms, matchmaking, challenges,
-                            rematches, clocks), PlayerRegistry, RatingStore, rate limits
+                            rematches, clocks), PlayerRegistry, RatingStore, rate limits; also serves
+                            the installers (/download) and the update feed (/releases)
 tests/
   Gambit.Tests/             xUnit: perft, notation (incl. PGN variations), rules, engine, premoves,
                             content validation (puzzles; lessons incl. an engine audit of tactic

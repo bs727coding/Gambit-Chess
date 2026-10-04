@@ -31,7 +31,7 @@ public sealed partial class AppSettings : ObservableObject
     [ObservableProperty] public partial bool AllowTakebacks { get; set; } = true;
 
     // Online play (the sign-in itself is kept in Windows Credential Manager: OnlineCredentials).
-    [ObservableProperty] public partial string OnlineServerUrl { get; set; } = "http://localhost:5080";
+    [ObservableProperty] public partial string OnlineServerUrl { get; set; } = AppInfo.HomeServer ?? "http://localhost:5080";
     [ObservableProperty] public partial string LastOnlineTimeControl { get; set; } = "3+2";
 }
 

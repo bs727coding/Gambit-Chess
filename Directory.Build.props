@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Authors>Gambit contributors</Authors>
     <Product>Gambit</Product>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <!-- Deterministic, reproducible builds. -->
     <Deterministic>true</Deterministic>
     <TieredPGO>true</TieredPGO>

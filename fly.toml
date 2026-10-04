@@ -1,7 +1,7 @@
 # Fly.io configuration for the Gambit online server (see docs/ONLINE.md).
 # App names are global: change `app` before the first deploy. Then:
 #   fly launch --copy-config --no-deploy        # create the app from this file
-#   fly volumes create gambit_data --size 1     # ratings + PGN archive survive restarts
+#   fly volumes create gambit_data --size 3     # database + releases survive restarts
 #   fly deploy --ha=false                       # exactly ONE machine: games live in its memory
 app = "gambit-chess-change-me"
 primary_region = "iad"

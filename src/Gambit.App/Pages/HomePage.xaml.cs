@@ -26,6 +26,8 @@ public sealed partial class HomePage : Page
                 : "Welcome to Gambit. Start with a bot at your level, or explore a position on the analysis board.";
 
         ContinueBar.IsOpen = GamePage.HasActiveGame;
+        UpdateService.Instance.Changed += ShowUpdate;
+        ShowUpdate();
 
         BotProfile next = App.Profile.NextBot();
         PlayCardText.Text = p.GamesPlayed > 0
@@ -64,6 +66,39 @@ public sealed partial class HomePage : Page
             return;
         }
         foreach (GameRecord g in p.RecentGames.Take(6)) RecentList.Children.Add(GameRows.Create(g));
+    }
+
+    protected override void OnNavigatedFrom(NavigationEventArgs e)
+    {
+        base.OnNavigatedFrom(e);
+        UpdateService.Instance.Changed -= ShowUpdate;
+    }
+
+    private void ShowUpdate()
+    {
+        UpdateBar.IsOpen = UpdateService.Instance.Available != null;
+        UpdateBar.Message = $"Gambit {UpdateService.Instance.AvailableVersion} is ready to install.";
+        UpdateBarButton.IsEnabled = true;
+    }
+
+    private async void Update_Click(object sender, RoutedEventArgs e)
+    {
+        if (UpdateService.WaitReason is string wait)
+        {
+            UpdateBar.Message = wait;
+            return;
+        }
+        UpdateBarButton.IsEnabled = false;
+        try
+        {
+            await UpdateService.Instance.UpdateAndRestartAsync(percent => DispatcherQueue.TryEnqueue(() => UpdateBar.Message = $"Downloading the update… {percent}%"));
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"Update failed: {ex.Message}");
+            UpdateBar.Message = $"The update didn't work: {ex.Message}";
+            UpdateBarButton.IsEnabled = true;
+        }
     }
 
     private void Continue_Click(object sender, RoutedEventArgs e) => App.Window.Navigate(typeof(GamePage), null, "play");

@@ -128,12 +128,13 @@ Pick one:
 fly auth login
 # edit `app` in fly.toml (names are global), then:
 fly launch --copy-config --no-deploy
-fly volumes create gambit_data --size 1
+fly volumes create gambit_data --size 3
 fly deploy --ha=false
 ```
 
 `fly.toml` already encodes the rules above (one machine that never auto-stops, the `/data` volume,
-forwarded headers, a `/health` check). The app is then at `https://<app>.fly.dev`.
+forwarded headers, a `/health` check). The app is then at `https://<app>.fly.dev`. The 3 GB
+volume (about $0.45 a month) leaves room for the database and a few releases (~400 MB each).
 
 ### Azure Container Apps
 
@@ -157,6 +158,18 @@ docker run -d --restart unless-stopped -p 8080:8080 -v gambit-data:/data gambit-
 Put a TLS reverse proxy (Caddy, nginx) in front for an `https://` address, with WebSockets enabled
 and forwarded headers on.
 
+## Downloads and updates
+
+The server also hands out Gambit itself. Put the files that `./build.ps1 package` makes into the
+data folder's `releases/` (on Fly.io: `/data/releases`):
+
+* `GET /download` is a page with the installers (Windows on Arm, and Intel/AMD) for people who
+  don't have Gambit yet. Send friends this link along with an invite code.
+* `GET /releases/...` is the update feed. Installed copies check it after starting and offer
+  **Update and restart** on Home.
+
+Step by step, code signing and disk space: [RELEASING.md](RELEASING.md).
+
 ## Configuration
 
 | Setting | Default | Notes |
@@ -175,7 +188,8 @@ and forwarded headers on.
 | `Gambit:MaxOpenChallenges` | `5` | Friend codes per player; creating more drops the oldest |
 | `ASPNETCORE_FORWARDEDHEADERS_ENABLED` | unset | Set to `true` behind a reverse proxy (Azure Container Apps, Fly.io, nginx) so limits see the real client IP |
 
-Health check: `GET /health` → `ok`. `GET /` shows players online and games in progress.
+Health check: `GET /health` → `ok`. `GET /` shows players online and games in progress;
+`GET /download` lists the installers.
 
 ## Protocol (Gambit.Online.Contracts)
 

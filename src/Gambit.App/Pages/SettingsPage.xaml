@@ -238,6 +238,19 @@
                 </StackPanel>
                 <Button Grid.Column="2" Content="Open data folder" VerticalAlignment="Center" Click="OpenData_Click" />
             </Grid>
+            <Grid x:Name="UpdateRow" Style="{StaticResource SettingRowStyle}" Visibility="Collapsed">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <FontIcon Glyph="&#xE895;" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="Updates" />
+                    <TextBlock x:Name="UpdateText" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                </StackPanel>
+                <Button x:Name="UpdateButton" Grid.Column="2" VerticalAlignment="Center" MinWidth="120" Content="Check for updates" Click="Update_Click" />
+            </Grid>
         </StackPanel>
     </ScrollViewer>
 </Page>

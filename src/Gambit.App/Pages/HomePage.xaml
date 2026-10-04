@@ -9,6 +9,12 @@
             <TextBlock x:Name="Greeting" Style="{StaticResource TitleLargeTextBlockStyle}" />
             <TextBlock x:Name="SubGreeting" Style="{StaticResource SecondaryTextStyle}" Margin="0,0,0,12" />
 
+            <InfoBar x:Name="UpdateBar" IsOpen="False" IsClosable="True" Severity="Success" Title="Update available">
+                <InfoBar.ActionButton>
+                    <Button x:Name="UpdateBarButton" Content="Update and restart" Click="Update_Click" />
+                </InfoBar.ActionButton>
+            </InfoBar>
+
             <InfoBar x:Name="ContinueBar" IsOpen="False" IsClosable="False" Severity="Informational"
                      Title="Unfinished game" Message="Pick up where you left off.">
                 <InfoBar.ActionButton>

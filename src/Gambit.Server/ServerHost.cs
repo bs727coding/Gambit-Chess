@@ -66,6 +66,7 @@ public static class ServerHost
         app.UseAuthorization();
         app.MapHub<GameHub>(OnlineProtocol.HubPath).RequireRateLimiting("connect");
         app.MapAccountApi(options);
+        app.MapReleases(options);
         app.MapGet("/health", () => Results.Ok("ok"));
         app.MapGet("/", (GameManager games) =>
         {
