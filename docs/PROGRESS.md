@@ -12,19 +12,21 @@ and runs natively on Arm64 (and x64), with Velopack installers and updates from 
 | Gambit.Engine | PVS + TT + QS/SEE + null-move + LMR + MultiPV; PeSTO eval; 13 bots with opening books; `GameReviewer` (parallel, move classes, accuracy) |
 | Gambit.App | Welcome screen (first run), Home, Play (bots, pass-and-play, online), Game (clocks, premoves, hints, takebacks, resume after restart, sounds, online rematch), Game Review (with plain-language explanations), Analysis (multi-core engine lines, position editor, variations), Puzzles (rated, Rush, Survival, daily, themes, openings), Learn (5 courses / 49 lessons, opening review), Online lobby, Profile (stats, rating chart, openings, ~50 achievements), Settings (themes, pieces, sounds, premoves, progress back up / restore / reset, updates); one window per profile |
 | Online | `Gambit.Server` (ASP.NET Core + SignalR, authoritative, rematches, spectators, rate limits; accounts with invite-only sign-up, SQLite `gambit.db`, admin commands), `Gambit.Online.Client` (`RemoteGameSession`, `AccountClient`), Dockerfile, docs/ONLINE.md; `./build.ps1 server` for LAN play |
-| Tools | `import_lichess_puzzles.py`, `Gambit.PuzzleGen` (experiments), `Gambit.BotArena` (ladder measurement), `Gambit.OnlineBot` (plays online, accepts rematches), `ui.ps1`, `ui-scroll.ps1`, `screenshot-quiet.ps1` |
+| Tools | `import_lichess_puzzles.py`, `Gambit.PuzzleGen` (experiments), `Gambit.BotArena` (ladder measurement), `Gambit.BotCalibration` + `extract_lichess_games.py` (bots vs real players), `Gambit.OnlineBot` (plays online, accepts rematches), `ui.ps1`, `ui-scroll.ps1`, `screenshot-quiet.ps1` |
 | Content | 21,162 puzzles from the Lichess puzzle DB (CC0; `tools/import_lichess_puzzles.py`): 400–1,100 per 100-point band from 400 to 2999, 49 practice themes with ≥ 120 each, 25 practice openings with ≥ 50 each; 49 lessons; tactic/mate solutions audited by the engine in tests |
 | Install | `./build.ps1 package -ServerUrl …` → Velopack Setup.exe + portable zip + update packages for win-arm64 and win-x64 in `artifacts/releases` (docs/RELEASING.md); the server offers them at `/download` and `/releases`. Not installed on this PC (installer tests are the user's). Developer install: `./build.ps1 install` |
-| Tests | 205 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
+| Tests | 206 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
 
 ## Next steps
 
-**In progress (2026-10-04): bot calibration against real players**, at the user's request (the
-1000 bot blundered more than a 1000 player would). `tools/Gambit.BotCalibration` measures people
-per rating (Lichess rapid games, Chess.com scale) and each bot on the same positions; random moves
-are replaced by oversights (revision 4). Fitted so far: Acorn, Bramble, Clover. Dash–Gale and the
-upper bands (1600–2400) are running; Dash–Lumen keep their old temperature/noise until fitted.
-Data in `artifacts/calibration` (git-ignored); write-up goes into docs/BOT-CALIBRATION.md.
+**Bot calibration against real players (2026-10-04, at the user's request): Acorn to Jade done.**
+Each bot now blunders, errs and finds the best move about as often as people at its rating
+(Chess.com rapid scale), measured on Lichess rapid games; random moves are gone (oversights
+instead, revision 4). Still to do, in docs/BOT-CALIBRATION.md "Next steps": **fit Kestrel and
+Lumen** (both far stronger than people at 2200/2400; give them 3–5 candidates first; finish the
+2400 people band), and play the new ladder in the arena. Run long calibrations where the PC
+won't sleep: this session's runs were killed twice by sleep. Data in `artifacts/calibration`
+(git-ignored; `artifacts/rapid-games.tsv` holds the extracted games).
 
 **Priority (from the user, 2026-10-02): a functional, clean, correct app over bot tuning.**
 The user's list of 2026-10-03 is done (QA pass, GamePage view model, inline variations, puzzles
@@ -320,3 +322,23 @@ Proposed to the user on 2026-10-03, in this order (waiting for their pick):
   app is an MSIX package). My earlier "your progress survived" check read a stale private copy;
   the real profile was fine. `tools/run-outside.ps1` runs PowerShell outside the container (WMI) to
   read the real profile; CLAUDE.md explains it.
+
+### Session 3 — 2026-10-04: bots calibrated against real players
+* The user found the 1000 bot (Ember) blundering more than a 1000 player would and asked to retune
+  every bot against real-world data. Plan: measure people per rating, then each bot on the same
+  positions, with the same yardstick (Game Review's thresholds).
+* Data (download approved by the user): the first 150 MB of Lichess's September 2026 database
+  (range request; deleted afterwards) → 69,673 rated rapid games (`tools/extract_lichess_games.py`).
+  Ratings mapped to Chess.com rapid with ChessGoals' survey (Chess.com 1000 ≈ Lichess 1430).
+* New `tools/Gambit.BotCalibration`: `humans` samples 1,500 positions per band (players within ±60,
+  opponents within ±150, move 5 on, ≥ 30 s on the clock) and scores the people's moves at a fixed
+  node budget; `bots` / `grid` / `fit` score bots on the same positions; results cached per run.
+* Findings: people find the best move ~50% of the time at every level; a 1000 player blunders on
+  4.1% of moves. The four weakest bots blundered ~3x as often as people (random moves and high
+  temperatures); Harbor and up were far stronger than their labels (Iris 94 accuracy vs 89).
+* Revision 4: random moves replaced by oversights (the move that looks best right after it, ignoring
+  the opponent's reply); Acorn to Jade fitted (temperature, noise, oversight share), checked on
+  common positions (Dash and Flint nudged; Iris and Jade now weigh 5 candidates). Every fitted bot
+  is within ~1 point of accuracy of people at its rating. Test: an oversight grabs a defended pawn.
+* Kestrel and Lumen not fitted yet (expensive; see Next steps). The PC slept twice during long runs,
+  which killed them; `request_keep_awake` helps against idle sleep only.

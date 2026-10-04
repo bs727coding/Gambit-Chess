@@ -122,8 +122,8 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 
 ## Backlog / stretch
 
-- Stronger engine (NNUE-style eval; multithreaded search ✔ for the analysis board); even out the bot ladder with
-  `tools/Gambit.BotArena` (first measurement in docs/BOT-CALIBRATION.md)
+- Stronger engine (NNUE-style eval; multithreaded search ✔ for the analysis board); bots calibrated against real
+  players ✔ for Acorn–Jade (docs/BOT-CALIBRATION.md), Kestrel/Lumen still to fit
 - Opening explorer, endgame tablebase (syzygy) probing; richer coach explanations (Game Review
   already explains hung pieces, allowed/missed mates and forks)
 - Accessibility pass (Narrator, keyboard-only play, high contrast), localization
