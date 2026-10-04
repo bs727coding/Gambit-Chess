@@ -67,8 +67,13 @@ Proposed to the user on 2026-10-03, in this order (waiting for their pick):
   `./tools/ui.ps1 invoke -Name "Play"`, `./tools/ui.ps1 board -Moves "e2e4,g1f3"`.
   **The user plays Gambit while sessions run** — check it isn't in use before driving it, and
   test in a sandbox profile (`./build.ps1 run -Configuration Debug -DataDir artifacts/qa-profile`).
-* The user's real profile was reset to a clean slate on 2026-10-03 at their request (backup in
-  `%LOCALAPPDATA%\Gambit-backup-2026-10-03`); appearance and gameplay settings were kept.
+* The user's real profile was reset to a clean slate on 2026-10-03 at their request. That was done
+  from inside the Claude app's container (see CLAUDE.md, AppData is virtualized), so the backup of
+  the old profile is **not** at `%LOCALAPPDATA%\Gambit-backup-2026-10-03` as reported: it is in
+  `%LOCALAPPDATA%\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Local\Gambit-backup-2026-10-03`,
+  invisible to the user, next to a stale private copy of the reset profile (`...\LocalCache\Local\Gambit`)
+  that hides the real one from Claude's tools. Asked the user (2026-10-03) whether to copy the
+  backup somewhere visible and delete the stale copy.
 * api.nuget.org has an unreachable CDN edge from this network (see CLAUDE.md); restores still work.
 * Windows PowerShell 5.1 mangles UTF-8 in `Get-Content`/`Set-Content` (see CLAUDE.md) — edit
   files with the Edit/Write tools, `sed` or Python.
@@ -297,3 +302,13 @@ Proposed to the user on 2026-10-03, in this order (waiting for their pick):
     file as binary; Settings showed "ready to install" instead of an update error.
   * `tools/ui.ps1 value -AutomationId X` reads a text box. Docs: RELEASING.md (new), README
     (Install), ONLINE.md (downloads and updates, 3 GB Fly volume), CLAUDE.md, ROADMAP, ARCHITECTURE.
+* The user's installer check: install, the shortcuts and one window per profile worked. Uninstalling
+  seemed to leave Gambit behind because the taskbar pin opened it, but that pin was the development
+  build (`src/.../bin/ARM64/Release`), which shares the profile. The real log confirms it: the
+  installed copy ran, the second launch handed over, and the later starts are the development build.
+  Settings → About now says "installed" or "development copy (not installed)". Restored the
+  desktop shortcut to the development build (Setup had replaced it and uninstalling removed it).
+* Found while checking: everything Claude Code starts here sees a virtualized AppData (the Claude
+  app is an MSIX package). My earlier "your progress survived" check read a stale private copy;
+  the real profile was fine. `tools/run-outside.ps1` runs PowerShell outside the container (WMI) to
+  read the real profile; CLAUDE.md explains it.

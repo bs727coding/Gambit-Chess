@@ -51,8 +51,17 @@ session short at any moment, so **checkpoint often**).
 * Bot ladder: `dotnet run -c Release --project tools/Gambit.BotArena -- <minutes> artifacts/arena.csv <ids,...>`
   (see docs/BOT-CALIBRATION.md; bump `BotMoveProvider.Revision` when bot move choice changes)
 * Sounds: `python tools/gen_sounds.py`; icon: `tools/make-icon.ps1`.
-* `python` here is the Microsoft Store build: its view of `%LOCALAPPDATA%` is virtualized (it once
-  reported the real `Gambit\settings.json` as missing). Touch the user's profile with PowerShell.
+* **AppData is virtualized for everything Claude Code starts here** (PowerShell, bash, python, apps):
+  the Claude desktop app is an MSIX package, and its children inherit its file-system virtualization.
+  Files they create under `%LOCALAPPDATA%` / `%APPDATA%` land in
+  `%LOCALAPPDATA%\Packages\Claude_pzs8sxrjxfjjc\LocalCache\...`, invisible to the user, and in this
+  view they hide the real files. A stale private copy of `Gambit\` (from a profile reset done in here)
+  once made the real profile look reset. So read the user's real profile with
+  `./tools/run-outside.ps1 '<PowerShell>'` (runs it via WMI, outside the container), change it
+  only with the user's OK, and don't run `./build.ps1 install` or a Setup.exe from here: it would
+  install where the user can't see it. `./build.ps1 server` keeps its data in the private copy, a
+  different database from the user's own `./build.ps1 server`. Sandboxed profiles under
+  `artifacts/` are unaffected (Documents isn't virtualized).
 * Edit files with the Edit/Write tools, `sed` or Python — in Windows PowerShell 5.1 `Set-Content -Encoding utf8`
   adds a BOM and `Get-Content` without `-Encoding utf8` reads UTF-8 as ANSI (mangles —, →, ≥).
 

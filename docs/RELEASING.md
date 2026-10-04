@@ -102,7 +102,10 @@ no certificate needed.
   id (`--packId GambitChess`) to "Gambit"**: uninstalling deletes `%LOCALAPPDATA%\<package id>`,
   which would then be the player's data.
 * **Shortcuts:** Setup puts "Gambit" on the desktop and in the Start menu. It replaces a desktop
-  shortcut that is already called Gambit (such as one to a development build).
+  shortcut that is already called Gambit (such as one to a development build), and uninstalling
+  removes it. Shortcuts or taskbar pins made from a development build keep opening that build.
+* **Which copy is this?** An installed copy and a development build share the same progress and
+  look alike. Settings → About says "installed" or "development copy (not installed)".
 * **One Gambit per profile:** opening Gambit while it's already open brings the open window
   forward. Two copies on the same data would overwrite each other's progress.
 * **Online protocol changes:** when `OnlineProtocol.Version` goes up, older apps are told to update.

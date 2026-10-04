@@ -40,7 +40,9 @@ public sealed partial class SettingsPage : Page
 
         AboutTitle.Text = $"{AppInfo.DisplayName} {AppInfo.Version}";
         string commit = AppInfo.Commit.Length > 0 ? $" {AppInfo.Commit}" : "";
-        AboutDetails.Text = $"Native {AppInfo.Architecture} build{commit} · .NET {Environment.Version} · Windows App SDK · Engine: Gambit search (PVS, PeSTO evaluation)";
+        // Says which copy this is: an installed one and a development build share the profile and look alike.
+        string copy = UpdateService.Instance.IsInstalled ? "installed" : "development copy (not installed)";
+        AboutDetails.Text = $"Native {AppInfo.Architecture} build{commit} · {copy} · .NET {Environment.Version} · Windows App SDK · Engine: Gambit search (PVS, PeSTO evaluation)";
         UpdateRow.Visibility = UpdateService.Instance.IsInstalled ? Visibility.Visible : Visibility.Collapsed;
         ShowUpdateState();
 
