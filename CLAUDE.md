@@ -32,8 +32,9 @@ session short at any moment, so **checkpoint often**).
   heuristic ratings) is for experiments — don't mix its output into the bundled set.
 * Online bot: `dotnet run -c Release --project tools/Gambit.OnlineBot -- http://localhost:5080 <bot-id> <tc|code> [games] [--invite CODE]`
   (plays as the account `<Name>Bot`; password in `GAMBIT_BOT_PASSWORD`; `--invite` creates the account once).
-* Server admin: `dotnet run --project src/Gambit.Server -- <invite|users|reset-password|ban|backup|help>`
-  works on `gambit.db` (set `GAMBIT_DATA` to the server's data folder). A new server logs the invite
+* Server admin: `./build.ps1 server-admin <invite|users|reset-password|ban|backup|help> [args]` works on
+  the local server's `gambit.db` in `%LOCALAPPDATA%\Gambit Server` (where `./build.ps1 server` keeps it,
+  outside bin/; `GAMBIT_DATA` overrides). A new server logs the invite
   code for the first (admin) account. Accounts are invite-only by default (docs/ONLINE.md).
   Restoring: put the backup in the data folder as `restore.db` and restart the server.
 * Engine speed: `dotnet run -c Release tools/bench.cs [depth] [rounds]` searches fixed positions to a

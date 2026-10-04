@@ -93,7 +93,8 @@ Restoring brings back accounts, ratings and games as of the backup; sign-ins mad
 ## Play with friends on your network (easiest)
 
 1. On one PC run: `./build.ps1 server` (allow it through the Windows firewall when asked). Note the
-   invite code it prints the first time.
+   invite code it prints the first time. Its data lives in `%LOCALAPPDATA%\Gambit Server`;
+   `./build.ps1 server-admin users` (or any admin command below) works on it.
 2. Find that PC's address: `ipconfig` → IPv4 address, e.g. `192.168.1.20`.
 3. Open **Online** in Gambit, enter `http://192.168.1.20:5080`, **Connect**, then **Create an
    account** with that invite code. Use **Invite a friend** to get a code for each friend.

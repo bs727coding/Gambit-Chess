@@ -9,18 +9,24 @@
     ./build.ps1 publish    # self-contained Release build in ./artifacts/<rid>
     ./build.ps1 perft      # quick move-generator speed check
     ./build.ps1 server     # run the online play server on port 5080 (all network interfaces)
+    ./build.ps1 server-admin users   # an admin command for that server (invite, users, ban, backup, help, ...)
     ./build.ps1 install    # install for this user (%LOCALAPPDATA%\Programs\Gambit + Start menu shortcut); re-run to update
     ./build.ps1 uninstall  # remove that install (your profile and games in %LOCALAPPDATA%\Gambit are kept)
 #>
+[CmdletBinding(PositionalBinding = $false)]
 param(
-    [ValidateSet('build', 'test', 'run', 'publish', 'perft', 'clean', 'server', 'install', 'uninstall')]
+    [Parameter(Position = 0)]
+    [ValidateSet('build', 'test', 'run', 'publish', 'perft', 'clean', 'server', 'server-admin', 'install', 'uninstall')]
     [string]$Command = 'build',
     [ValidateSet('Debug', 'Release', '')]
     [string]$Configuration = '',
     [string]$Runtime = '',
     [string]$InstallDir = '',
     [string]$DataDir = '',
-    [switch]$NoShortcut
+    [switch]$NoShortcut,
+    # server-admin: the command and its arguments, e.g. ./build.ps1 server-admin invite --uses 3
+    [Parameter(ValueFromRemainingArguments = $true)]
+    [string[]]$AdminArgs = @()
 )
 
 $ErrorActionPreference = 'Stop'
@@ -149,7 +155,16 @@ switch ($Command) {
     'server' {
         $server = Join-Path $root 'src\Gambit.Server\Gambit.Server.csproj'
         Restore $server
-        Write-Host 'Gambit server on http://0.0.0.0:5080 (Ctrl+C to stop). Friends on your network connect to http://<this-PC-IP>:5080'
+        # Accounts, ratings and games live outside bin/ ('clean' deletes bin/).
+        if (-not $env:GAMBIT_DATA) { $env:GAMBIT_DATA = Join-Path $env:LOCALAPPDATA 'Gambit Server' }
+        Write-Host "Gambit server on http://0.0.0.0:5080 (Ctrl+C to stop), data in $env:GAMBIT_DATA."
+        Write-Host 'Friends on your network connect to http://<this-PC-IP>:5080'
         Invoke-Dotnet @('run', '--project', $server, '-c', 'Release', '--no-restore', '--urls', 'http://0.0.0.0:5080')
+    }
+    'server-admin' {
+        $server = Join-Path $root 'src\Gambit.Server\Gambit.Server.csproj'
+        if (-not $env:GAMBIT_DATA) { $env:GAMBIT_DATA = Join-Path $env:LOCALAPPDATA 'Gambit Server' }
+        $adminCommand = if ($AdminArgs.Count -gt 0) { $AdminArgs } else { @('help') }
+        Invoke-Dotnet (@('run', '--project', $server, '-c', 'Release', '--') + $adminCommand)
     }
 }
