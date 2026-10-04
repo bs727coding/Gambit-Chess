@@ -15,7 +15,7 @@ natively on Arm64.
 | Tools | `import_lichess_puzzles.py`, `Gambit.PuzzleGen` (experiments), `Gambit.BotArena` (ladder measurement), `Gambit.OnlineBot` (plays online, accepts rematches), `ui.ps1`, `ui-scroll.ps1`, `screenshot-quiet.ps1` |
 | Content | 21,162 puzzles from the Lichess puzzle DB (CC0; `tools/import_lichess_puzzles.py`): 400–1,100 per 100-point band from 400 to 2999, 49 practice themes with ≥ 120 each, 25 practice openings with ≥ 50 each; 49 lessons; tactic/mate solutions audited by the engine in tests |
 | Install | `./build.ps1 install` → `%LOCALAPPDATA%\Programs\Gambit` + Start menu shortcut (tested into a scratch folder; not installed for real, the user decides) |
-| Tests | 185 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
+| Tests | 187 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
 
 ## Next steps
 
@@ -28,8 +28,7 @@ Proposed to the user on 2026-10-03, in this order (waiting for their pick):
    opening drills, a multi-core analysis board. The puzzle source link was dropped (the user's call).
 2. **In progress (the user's go, 2026-10-03) — server ready to go online, built and tested locally
    (not deployed):** accounts with sign-in and invite-only sign-ups ✔, SQLite instead of
-   ratings.json ✔; still to do: repeat-abandonment handling, name moderation, backups off the
-   server. Hosting itself is ready (Fly.io, docs/ONLINE.md); the user chose username + password
+   ratings.json ✔, repeat walkouts ✔; still to do: name moderation, backups off the server. Hosting itself is ready (Fly.io, docs/ONLINE.md); the user chose username + password
    (no email), SQLite, invite-only.
 3. **Distribution:** version numbers and an update check, MSIX or a signed installer (buying a
    signing certificate is the user's call), an x64 build test.
@@ -236,3 +235,9 @@ Proposed to the user on 2026-10-03, in this order (waiting for their pick):
     the online tests now sign up with invites. Verified in the app against a local server: first
     account with the logged code (admin), invite, sign out, wrong and right password, saved sign-in
     after a restart, and a rated game against the online bot stored in the database.
+* Group 2, step 2 — walkouts: not moving first, resigning before both sides moved, or leaving a game
+  is recorded per player (`Conduct`, in memory); three within 30 minutes pause quick pairing for 10
+  minutes (friends' games still work). Hub errors now reach the player in the server's own words
+  (`OnlineClient.ServerMessage`), and server notices show on the Online page and as game messages
+  (they were dropped before). Tests: end to end (three aborts → paused, the opponent unaffected)
+  and the timing with a test clock.

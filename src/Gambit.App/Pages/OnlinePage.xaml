@@ -184,6 +184,7 @@
             </Border>
 
             <InfoBar x:Name="ErrorBar" IsOpen="False" Severity="Error" IsClosable="True" />
+            <InfoBar x:Name="NoticeBar" IsOpen="False" Severity="Informational" IsClosable="True" Title="From the server" />
 
             <InfoBar IsOpen="True" IsClosable="False" Severity="Informational" Title="Hosting a server"
                      Message="Run the Gambit server on any PC (./build.ps1 server). The first time, it shows an invite code for your own account, which becomes the server's admin; then use Invite a friend to let others join. To play over the internet, deploy the server (see docs/ONLINE.md)." />

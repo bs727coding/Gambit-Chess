@@ -93,6 +93,26 @@ public sealed class AccountStoreTests : IDisposable
     }
 
     [Fact]
+    public void Three_walkouts_in_half_an_hour_pause_quick_pairing_for_ten_minutes()
+    {
+        var conduct = new Conduct(Options(), _clock);
+        conduct.RecordWalkout("p1");
+        _clock.Now += TimeSpan.FromMinutes(20);
+        conduct.RecordWalkout("p1");
+        Assert.Null(conduct.PairingPause("p1"));
+        _clock.Now += TimeSpan.FromMinutes(5);
+        conduct.RecordWalkout("p1");
+        Assert.Equal(TimeSpan.FromMinutes(10), conduct.PairingPause("p1"));
+        Assert.Null(conduct.PairingPause("p2"));
+
+        _clock.Now += TimeSpan.FromMinutes(10);
+        Assert.Null(conduct.PairingPause("p1"));
+        _clock.Now += TimeSpan.FromMinutes(30);
+        conduct.RecordWalkout("p1"); // the old walkouts have expired
+        Assert.Null(conduct.PairingPause("p1"));
+    }
+
+    [Fact]
     public void Admin_commands_manage_invites_and_accounts()
     {
         ServerOptions options = Options();

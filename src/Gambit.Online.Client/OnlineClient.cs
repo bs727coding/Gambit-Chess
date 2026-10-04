@@ -155,6 +155,14 @@ public sealed class OnlineClient : IAsyncDisposable
         if (_hub is { State: HubConnectionState.Connected } hub) await hub.InvokeAsync(nameof(IGameServer.Unwatch), gameId);
     }
 
+    /// <summary>The server's own words from a failed hub call ("... HubException: message"), else the exception's message.</summary>
+    public static string ServerMessage(Exception ex)
+    {
+        const string marker = "HubException: ";
+        int i = ex.Message.IndexOf(marker, StringComparison.Ordinal);
+        return i >= 0 ? ex.Message[(i + marker.Length)..] : ex.Message;
+    }
+
     private void SetState(OnlineState s)
     {
         if (State == s) return;

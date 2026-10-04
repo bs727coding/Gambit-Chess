@@ -103,4 +103,12 @@ public sealed class ServerOptions
 
     /// <summary>A sign-in lasts until it goes unused this long.</summary>
     public int SessionDays { get; set; } = 180;
+
+    /// <summary>Games walked out of (not moving, resigning at once, leaving) within <see cref="WalkoutWindow"/> before quick pairing pauses.</summary>
+    public int WalkoutsBeforePause { get; set; } = 3;
+
+    public TimeSpan WalkoutWindow { get; set; } = TimeSpan.FromMinutes(30);
+
+    /// <summary>How long quick pairing stays paused after the last walkout.</summary>
+    public TimeSpan PairingPause { get; set; } = TimeSpan.FromMinutes(10);
 }

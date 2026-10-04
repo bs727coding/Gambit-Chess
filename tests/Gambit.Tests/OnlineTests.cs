@@ -228,6 +228,28 @@ public sealed class OnlineTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Walking_out_of_games_pauses_quick_pairing_only()
+    {
+        OnlineClient quitter = await Connect("Quin"), patient = await Connect("Pam");
+        for (int i = 0; i < 3; i++)
+        {
+            Task<GameStartDto> started = Next<GameStartDto>(h => quitter.GameStarted += h);
+            Task<GameOverDto> over = Next<GameOverDto>(h => quitter.GameOver += h);
+            ChallengeDto ch = await patient.CreateChallengeAsync(new TimeControlDto(300, 0), "black");
+            Assert.True(await quitter.AcceptChallengeAsync(ch.Code));
+            GameStartDto game = await started;
+            await quitter.ResignAsync(game.GameId); // before moving: aborted, and a walkout
+            Assert.Equal(nameof(Termination.Aborted), (await over).Termination);
+        }
+
+        Exception paused = await Assert.ThrowsAnyAsync<Exception>(() => quitter.SeekAsync(new TimeControlDto(180, 0)));
+        Assert.Equal("You left several games early, so quick pairing is paused for 10 more minutes. Games with friends still work.",
+            OnlineClient.ServerMessage(paused));
+        await patient.SeekAsync(new TimeControlDto(180, 0)); // the other player isn't affected
+        Assert.Equal(6, (await quitter.CreateChallengeAsync(new TimeControlDto(300, 0), "random")).Code.Length); // friends still work
+    }
+
+    [Fact]
     public async Task Remote_sessions_negotiate_a_rematch()
     {
         OnlineClient alice = await Connect("Cyd"), bob = await Connect("Dia");

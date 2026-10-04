@@ -25,6 +25,9 @@ public sealed class GameRoom(string id, Player white, Player black, TimeControlD
     public string? DrawOfferBy { get; set; }
     public bool Finished { get; set; }
 
+    /// <summary>The player whose walkout ended the game (no first move, an early resignation, or leaving), if any.</summary>
+    public Player? WalkedOut { get; set; }
+
     /// <summary>"white"/"black" while that player's rematch offer is pending (finished games only).</summary>
     public string? RematchOfferBy { get; set; }
     public bool RematchStarted { get; set; }
@@ -46,7 +49,8 @@ public sealed class GameRoom(string id, Player white, Player black, TimeControlD
 /// Owns rooms, matchmaking and challenges. Every move is validated with Gambit.Core before it is
 /// broadcast; clocks, flags, aborts and abandonment are decided here, never by clients.
 /// </summary>
-public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerRegistry players, RatingStore ratings, GameArchive archive, ILogger<GameManager> log, ServerOptions options)
+public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerRegistry players, RatingStore ratings, GameArchive archive,
+    Conduct conduct, ILogger<GameManager> log, ServerOptions options)
 {
     private readonly ConcurrentDictionary<string, GameRoom> _rooms = new();
     private readonly ConcurrentDictionary<string, string> _activeRoomByPlayer = new();
@@ -73,6 +77,11 @@ public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerReg
     public async Task SeekAsync(Player p, TimeControlDto tc)
     {
         if (!IsValid(tc) || ActiveRoom(p) != null) return;
+        if (conduct.PairingPause(p.PublicId) is TimeSpan wait)
+        {
+            int minutes = (int)Math.Ceiling(wait.TotalMinutes);
+            throw new HubException($"You left several games early, so quick pairing is paused for {(minutes == 1 ? "1 more minute" : $"{minutes} more minutes")}. Games with friends still work.");
+        }
         await WithdrawRematchOffersAsync(p);
         Player? opponent = null;
         lock (_seekGate)
@@ -199,8 +208,15 @@ public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerReg
         lock (room.Gate)
         {
             if (room.Finished || room.Game.IsOver || room.ColorOf(p) is not Color c) return;
-            if (room.Game.Moves.Count < 2) room.Game.Abort();
-            else room.Game.Resign(c);
+            if (room.Game.Moves.Count < 2)
+            {
+                room.Game.Abort();
+                room.WalkedOut = p;
+            }
+            else
+            {
+                room.Game.Resign(c);
+            }
         }
         await FinishAsync(room);
     }
@@ -414,18 +430,21 @@ public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerReg
                 else if (room.Game.Moves.Count == 0 && now - room.CreatedAt > options.FirstMoveTimeout)
                 {
                     room.Game.Abort();
+                    room.WalkedOut = room.White;
                     end = true;
                 }
                 else if (room.WhiteGoneSince is DateTimeOffset w && now - w > options.ReconnectGrace)
                 {
                     if (room.Game.Moves.Count < 2) room.Game.Abort();
                     else room.Game.Abandon(Color.White);
+                    room.WalkedOut = room.White;
                     end = true;
                 }
                 else if (room.BlackGoneSince is DateTimeOffset b && now - b > options.ReconnectGrace)
                 {
                     if (room.Game.Moves.Count < 2) room.Game.Abort();
                     else room.Game.Abandon(Color.Black);
+                    room.WalkedOut = room.Black;
                     end = true;
                 }
             }
@@ -463,6 +482,7 @@ public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerReg
 
         _activeRoomByPlayer.TryRemove(room.White.PublicId, out _);
         _activeRoomByPlayer.TryRemove(room.Black.PublicId, out _);
+        if (room.WalkedOut is Player walkedOut) conduct.RecordWalkout(walkedOut.PublicId);
         Archive(room, rated, whiteChange, blackChange);
         log.LogInformation("Game {Id} over: {Result}", room.Id, description);
         await hub.Clients.Group(room.Id).GameOver(new GameOverDto(room.Id, result, room.Game.Termination.ToString(), description, whiteChange, blackChange));

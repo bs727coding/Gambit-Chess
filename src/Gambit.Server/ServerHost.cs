@@ -30,6 +30,7 @@ public static class ServerHost
         builder.Services.AddSingleton<RatingStore>();
         builder.Services.AddSingleton<GameArchive>();
         builder.Services.AddSingleton<PlayerRegistry>();
+        builder.Services.AddSingleton<Conduct>();
         builder.Services.AddSingleton<GameManager>();
         builder.Services.AddHostedService<GameClockService>();
         builder.Services.AddSingleton<CallRateLimitFilter>();

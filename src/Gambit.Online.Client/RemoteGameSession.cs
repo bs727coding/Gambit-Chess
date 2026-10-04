@@ -54,6 +54,7 @@ public sealed class RemoteGameSession : IGameSession
         _client.DrawOffered += OnDrawOffered;
         _client.DrawDeclined += OnDrawDeclined;
         _client.OpponentConnection += OnOpponentConnection;
+        _client.Notice += OnNotice;
         _client.Resync += OnResync;
         _client.RematchOffered += OnRematchOffered;
         _client.RematchDeclined += OnRematchDeclined;
@@ -222,6 +223,9 @@ public sealed class RemoteGameSession : IGameSession
             : $"{who} disconnected and has {graceSeconds} seconds to come back.")));
     }
 
+    /// <summary>Server announcements (e.g. "signed in somewhere else") show up like the server's other game messages.</summary>
+    private void OnNotice(string message) => Post(() => ChatReceived?.Invoke(this, new ChatEventArgs(ServerVoice, message)));
+
     private void OnResync(GameStartDto dto)
     {
         if (dto.GameId != GameId) return;
@@ -350,6 +354,7 @@ public sealed class RemoteGameSession : IGameSession
         _client.DrawOffered -= OnDrawOffered;
         _client.DrawDeclined -= OnDrawDeclined;
         _client.OpponentConnection -= OnOpponentConnection;
+        _client.Notice -= OnNotice;
         _client.Resync -= OnResync;
         _client.RematchOffered -= OnRematchOffered;
         _client.RematchDeclined -= OnRematchDeclined;

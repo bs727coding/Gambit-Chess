@@ -55,6 +55,7 @@ public sealed partial class OnlinePage : Page
         Online.StateChanged += OnStateChanged;
         Online.StatsChanged += OnStatsChanged;
         Online.GameOpened += OnGameOpened;
+        Online.NoticeReceived += OnNotice;
         UpdateState(Online.Client.State);
         if (Online.Client.Stats is LobbyStatsDto stats) OnStatsChanged(stats);
     }
@@ -65,6 +66,13 @@ public sealed partial class OnlinePage : Page
         Online.StateChanged -= OnStateChanged;
         Online.StatsChanged -= OnStatsChanged;
         Online.GameOpened -= OnGameOpened;
+        Online.NoticeReceived -= OnNotice;
+    }
+
+    private void OnNotice(string message)
+    {
+        NoticeBar.Message = message;
+        NoticeBar.IsOpen = true;
     }
 
     private void OnStateChanged(OnlineState state) => UpdateState(state);
@@ -127,7 +135,7 @@ public sealed partial class OnlinePage : Page
         }
         catch (Exception ex)
         {
-            ShowError(ex.Message);
+            ShowError(OnlineClient.ServerMessage(ex));
         }
     }
 
@@ -169,7 +177,7 @@ public sealed partial class OnlinePage : Page
         }
         catch (Exception ex)
         {
-            ShowError(ex.Message);
+            ShowError(OnlineClient.ServerMessage(ex));
         }
     }
 
@@ -221,7 +229,7 @@ public sealed partial class OnlinePage : Page
         }
         catch (OnlineAccountException ex)
         {
-            ShowError(ex.Message);
+            ShowError(OnlineClient.ServerMessage(ex));
         }
     }
 
@@ -276,7 +284,7 @@ public sealed partial class OnlinePage : Page
         }
         catch (Exception ex)
         {
-            ShowError(ex.Message);
+            ShowError(OnlineClient.ServerMessage(ex));
         }
         finally
         {
@@ -306,7 +314,7 @@ public sealed partial class OnlinePage : Page
         }
         catch (Exception ex)
         {
-            ShowError(ex.Message);
+            ShowError(OnlineClient.ServerMessage(ex));
         }
     }
 
@@ -330,7 +338,7 @@ public sealed partial class OnlinePage : Page
         catch (Exception ex)
         {
             SeekingPanel.Visibility = Visibility.Collapsed;
-            ShowError(ex.Message);
+            ShowError(OnlineClient.ServerMessage(ex));
         }
     }
 
@@ -343,7 +351,7 @@ public sealed partial class OnlinePage : Page
         }
         catch (Exception ex)
         {
-            ShowError(ex.Message);
+            ShowError(OnlineClient.ServerMessage(ex));
         }
     }
 
@@ -360,7 +368,7 @@ public sealed partial class OnlinePage : Page
         }
         catch (Exception ex)
         {
-            ShowError(ex.Message);
+            ShowError(OnlineClient.ServerMessage(ex));
         }
     }
 
@@ -381,7 +389,7 @@ public sealed partial class OnlinePage : Page
         }
         catch (Exception ex)
         {
-            ShowError(ex.Message);
+            ShowError(OnlineClient.ServerMessage(ex));
         }
     }
 

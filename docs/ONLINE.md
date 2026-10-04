@@ -11,6 +11,9 @@ Gambit app ──HTTPS: sign-in, invites (/api)──► Gambit.Server ──►
 * **The server is authoritative.** Every move is checked with `Gambit.Core` before it is broadcast;
   clocks, flag falls, first-move aborts (45 s) and abandonment (60 s to reconnect) are decided on
   the server.
+* **Walkouts:** not making the first move, resigning before both sides have moved, or leaving a game
+  counts as a walkout. Three within 30 minutes pause that player's quick pairing for 10 minutes
+  after the last one (games with friends still work). Kept in memory: a restart forgives.
 * **The app plays online games through the same game page as bot games** — only the session type
   differs (`RemoteGameSession` instead of `LocalGameSession`). Your moves are applied instantly and
   confirmed by the server; if anything disagrees the app resyncs from the server's move list.
@@ -133,6 +136,7 @@ and forwarded headers on.
 | `Gambit:MembersCanInvite` / `Gambit:InvitesPerMember` / `Gambit:InviteDays` | `true` / `5` / `14` | Invites made in the app |
 | `Gambit:SessionDays` | `180` | A sign-in ends after this many days unused |
 | `Gambit:AccountRequestsPerMinute` | `20` | Sign-in and sign-up requests per client IP |
+| `Gambit:WalkoutsBeforePause` / `Gambit:WalkoutWindow` / `Gambit:PairingPause` | `3` / `00:30:00` / `00:10:00` | Quick-pairing pause for repeat walkouts |
 | `Gambit:ReconnectGrace` | `00:01:00` | appsettings.json or env `Gambit__ReconnectGrace` |
 | `Gambit:FirstMoveTimeout` | `00:00:45` | Game aborted if White doesn't move |
 | `Gambit:CallsPerSecond` / `Gambit:CallBurst` | `10` / `30` | Hub calls per connection (token bucket); excess calls fail with "Too many requests" |
@@ -170,5 +174,5 @@ The client re-watches after a reconnect.
 
 ## Next steps (roadmap Session 8)
 
-Name moderation and repeat-abandonment penalties, backups off the server, friends list, chat with
-moderation, and a public deployment.
+Name moderation, backups off the server, friends list, chat with moderation, and a public
+deployment.
