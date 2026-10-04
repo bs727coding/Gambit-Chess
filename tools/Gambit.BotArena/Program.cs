@@ -150,7 +150,7 @@ static class Strength
     {
         string knobs = string.Join('|', BotMoveProvider.Revision, p.MaxDepth, p.MaxNodes, p.ThinkTimeMs, p.UsesClock, p.Candidates,
             p.Temperature.ToString(CultureInfo.InvariantCulture), p.EvalNoise.ToString(CultureInfo.InvariantCulture),
-            p.RandomMoveChance.ToString(CultureInfo.InvariantCulture), p.BookDepth);
+            p.OversightChance.ToString(CultureInfo.InvariantCulture), p.BookDepth, p.Style);
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(knobs)))[..6].ToLowerInvariant();
     }
 

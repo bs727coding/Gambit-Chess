@@ -50,6 +50,11 @@ session short at any moment, so **checkpoint often**).
   review workers and the bench stay single-threaded and deterministic.
 * Bot ladder: `dotnet run -c Release --project tools/Gambit.BotArena -- <minutes> artifacts/arena.csv <ids,...>`
   (see docs/BOT-CALIBRATION.md; bump `BotMoveProvider.Revision` when bot move choice changes)
+* Bot calibration against real players: `tools/Gambit.BotCalibration` (`humans` / `bots` / `grid` /
+  `fit`; docs/BOT-CALIBRATION.md). Bot labels are Chess.com rapid ratings, and a bot's
+  `Temperature`, `EvalNoise` and `OversightChance` are fitted so its blunder/mistake/inaccuracy
+  rates match people of that rating on the same positions. Re-fit after changing a bot's search
+  limits or the move-choice logic.
 * Sounds: `python tools/gen_sounds.py`; icon: `tools/make-icon.ps1`.
 * **AppData is virtualized for everything Claude Code starts here** (PowerShell, bash, python, apps):
   the Claude desktop app is an MSIX package, and its children inherit its file-system virtualization.

@@ -3,6 +3,7 @@ using Gambit.Core.Board;
 using Gambit.Core.Games;
 using Gambit.Core.Openings;
 using Gambit.Core.Sessions;
+using Gambit.Engine.Evaluation;
 using Gambit.Engine.Search;
 
 namespace Gambit.Engine.Bots;
@@ -10,7 +11,8 @@ namespace Gambit.Engine.Bots;
 /// <summary>
 /// Plays moves for a <see cref="BotProfile"/>. The engine scores the top N candidate moves; weaker
 /// bots then add noise and sample with a softmax (so they prefer good moves but sometimes miss
-/// things), and occasionally play a random move. Strong bots just play the best line.
+/// things), and now and then overlook the opponent's reply altogether. Strong bots just play the
+/// best line. The knobs are fitted to real players' mistakes (tools/Gambit.BotCalibration).
 /// </summary>
 public sealed class BotMoveProvider : IMoveProvider
 {
@@ -18,7 +20,7 @@ public sealed class BotMoveProvider : IMoveProvider
     /// Bump when the move-choice logic changes: calibration results (tools/Gambit.BotArena) are
     /// fingerprinted with it, so games from older logic stop counting.
     /// </summary>
-    public const int Revision = 3;
+    public const int Revision = 4;
 
     /// <summary>Advantage (cp, bot's view) from which a bot plays its best move in an endgame.</summary>
     private const int ConvertMargin = 500;
@@ -66,7 +68,7 @@ public sealed class BotMoveProvider : IMoveProvider
         if (snapshot.Ply < Profile.BookDepth && TryBookMove(pos) is Move book && legal.Contains(book))
             return book;
 
-        bool randomMove = Profile.RandomMoveChance > 0 && _rng.NextDouble() < Profile.RandomMoveChance;
+        bool oversight = Profile.OversightChance > 0 && _rng.NextDouble() < Profile.OversightChance;
 
         SearchLimits limits = BuildLimits(snapshot, legal.Count);
         SearchResult result;
@@ -77,37 +79,63 @@ public sealed class BotMoveProvider : IMoveProvider
         // shuffle won endgames into 50-move draws. Their mistakes stay in the opening and middlegame.
         bool converting = result.Score >= Searcher.MateBound || result.Score >= ConvertMargin && IsEndgame(pos);
         if (converting) return result.BestMove;
-        if (randomMove) return legal[_rng.Next(legal.Count)];
+        if (oversight) return Overlooking(pos, legal);
         if (result.Lines.Count <= 1 || Profile.Temperature <= 0) return result.BestMove;
 
         // Weakened choice: noisy scores + softmax sampling over the candidate lines.
         var lines = result.Lines;
-        Span<double> noisy = stackalloc double[lines.Count];
-        double best = double.MinValue;
+        var moves = new Move[lines.Count];
+        var scores = new double[lines.Count];
         for (int i = 0; i < lines.Count; i++)
         {
             double score = Math.Clamp(lines[i].Score, -1500, 1500);
             if (Profile.EvalNoise > 0) score += Gaussian() * Profile.EvalNoise;
-            score += BotStyles.Bonus(Profile.Style, pos, lines[i].Move);
-            noisy[i] = score;
-            best = Math.Max(best, score);
+            moves[i] = lines[i].Move;
+            scores[i] = score + BotStyles.Bonus(Profile.Style, pos, lines[i].Move);
         }
+        return Pick(moves, scores);
+    }
 
-        double total = 0;
-        Span<double> weights = stackalloc double[lines.Count];
-        for (int i = 0; i < lines.Count; i++)
+    /// <summary>
+    /// An oversight: every move is judged by the board right after it, as if the opponent had no reply
+    /// (static evaluation plus the bot's noise and style). A mate in one is still noticed.
+    /// </summary>
+    private Move Overlooking(Position position, List<Move> legal)
+    {
+        Position pos = position.Clone();
+        var moves = legal.ToArray();
+        var scores = new double[moves.Length];
+        for (int i = 0; i < moves.Length; i++)
         {
-            weights[i] = Math.Exp((noisy[i] - best) / Profile.Temperature);
+            pos.MakeMove(moves[i]);
+            double score = pos.InCheck && MoveGenerator.LegalMoves(pos).Count == 0 ? 5000 : -Evaluator.Evaluate(pos);
+            pos.UnmakeMove();
+            if (Profile.EvalNoise > 0) score += Gaussian() * Profile.EvalNoise;
+            scores[i] = score + BotStyles.Bonus(Profile.Style, position, moves[i]);
+        }
+        return Pick(moves, scores);
+    }
+
+    /// <summary>Softmax sampling: better-scored moves are likelier, by how much depends on the temperature.</summary>
+    private Move Pick(Move[] moves, double[] scores)
+    {
+        double best = scores.Max();
+        if (Profile.Temperature <= 0) return moves[Array.IndexOf(scores, best)];
+        double total = 0;
+        var weights = new double[moves.Length];
+        for (int i = 0; i < moves.Length; i++)
+        {
+            weights[i] = Math.Exp((scores[i] - best) / Profile.Temperature);
             total += weights[i];
         }
 
         double pick = _rng.NextDouble() * total;
-        for (int i = 0; i < lines.Count; i++)
+        for (int i = 0; i < moves.Length; i++)
         {
             pick -= weights[i];
-            if (pick <= 0) return lines[i].Move;
+            if (pick <= 0) return moves[i];
         }
-        return lines[0].Move;
+        return moves[Array.IndexOf(scores, best)];
     }
 
     public async ValueTask<bool> ConsiderDrawOfferAsync(GameSnapshot snapshot, CancellationToken cancellationToken)

@@ -10,15 +10,18 @@ public enum BotStyle
 
 /// <summary>
 /// A named computer opponent: identity/personality plus the knobs that set its strength.
-/// Strength comes from search limits (depth/nodes/time) and from how it picks among the engine's
-/// top candidate moves (noise + softmax temperature + occasional random moves).
+/// Strength comes from search limits (depth/nodes/time), from how it picks among the engine's
+/// top candidate moves (noise + softmax temperature) and from occasional oversights.
 /// </summary>
 public sealed record BotProfile
 {
     public required string Id { get; init; }
     public required string Name { get; init; }
 
-    /// <summary>Approximate playing strength (estimated; calibrated by self-play in a later session).</summary>
+    /// <summary>
+    /// Playing strength on the Chess.com rapid scale: the bot makes blunders, mistakes and
+    /// inaccuracies about as often as real players of this rating (docs/BOT-CALIBRATION.md).
+    /// </summary>
     public required int Rating { get; init; }
 
     public required string Tagline { get; init; }
@@ -49,8 +52,12 @@ public sealed record BotProfile
     /// <summary>Standard deviation (cp) of noise added to candidate scores.</summary>
     public double EvalNoise { get; init; }
 
-    /// <summary>Probability of playing a uniformly random legal move.</summary>
-    public double RandomMoveChance { get; init; }
+    /// <summary>
+    /// Probability of an oversight: the move is chosen by how the board looks right after it, without
+    /// checking the opponent's replies. Like a person who doesn't look at what the opponent can do
+    /// next, the bot may leave a piece hanging or grab a defended pawn with its queen.
+    /// </summary>
+    public double OversightChance { get; init; }
 
     /// <summary>How many plies the bot follows the opening book (0 = never).</summary>
     public int BookDepth { get; init; } = 12;

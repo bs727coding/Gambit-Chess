@@ -3,6 +3,16 @@
 The version is set in `Directory.Build.props`; [docs/RELEASING.md](docs/RELEASING.md) explains how a
 release goes out.
 
+## Unreleased
+
+**Bots**
+* Every bot's mistakes are now fitted to real players of its rating (Chess.com rapid scale): on the
+  same positions, a bot blunders, makes mistakes and inaccuracies about as often as people rated
+  like it (measured on 70,000 Lichess rapid games). The weakest bots used to blunder three times as
+  often as people at their level.
+* No more random moves: a bot's blunders are now oversights, a natural-looking move that misses
+  what the opponent can do next, like a person's.
+
 ## 0.2.0 — 2026-10-03
 
 The first version with installers.

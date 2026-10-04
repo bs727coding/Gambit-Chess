@@ -87,6 +87,21 @@ public class EngineTests
     }
 
     [Fact]
+    public void An_oversight_misses_the_recapture()
+    {
+        // Qxd5 is the only capture, and the pawn is defended (exd5 wins the queen). An oversight judges
+        // the board right after the move, so the pawn looks free; with no oversights the bot sees exd5.
+        var pos = Position.FromFen("r1b2rk1/pp3ppp/2n1p3/3p4/8/5N2/PP3PPP/R1BQ1RK1 w - - 0 12");
+        var careless = BotRoster.Get("ember") with { OversightChance = 1, Temperature = 0, EvalNoise = 0, BookDepth = 0 };
+        var careful = careless with { OversightChance = 0 };
+        Move Choose(BotProfile profile) =>
+            new BotMoveProvider(profile, seed: 1) { HumanLikeDelay = false }.ChooseMove(new GameSnapshot(pos.Clone(), null, null, TimeSpan.Zero, 22));
+
+        Assert.Equal("d1d5", Choose(careless).ToUci());
+        Assert.NotEqual("d1d5", Choose(careful).ToUci());
+    }
+
+    [Fact]
     public void Strong_bot_beats_weakest_bot()
     {
         var weak = new BotMoveProvider(BotRoster.Get("acorn"), seed: 1) { HumanLikeDelay = false };

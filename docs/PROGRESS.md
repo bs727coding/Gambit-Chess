@@ -19,6 +19,13 @@ and runs natively on Arm64 (and x64), with Velopack installers and updates from 
 
 ## Next steps
 
+**In progress (2026-10-04): bot calibration against real players**, at the user's request (the
+1000 bot blundered more than a 1000 player would). `tools/Gambit.BotCalibration` measures people
+per rating (Lichess rapid games, Chess.com scale) and each bot on the same positions; random moves
+are replaced by oversights (revision 4). Fitted so far: Acorn, Bramble, Clover. Dash–Gale and the
+upper bands (1600–2400) are running; Dash–Lumen keep their old temperature/noise until fitted.
+Data in `artifacts/calibration` (git-ignored); write-up goes into docs/BOT-CALIBRATION.md.
+
 **Priority (from the user, 2026-10-02): a functional, clean, correct app over bot tuning.**
 The user's list of 2026-10-03 is done (QA pass, GamePage view model, inline variations, puzzles
 by opening, faster engine, onboarding) and the "Left" tooltip bug is fixed (confirmed by the user).

@@ -17,6 +17,7 @@
   </Folder>
   <Folder Name="/tools/">
     <Project Path="tools/Gambit.BotArena/Gambit.BotArena.csproj" />
+    <Project Path="tools/Gambit.BotCalibration/Gambit.BotCalibration.csproj" />
     <Project Path="tools/Gambit.OnlineBot/Gambit.OnlineBot.csproj" />
     <Project Path="tools/Gambit.PuzzleGen/Gambit.PuzzleGen.csproj" />
   </Folder>

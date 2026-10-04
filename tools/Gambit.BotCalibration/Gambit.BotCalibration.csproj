@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Compares the bots' move quality with real players' at the same rating. See Program.cs for usage. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Gambit.Core\Gambit.Core.csproj" />
+    <ProjectReference Include="..\..\src\Gambit.Engine\Gambit.Engine.csproj" />
+  </ItemGroup>
+
+</Project>
