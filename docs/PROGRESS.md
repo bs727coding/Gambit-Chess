@@ -33,9 +33,10 @@ Proposed to the user on 2026-10-03, in this order (waiting for their pick):
 3. **Distribution: done** (2026-10-03): Velopack installers for Arm64 and x64, updates from the
    server (delta packages), a `/download` page, version 0.2.0 + CHANGELOG.md, the x64 build tested
    under emulation, one window per profile. Code signing is the user's call (RELEASING.md).
-4. **With the user** (asked to check by hand on 2026-10-03): the Arm64 Setup.exe (install,
-   shortcuts, uninstall keeps the data), the x64 installer on an Intel/AMD PC, a real online game
-   with a friend on another PC, signing yes/no, deploying the server (Fly.io, their account).
+4. **With the user:** the Arm64 installer checked out (install, shortcuts, one window,
+   uninstall). Still open: the x64 installer on an Intel/AMD PC, a real online game with a friend.
+   **No deployment, signing or Fly.io for now (2026-10-03):** friends get the installer file, and the
+   user's PC is the server (LAN or Tailscale), as in RELEASING.md "Sharing without hosting".
 5. **Candidates found in the 2026-10-03 audit** (not started; the user picks): warn before signing
    in over plain http:// to a non-local server (passwords travel unencrypted with port forwarding),
    a way for friends to send a log/bug report (logs stay on their PC), a one-command release
@@ -72,8 +73,8 @@ Proposed to the user on 2026-10-03, in this order (waiting for their pick):
   the old profile is **not** at `%LOCALAPPDATA%\Gambit-backup-2026-10-03` as reported: it is in
   `%LOCALAPPDATA%\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Local\Gambit-backup-2026-10-03`,
   invisible to the user, next to a stale private copy of the reset profile (`...\LocalCache\Local\Gambit`)
-  that hides the real one from Claude's tools. Asked the user (2026-10-03) whether to copy the
-  backup somewhere visible and delete the stale copy.
+  that hides the real one from Claude's tools. The user (2026-10-03): the backup isn't needed (left
+  where it is, harmless); the stale private copy was deleted, so the real profile shows through.
 * api.nuget.org has an unreachable CDN edge from this network (see CLAUDE.md); restores still work.
 * Windows PowerShell 5.1 mangles UTF-8 in `Get-Content`/`Set-Content` (see CLAUDE.md) — edit
   files with the Edit/Write tools, `sed` or Python.

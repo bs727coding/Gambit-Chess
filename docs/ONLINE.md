@@ -104,8 +104,11 @@ Restoring brings back accounts, ratings and games as of the backup; sign-ins mad
 
 Pick one:
 
-* **Tailscale (no router changes):** install Tailscale on your PC and your friends' PCs, run the
-  server, and connect to `http://<your-tailscale-ip>:5080`.
+* **Tailscale (no router changes, free):** install Tailscale on your PC and run the server. Share
+  your PC with each friend (Tailscale admin console → Machines → your PC → Share); they accept with
+  their own free Tailscale account and connect to `http://<your-tailscale-ip>:5080`. The traffic is
+  encrypted, it works through campus Wi-Fi that blocks direct connections, and nothing on the
+  router changes.
 * **Port forwarding:** forward TCP 5080 on your router to the server PC and give friends your
   public IP. Prefer the cloud options below for anything long-running.
 * **Cloud (recommended for a public server):** the repo has a `Dockerfile` and a `fly.toml`.

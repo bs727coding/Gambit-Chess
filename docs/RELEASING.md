@@ -38,6 +38,39 @@ artifacts\releases\  ──copy──►  <server data>\releases\  ──►  ht
 * Copies installed with Setup.exe or unzipped from the portable zip update themselves.
   Development builds (`./build.ps1 run`, `./build.ps1 install`) don't.
 
+## Sharing without hosting (your PC as the server)
+
+No deployment and no signing: friends install from a file you send, and your PC runs the server.
+
+1. **Send the installer** from `artifacts\releases`: `GambitChess-win-x64-Setup.exe` for most PCs
+   (Intel/AMD), `GambitChess-win-arm64-Setup.exe` for Arm PCs (Snapdragon laptops). It's ~100 MB,
+   too big for email or Discord, so share a cloud-drive link (Google Drive, Dropbox, OneDrive).
+   Windows warns about the unknown publisher: **More info → Run anyway**. Bots, puzzles and lessons
+   work right away, no server needed.
+2. **Online games:** run `./build.ps1 server` in your own terminal, not from inside the Claude app
+   (programs it starts keep their data in a private copy of AppData, so you'd get a second, separate
+   database). Friends on your network connect to `http://<your PC's IP>:5080`. Friends anywhere
+   else use Tailscale (ONLINE.md): you share your PC with them, and they connect to
+   `http://<your Tailscale IP>:5080`. Campus and public Wi-Fi often block connections between
+   devices; Tailscale gets around that. Each friend needs an invite code (Online → Invite a friend).
+3. **Updates:** raise the version and run `./build.ps1 package`, then copy the new files into your
+   server's releases folder:
+   ```powershell
+   Copy-Item artifacts\releases\* "$env:LOCALAPPDATA\Gambit Server\releases" -Force
+   ```
+   A friend's Gambit finds the update the next time it starts while your server is reachable at
+   the address they connected to (or on Settings → Updates → Check for updates). Or send them
+   the new Setup.exe: it says which version is installed, offers **Update**, and keeps their
+   progress.
+4. **Optional:** `./build.ps1 package -ServerUrl http://<your Tailscale IP>:5080` builds your
+   address into their copy: it's filled in on the Online page, and updates come from there even
+   if they never connect. Only use a stable address. A Tailscale IP stays the same; a home
+   network IP can change.
+
+Moving to a hosted server later takes one more release, packaged with the new `-ServerUrl`. Your
+friends' copies pick it up from your PC and update from the new server after that. They change the
+address on the Online page once to play there.
+
 ## Making a release
 
 1. **Raise the version** in `Directory.Build.props` (`<Version>0.2.1</Version>`: the last number
