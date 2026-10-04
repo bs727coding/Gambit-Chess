@@ -50,7 +50,7 @@ switch (command)
         break;
     default:
         Console.WriteLine("usage: humans <games.tsv> <dir> [positions per band] [bands, e.g. 800,1000]");
-        Console.WriteLine("       bots <dir> [ids|all] [id.Property=value ...]");
+        Console.WriteLine("       bots <dir> [ids|all] [band=1000] [limit=N] [id.Property=value ...]");
         Console.WriteLine("       grid <dir> <id> Property=v1,v2,... [Property=...] [band=1000] [limit=800]");
         Console.WriteLine("       fit <dir> <ids> [temps=0,10,20,35,55,80,120] [limit=1500]");
         break;
@@ -316,9 +316,14 @@ static class Bots
         return human;
     }
 
-    public static void Run(string dir, string ids, List<string> overrides)
+    public static void Run(string dir, string ids, List<string> options)
     {
         var byBand = LoadSamples(dir);
+        // band=1000 plays every bot on that band's positions (to compare bots with each other);
+        // limit=N uses only the first N positions of a band.
+        int? fixedBand = options.FirstOrDefault(o => o.StartsWith("band=")) is string b ? int.Parse(b[5..]) : null;
+        int limit = options.FirstOrDefault(o => o.StartsWith("limit=")) is string l ? int.Parse(l[6..]) : int.MaxValue;
+        var overrides = options.Where(o => o.Contains('.')).ToList();
         var bots = (ids == "all" ? BotRoster.Bots.Where(b => !b.IsMaxStrength) : ids.Split(',').Select(BotRoster.Get))
             .Select(b => Override(b, overrides)).ToList();
 
@@ -326,10 +331,12 @@ static class Bots
         Console.WriteLine($"{"bot",-9} {"band",5}   {"who",-6} {Stats.Header} {"same as human",13}");
         foreach (BotProfile bot in bots)
         {
-            if (!byBand.TryGetValue(bot.Rating, out var band)) continue;
+            int bandRating = fixedBand ?? bot.Rating;
+            if (!byBand.TryGetValue(bandRating, out var all)) continue;
+            var band = all.Take(limit).ToList();
             var sw = Stopwatch.StartNew();
-            Stats stats = Evaluate(bot, band, bot.Rating, analyzer);
-            Console.WriteLine($"{bot.Name,-9} {bot.Rating,5}   {"people",-6} {People(band)}");
+            Stats stats = Evaluate(bot, band, bandRating, analyzer);
+            Console.WriteLine($"{bot.Name,-9} {bandRating,5}   {"people",-6} {People(band)}");
             Console.WriteLine($"{"",-9} {"",5}   {"bot",-6} {stats} {100.0 * stats.Matches / stats.N,12:F1}%   ({sw.Elapsed.TotalSeconds:F0} s, distance {Distance(stats, People(band)):F2})");
         }
     }
