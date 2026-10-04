@@ -26,6 +26,9 @@ public static class AccountApi
 
     /// <summary>POST (signed in): a new <see cref="InviteDto"/> for a friend. GET: your unused invites.</summary>
     public const string Invites = "/api/invites";
+
+    /// <summary>GET (admins): a copy of the server's database (a SQLite file), made on the spot.</summary>
+    public const string Backup = "/api/admin/backup";
 }
 
 public sealed record RegisterRequest(string Username, string Password, string? InviteCode, string? Device);

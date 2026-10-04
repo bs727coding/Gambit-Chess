@@ -65,6 +65,12 @@
                             </StackPanel>
                         </Button>
                         <Button Content="Sign out" Click="SignOut_Click" />
+                        <Button x:Name="ServerBackupButton" Click="ServerBackup_Click" Visibility="Collapsed" AutomationProperties.Name="Back up the server">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE74E;" FontSize="14" />
+                                <TextBlock Text="Back up server…" />
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                     <Border x:Name="InvitePanel" Visibility="Collapsed" CornerRadius="6" Padding="12" HorizontalAlignment="Left"
                             Background="{ThemeResource SubtleFillColorSecondaryBrush}">
@@ -185,6 +191,7 @@
 
             <InfoBar x:Name="ErrorBar" IsOpen="False" Severity="Error" IsClosable="True" />
             <InfoBar x:Name="NoticeBar" IsOpen="False" Severity="Informational" IsClosable="True" Title="From the server" />
+            <InfoBar x:Name="DoneBar" IsOpen="False" Severity="Success" IsClosable="True" />
 
             <InfoBar IsOpen="True" IsClosable="False" Severity="Informational" Title="Hosting a server"
                      Message="Run the Gambit server on any PC (./build.ps1 server). The first time, it shows an invite code for your own account, which becomes the server's admin; then use Invite a friend to let others join. To play over the internet, deploy the server (see docs/ONLINE.md)." />

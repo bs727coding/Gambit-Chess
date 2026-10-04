@@ -44,6 +44,26 @@ public sealed class ServerDatabase
         return connection;
     }
 
+    /// <summary>The file that, when present at startup, replaces the database (how a backup is put back).</summary>
+    public const string RestoreFileName = "restore.db";
+
+    /// <summary>
+    /// If the data folder holds <see cref="RestoreFileName"/>, makes it the database: the current one (with
+    /// its -wal/-shm files) is kept as gambit-replaced-TIME.db. Call before the database is opened.
+    /// Returns a description of what happened, or null.
+    /// </summary>
+    public static string? ApplyPendingRestore(string dataDirectory)
+    {
+        string restore = System.IO.Path.Combine(dataDirectory, RestoreFileName);
+        if (!File.Exists(restore)) return null;
+        string current = System.IO.Path.Combine(dataDirectory, FileName);
+        string kept = System.IO.Path.Combine(dataDirectory, $"gambit-replaced-{DateTime.UtcNow:yyyyMMdd-HHmmss}.db");
+        foreach (string suffix in new[] { "", "-wal", "-shm" })
+            if (File.Exists(current + suffix)) File.Move(current + suffix, kept + suffix);
+        File.Move(restore, current);
+        return $"Restored the database from {RestoreFileName}; the previous one is kept as {System.IO.Path.GetFileName(kept)}.";
+    }
+
     /// <summary>Writes a consistent copy of the database to <paramref name="file"/> (safe while the server runs).</summary>
     public void BackupTo(string file)
     {

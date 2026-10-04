@@ -15,7 +15,7 @@ natively on Arm64.
 | Tools | `import_lichess_puzzles.py`, `Gambit.PuzzleGen` (experiments), `Gambit.BotArena` (ladder measurement), `Gambit.OnlineBot` (plays online, accepts rematches), `ui.ps1`, `ui-scroll.ps1`, `screenshot-quiet.ps1` |
 | Content | 21,162 puzzles from the Lichess puzzle DB (CC0; `tools/import_lichess_puzzles.py`): 400–1,100 per 100-point band from 400 to 2999, 49 practice themes with ≥ 120 each, 25 practice openings with ≥ 50 each; 49 lessons; tactic/mate solutions audited by the engine in tests |
 | Install | `./build.ps1 install` → `%LOCALAPPDATA%\Programs\Gambit` + Start menu shortcut (tested into a scratch folder; not installed for real, the user decides) |
-| Tests | 201 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
+| Tests | 204 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
 
 ## Next steps
 
@@ -26,10 +26,10 @@ by opening, faster engine, onboarding) and the "Left" tooltip bug is fixed (conf
 Proposed to the user on 2026-10-03, in this order (waiting for their pick):
 1. **Single-player polish: done** (2026-10-03): progress tools in Settings, spaced repetition for the
    opening drills, a multi-core analysis board. The puzzle source link was dropped (the user's call).
-2. **In progress (the user's go, 2026-10-03) — server ready to go online, built and tested locally
-   (not deployed):** accounts with sign-in and invite-only sign-ups ✔, SQLite instead of
-   ratings.json ✔, repeat walkouts ✔, name moderation ✔; still to do: backups off the server. Hosting itself is ready (Fly.io, docs/ONLINE.md); the user chose username + password
-   (no email), SQLite, invite-only.
+2. **Server ready to go online: done** (2026-10-03, built and tested locally, not deployed):
+   accounts with sign-in and invite-only sign-ups, SQLite, repeat-walkout pauses, name moderation,
+   backups. The user chose username + password (no email), SQLite, invite-only. Going live is the
+   Fly.io steps in docs/ONLINE.md, when the user wants (their account; they sign in themselves).
 3. **Distribution:** version numbers and an update check, MSIX or a signed installer (buying a
    signing certificate is the user's call), an x64 build test.
 4. **Parked unless asked:** bot ladder tuning (BOT-CALIBRATION.md), lessons on zwischenzug /
@@ -245,3 +245,8 @@ Proposed to the user on 2026-10-03, in this order (waiting for their pick):
   word, so Cassandra, Dickens, Peacock, Therapist pass). `AccountWatch` applies admin changes to
   connected players every 20 s: suspended or deleted accounts are told why and disconnected,
   renames take effect. Tests: refused and allowed names, a ban and a rename reaching connected players.
+* Group 2, step 4 — backups: the server keeps daily copies (`backups/`, newest seven); admins
+  download the whole database from the app (Online → Back up server…, `GET /api/admin/backup`);
+  a `restore.db` in the data folder replaces the database at the next start, keeping the old one.
+  Tests: admin download (and a member refused), the seven-day rotation, restore at startup. Verified
+  in the app against a local server: the admin button saved a 61 KB copy through the real dialog.

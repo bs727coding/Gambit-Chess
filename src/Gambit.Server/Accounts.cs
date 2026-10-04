@@ -85,6 +85,16 @@ public static class AccountEndpoints
 
         app.MapGet(AccountApi.Invites, (ClaimsPrincipal user, AccountStore accounts) =>
             accounts.OpenInvites(Id(user)).Select(ToDto).ToList()).RequireAuthorization();
+
+        // A fresh copy of the whole database for an admin to keep off the server.
+        app.MapGet(AccountApi.Backup, (ServerDatabase db, ClaimsPrincipal user, ILogger<ServerDatabase> log) =>
+        {
+            string temp = Path.Combine(Path.GetTempPath(), $"gambit-download-{Guid.NewGuid():N}.db");
+            db.BackupTo(temp);
+            log.LogInformation("Database downloaded by {Admin}", user.Identity?.Name);
+            var stream = new FileStream(temp, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete, 81920, FileOptions.DeleteOnClose);
+            return Results.File(stream, "application/vnd.sqlite3", $"gambit-{DateTime.UtcNow:yyyy-MM-dd-HHmm}.db");
+        }).RequireAuthorization(policy => policy.RequireRole(SessionAuthHandler.AdminRole));
     }
 
     private static string Id(ClaimsPrincipal user) => user.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";

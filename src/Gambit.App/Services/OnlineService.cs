@@ -36,6 +36,9 @@ public sealed class OnlineService
 
     public bool IsConnected => Client.State == OnlineState.Connected;
 
+    /// <summary>The signed-in account is one of the server's admins (it can download the server's database).</summary>
+    public bool IsAdmin { get; private set; }
+
     public event Action<OnlineState>? StateChanged;
     public event Action<LobbyStatsDto>? StatsChanged;
     public event Action<string>? NoticeReceived;
@@ -54,11 +57,29 @@ public sealed class OnlineService
             throw new OnlineAccountException("Sign in, or create an account, to play on this server.", signInRequired: true);
         try
         {
+            IsAdmin = (await AccountClient.GetAccountAsync(serverUrl, saved.Token)).IsAdmin;
             await Client.ConnectAsync(serverUrl, saved.Token);
         }
         catch (OnlineAccountException ex) when (ex.SignInRequired)
         {
             OnlineCredentials.Remove(serverUrl);
+            throw;
+        }
+    }
+
+    /// <summary>Saves a copy of the server's database to <paramref name="file"/> (admins only).</summary>
+    public async Task DownloadServerBackupAsync(string serverUrl, string file)
+    {
+        if (OnlineCredentials.Get(serverUrl) is not OnlineCredentials.SavedSignIn saved)
+            throw new OnlineAccountException("Sign in first.", signInRequired: true);
+        try
+        {
+            await using FileStream stream = File.Create(file);
+            await AccountClient.DownloadBackupAsync(serverUrl, saved.Token, stream);
+        }
+        catch
+        {
+            File.Delete(file); // no half-written copies
             throw;
         }
     }

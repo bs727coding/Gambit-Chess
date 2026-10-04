@@ -111,7 +111,9 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 - [x] Dockerfile + `fly.toml` + hosting guide (one instance, `/data` volume, forwarded headers);
       deploy to Fly.io / Azure Container Apps / any Docker host — **you** create the account and
       sign in; Claude prepares config + docs
-- [~] Rate limiting ✔, health check ✔, console logging ✔, SQLite database ✔ — TLS/domain still to do
+- [~] Rate limiting ✔, health check ✔, console logging ✔, SQLite database ✔, backups (daily copies,
+      admin download, restore at startup) ✔, moderation (offensive names, bans that apply at once,
+      quick-pairing pauses for repeat walkouts) ✔ — TLS/domain still to do (Fly.io provides TLS)
 - [~] Per-user install with Start menu shortcut (`./build.ps1 install`) ✔, app icon ✔ — MSIX packaging + signing, versioning, auto-update still to do
 - [~] Online polish: spectating ✔ — friends list, game history sync still to do
 

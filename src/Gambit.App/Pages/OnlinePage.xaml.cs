@@ -105,6 +105,7 @@ public sealed partial class OnlinePage : Page
         ConnectButton.Content = connected ? "Disconnect" : "Connect";
         ConnectButton.IsEnabled = state is OnlineState.Connected or OnlineState.Disconnected;
         SignedInPanel.Visibility = connected ? Visibility.Visible : Visibility.Collapsed;
+        ServerBackupButton.Visibility = connected && Online.IsAdmin ? Visibility.Visible : Visibility.Collapsed;
         if (connected) AccountPanel.Visibility = Visibility.Collapsed;
         else InvitePanel.Visibility = Visibility.Collapsed;
         if (!connected)
@@ -311,6 +312,33 @@ public sealed partial class OnlinePage : Page
             InviteNote.Text = (invite.ExpiresAt is DateTimeOffset expires ? $"Works once, until {expires.LocalDateTime:MMMM d}. " : "Works once. ")
                 + "Your friend enters it under Create an account, with this server's address.";
             InvitePanel.Visibility = Visibility.Visible;
+        }
+        catch (Exception ex)
+        {
+            ShowError(OnlineClient.ServerMessage(ex));
+        }
+    }
+
+    /// <summary>Admins: saves a copy of the server's whole database on this PC (a backup that survives losing the server).</summary>
+    private async void ServerBackup_Click(object sender, RoutedEventArgs e)
+    {
+        ErrorBar.IsOpen = DoneBar.IsOpen = false;
+        string url = Online.Client.ServerUrl ?? ServerBox.Text.Trim();
+        var picker = new Windows.Storage.Pickers.FileSavePicker
+        {
+            SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary,
+            SuggestedFileName = $"Gambit server backup {DateTime.Now:yyyy-MM-dd}",
+        };
+        picker.FileTypeChoices.Add("Server database", new List<string> { ".db" });
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.Window));
+        Windows.Storage.StorageFile? file = await picker.PickSaveFileAsync();
+        if (file == null) return;
+        try
+        {
+            await Online.DownloadServerBackupAsync(url, file.Path);
+            Log.Info("Server database downloaded");
+            DoneBar.Message = $"Saved a copy of the server's database to {file.Path}.";
+            DoneBar.IsOpen = true;
         }
         catch (Exception ex)
         {

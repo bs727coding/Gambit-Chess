@@ -35,6 +35,7 @@ session short at any moment, so **checkpoint often**).
 * Server admin: `dotnet run --project src/Gambit.Server -- <invite|users|reset-password|ban|backup|help>`
   works on `gambit.db` (set `GAMBIT_DATA` to the server's data folder). A new server logs the invite
   code for the first (admin) account. Accounts are invite-only by default (docs/ONLINE.md).
+  Restoring: put the backup in the data folder as `restore.db` and restart the server.
 * Engine speed: `dotnet run -c Release tools/bench.cs [depth] [rounds]` searches fixed positions to a
   fixed depth. Its node count is the search signature (pinned by `Search_signature_is_unchanged`):
   a pure speed-up keeps it. This machine's clock speed drifts (up to 2x between runs), so compare

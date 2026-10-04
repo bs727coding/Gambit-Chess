@@ -23,6 +23,7 @@ public static class ServerHost
         var builder = WebApplication.CreateBuilder(args);
         ServerOptions options = overrideOptions ?? LoadOptions(builder.Configuration);
         Directory.CreateDirectory(options.DataDirectory);
+        string? restored = ServerDatabase.ApplyPendingRestore(options.DataDirectory);
 
         builder.Services.AddSingleton(options);
         builder.Services.AddSingleton<ServerDatabase>();
@@ -35,6 +36,8 @@ public static class ServerHost
         builder.Services.AddHostedService<GameClockService>();
         builder.Services.AddSingleton<AccountWatch>();
         builder.Services.AddHostedService(sp => sp.GetRequiredService<AccountWatch>());
+        builder.Services.AddSingleton<DatabaseBackups>();
+        builder.Services.AddHostedService(sp => sp.GetRequiredService<DatabaseBackups>());
         builder.Services.AddSingleton<CallRateLimitFilter>();
         builder.Services.AddAuthentication(SessionAuthHandler.SchemeName)
             .AddScheme<AuthenticationSchemeOptions, SessionAuthHandler>(SessionAuthHandler.SchemeName, null);
@@ -57,6 +60,7 @@ public static class ServerHost
         });
 
         WebApplication app = builder.Build();
+        if (restored != null) app.Logger.LogWarning("{Message}", restored);
         app.UseRateLimiter();
         app.UseAuthentication();
         app.UseAuthorization();

@@ -67,6 +67,29 @@ dotnet run --project src/Gambit.Server -- users
 On Fly.io: `fly ssh console -C "dotnet /app/Gambit.Server.dll users"`. Locally the data folder is
 `GAMBIT_DATA`, or `data/` next to the server binary.
 
+## Backups and restoring
+
+Everything is in one file, `gambit.db`, so a backup is one file. There are three layers:
+
+1. **Daily copies on the server:** `backups/gambit-YYYY-MM-DD.db` in the data folder, the newest
+   seven. A quick way back from a mistake (they live on the same disk, so they don't protect
+   against losing it).
+2. **The host's snapshots:** Fly.io snapshots the volume daily and keeps five days.
+3. **A copy on your PC (do this monthly):** sign in as an admin, then **Online → Back up server…**
+   saves the whole database where you choose. The admin command `backup FILE` does the same on
+   the server.
+
+**Restoring:** put the backup file in the data folder as `restore.db` and restart the server. At
+startup it moves the current database aside (`gambit-replaced-TIME.db`, nothing is lost) and uses
+the backup. On Fly.io:
+
+```
+fly ssh sftp shell        # then: put "Gambit server backup 2026-10-03.db" /data/restore.db
+fly apps restart <app>
+```
+
+Restoring brings back accounts, ratings and games as of the backup; sign-ins made since then end.
+
 ## Play with friends on your network (easiest)
 
 1. On one PC run: `./build.ps1 server` (allow it through the Windows firewall when asked). Note the
@@ -181,4 +204,4 @@ The client re-watches after a reconnect.
 
 ## Next steps (roadmap Session 8)
 
-Backups off the server, friends list, chat with moderation, and a public deployment.
+Friends list, chat with moderation, and a public deployment (Fly.io, above).

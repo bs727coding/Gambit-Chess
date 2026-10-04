@@ -132,6 +132,40 @@ public sealed class AccountStoreTests : IDisposable
     }
 
     [Fact]
+    public void Daily_copies_keep_the_last_week()
+    {
+        var db = new ServerDatabase(Options());
+        var backups = new DatabaseBackups(db, Options(), Microsoft.Extensions.Logging.Abstractions.NullLogger<DatabaseBackups>.Instance, _clock);
+        for (int day = 0; day < 9; day++)
+        {
+            Assert.NotNull(backups.MakeDailyCopy());
+            Assert.Null(backups.MakeDailyCopy()); // once a day
+            _clock.Now += TimeSpan.FromDays(1);
+        }
+        string[] kept = [.. Directory.GetFiles(backups.Folder).Select(f => Path.GetFileName(f)).Order(StringComparer.Ordinal)];
+        Assert.Equal(DatabaseBackups.Kept, kept.Length);
+        Assert.Equal("gambit-2026-10-05.db", kept[0]);
+        Assert.Equal("gambit-2026-10-11.db", kept[^1]);
+    }
+
+    [Fact]
+    public void A_restore_file_replaces_the_database_at_startup_and_keeps_the_old_one()
+    {
+        AccountStore store = Store(SignUpMode.Open);
+        store.Register("Old", "correct-horse", null);
+        new ServerDatabase(Options()).BackupTo(Path.Combine(_dir, ServerDatabase.RestoreFileName));
+        store.Register("New", "correct-horse", null);
+        Assert.Null(ServerDatabase.ApplyPendingRestore(Path.Combine(_dir, "elsewhere"))); // nothing to restore there
+
+        SqliteConnection.ClearAllPools(); // as at startup: nothing has the database open
+        Assert.StartsWith("Restored the database", ServerDatabase.ApplyPendingRestore(_dir));
+        Assert.Equal("Old", Assert.Single(Store().All()).Username);
+        string kept = Assert.Single(Directory.GetFiles(_dir, "gambit-replaced-*.db"));
+        Assert.Equal(2, new AccountStore(new ServerDatabase(kept), Options()).All().Count);
+        Assert.False(File.Exists(Path.Combine(_dir, ServerDatabase.RestoreFileName)));
+    }
+
+    [Fact]
     public void Admin_commands_manage_invites_and_accounts()
     {
         ServerOptions options = Options();

@@ -177,6 +177,22 @@ public sealed class AccountTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Admins_download_the_database_and_members_cannot()
+    {
+        SessionDto owner = await AccountClient.RegisterAsync(_url, "Boss", "an-owner-password", Accounts.OwnerInvite()!.Code, "tests");
+        SessionDto member = await Register("Mel");
+
+        string file = Path.Combine(_dir, "download.db");
+        await using (FileStream out1 = File.Create(file)) await AccountClient.DownloadBackupAsync(_url, owner.Token, out1);
+        Assert.Equal("SQLite format 3 ", System.Text.Encoding.ASCII.GetString(File.ReadAllBytes(file), 0, 16));
+        var copy = new AccountStore(new ServerDatabase(file), new ServerOptions { DataDirectory = _dir });
+        Assert.Equal(new[] { "Boss", "Mel" }, copy.All().Select(a => a.Username).Order());
+
+        var refused = await Assert.ThrowsAsync<OnlineAccountException>(() => AccountClient.DownloadBackupAsync(_url, member.Token, Stream.Null));
+        Assert.Equal("Only the server's admins can download its database.", refused.Message);
+    }
+
+    [Fact]
     public async Task Changing_the_password_signs_out_other_devices()
     {
         SessionDto laptop = await Register("Pat");
