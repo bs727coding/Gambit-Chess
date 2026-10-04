@@ -1,13 +1,16 @@
+using System.Security.Claims;
 using Gambit.Core.Games;
 using Gambit.Online;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Gambit.Server;
 
 /// <summary>
-/// SignalR endpoint. Clients identify with a secret token in the query string (?token=...), which acts
-/// as a guest account; all game logic lives in <see cref="GameManager"/>.
+/// SignalR endpoint for signed-in accounts (session key from <see cref="Gambit.Online.AccountApi"/>);
+/// all game logic lives in <see cref="GameManager"/>.
 /// </summary>
+[Authorize]
 public sealed class GameHub(PlayerRegistry players, GameManager games) : Hub<IGameClient>, IGameServer
 {
     private Player Me => players.ByConnection(Context.ConnectionId) ?? throw new HubException("Say Hello first.");
@@ -15,10 +18,12 @@ public sealed class GameHub(PlayerRegistry players, GameManager games) : Hub<IGa
     public async Task<PlayerDto> Hello(string name, int protocolVersion)
     {
         if (protocolVersion != OnlineProtocol.Version) throw new HubException("Please update Gambit to play online.");
-        string token = Context.GetHttpContext()?.Request.Query["token"].ToString() ?? "";
-        if (token.Length < 16) throw new HubException("Missing player token.");
+        string accountId = Context.UserIdentifier ?? throw new HubException("Please sign in again.");
+        string username = Context.User?.FindFirstValue(ClaimTypes.Name) ?? "Player";
 
-        Player p = players.Connect(token, Context.ConnectionId, name);
+        Player p = players.Connect(accountId, username, Context.ConnectionId, out string? replaced);
+        if (replaced != null && replaced != Context.ConnectionId)
+            await Clients.Client(replaced).Notice("You signed in to Gambit somewhere else, so this window was disconnected from the game.");
         PlayerDto me = players.ToDto(p, TimeCategory.Blitz);
         await Clients.Caller.Welcome(me, games.Stats());
         await games.OnConnectedAsync(p);

@@ -30,7 +30,11 @@ session short at any moment, so **checkpoint often**).
 * Puzzles: the bundled set comes from the Lichess puzzle DB (CC0): `python tools/import_lichess_puzzles.py artifacts/lichess_db_puzzle.csv.zst src/Gambit.Core/Puzzles/puzzles.csv`
   (needs the ~300 MB download from database.lichess.org). `tools/Gambit.PuzzleGen` (engine-generated,
   heuristic ratings) is for experiments — don't mix its output into the bundled set.
-* Online bot: `dotnet run -c Release --project tools/Gambit.OnlineBot -- http://localhost:5080 <bot-id> <tc|code> [games]`
+* Online bot: `dotnet run -c Release --project tools/Gambit.OnlineBot -- http://localhost:5080 <bot-id> <tc|code> [games] [--invite CODE]`
+  (plays as the account `<Name>Bot`; password in `GAMBIT_BOT_PASSWORD`; `--invite` creates the account once).
+* Server admin: `dotnet run --project src/Gambit.Server -- <invite|users|reset-password|ban|backup|help>`
+  works on `gambit.db` (set `GAMBIT_DATA` to the server's data folder). A new server logs the invite
+  code for the first (admin) account. Accounts are invite-only by default (docs/ONLINE.md).
 * Engine speed: `dotnet run -c Release tools/bench.cs [depth] [rounds]` searches fixed positions to a
   fixed depth. Its node count is the search signature (pinned by `Search_signature_is_unchanged`):
   a pure speed-up keeps it. This machine's clock speed drifts (up to 2x between runs), so compare

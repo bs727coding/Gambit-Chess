@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using Gambit.App.Pages;
 using Gambit.Online;
 using Gambit.Online.Client;
@@ -44,15 +43,58 @@ public sealed class OnlineService
     /// <summary>Raised just before navigating to a new online game (lets the lobby reset its UI).</summary>
     public event Action? GameOpened;
 
+    /// <summary>
+    /// Connects with the sign-in saved for this server. Throws <see cref="OnlineAccountException"/>
+    /// (SignInRequired) when there is none or the server no longer accepts it.
+    /// </summary>
     public async Task ConnectAsync(string serverUrl)
     {
-        AppSettings s = App.Settings.Current;
-        if (string.IsNullOrEmpty(s.OnlineToken)) s.OnlineToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(24)).ToLowerInvariant();
-        s.OnlineServerUrl = serverUrl;
-        await Client.ConnectAsync(serverUrl, s.OnlineToken, App.Profile.Profile.Name);
+        App.Settings.Current.OnlineServerUrl = serverUrl;
+        if (OnlineCredentials.Get(serverUrl) is not OnlineCredentials.SavedSignIn saved)
+            throw new OnlineAccountException("Sign in, or create an account, to play on this server.", signInRequired: true);
+        try
+        {
+            await Client.ConnectAsync(serverUrl, saved.Token);
+        }
+        catch (OnlineAccountException ex) when (ex.SignInRequired)
+        {
+            OnlineCredentials.Remove(serverUrl);
+            throw;
+        }
     }
 
+    public async Task SignInAsync(string serverUrl, string username, string password)
+    {
+        SessionDto session = await AccountClient.SignInAsync(serverUrl, username, password, Device);
+        OnlineCredentials.Save(serverUrl, session.Account.Username, session.Token);
+        await ConnectAsync(serverUrl);
+    }
+
+    public async Task RegisterAsync(string serverUrl, string username, string password, string? inviteCode)
+    {
+        SessionDto session = await AccountClient.RegisterAsync(serverUrl, username, password, inviteCode, Device);
+        OnlineCredentials.Save(serverUrl, session.Account.Username, session.Token);
+        await ConnectAsync(serverUrl);
+    }
+
+    /// <summary>Ends the session on the server, forgets it here and disconnects.</summary>
+    public async Task SignOutAsync(string serverUrl)
+    {
+        if (OnlineCredentials.Get(serverUrl) is OnlineCredentials.SavedSignIn saved) await AccountClient.SignOutAsync(serverUrl, saved.Token);
+        OnlineCredentials.Remove(serverUrl);
+        await Client.DisconnectAsync();
+    }
+
+    /// <summary>A one-use invite code for a friend (signed-in players only).</summary>
+    public Task<InviteDto> CreateInviteAsync(string serverUrl) =>
+        OnlineCredentials.Get(serverUrl) is OnlineCredentials.SavedSignIn saved
+            ? AccountClient.CreateInviteAsync(serverUrl, saved.Token)
+            : throw new OnlineAccountException("Sign in first.", signInRequired: true);
+
     public Task DisconnectAsync() => Client.DisconnectAsync();
+
+    /// <summary>How this PC shows up among an account's sign-ins on the server.</summary>
+    private static string Device => $"Gambit on {Environment.MachineName}";
 
     /// <summary>Shows a game the server sent (a player's own game, or one being watched). Call on the UI thread.</summary>
     public void Open(GameStartDto start) => OpenGame(start);

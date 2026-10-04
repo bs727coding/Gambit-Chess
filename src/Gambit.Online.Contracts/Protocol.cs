@@ -4,7 +4,9 @@ namespace Gambit.Online;
 public static class OnlineProtocol
 {
     public const string HubPath = "/hub/game";
-    public const int Version = 1;
+
+    /// <summary>2: accounts (sign-in, invites) replaced guest tokens.</summary>
+    public const int Version = 2;
 }
 
 /// <summary>A player as seen by others.</summary>
@@ -66,6 +68,7 @@ public interface IGameClient
 /// <summary>Client → server calls (implemented by the hub).</summary>
 public interface IGameServer
 {
+    /// <summary>First call on a connection. The player is the signed-in account; <paramref name="name"/> is ignored.</summary>
     Task<PlayerDto> Hello(string name, int protocolVersion);
     Task Seek(TimeControlDto timeControl);
     Task CancelSeek();

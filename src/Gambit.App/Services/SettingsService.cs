@@ -30,11 +30,8 @@ public sealed partial class AppSettings : ObservableObject
     [ObservableProperty] public partial string LastTimeControl { get; set; } = "unlimited";
     [ObservableProperty] public partial bool AllowTakebacks { get; set; } = true;
 
-    // Online play.
+    // Online play (the sign-in itself is kept in Windows Credential Manager: OnlineCredentials).
     [ObservableProperty] public partial string OnlineServerUrl { get; set; } = "http://localhost:5080";
-
-    /// <summary>Secret guest-account token (never shown to other players).</summary>
-    [ObservableProperty] public partial string OnlineToken { get; set; } = "";
     [ObservableProperty] public partial string LastOnlineTimeControl { get; set; } = "3+2";
 }
 

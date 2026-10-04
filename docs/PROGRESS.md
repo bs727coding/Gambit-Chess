@@ -11,11 +11,11 @@ natively on Arm64.
 | Gambit.Core | Board, legal movegen (perft-verified, also king-less lesson positions), FEN/SAN/UCI/PGN (incl. variations), Game + draw rules, `MoveTree`, clock, Glicko-2, sessions (`IGameSession`), premove rules, openings (~150, embedded TSV), puzzles (embedded CSV), lessons (embedded JSON) |
 | Gambit.Engine | PVS + TT + QS/SEE + null-move + LMR + MultiPV; PeSTO eval; 13 bots with opening books; `GameReviewer` (parallel, move classes, accuracy) |
 | Gambit.App | Welcome screen (first run), Home, Play (bots, pass-and-play, online), Game (clocks, premoves, hints, takebacks, resume after restart, sounds, online rematch), Game Review (with plain-language explanations), Analysis (multi-core engine lines, position editor, variations), Puzzles (rated, Rush, Survival, daily, themes, openings), Learn (5 courses / 49 lessons, opening review), Online lobby, Profile (stats, rating chart, openings, ~50 achievements), Settings (themes, pieces, sounds, premoves) |
-| Online | `Gambit.Server` (ASP.NET Core + SignalR, authoritative, rematches, spectators, rate limits), `Gambit.Online.Client` (`RemoteGameSession`), Dockerfile, docs/ONLINE.md; `./build.ps1 server` for LAN play |
+| Online | `Gambit.Server` (ASP.NET Core + SignalR, authoritative, rematches, spectators, rate limits; accounts with invite-only sign-up, SQLite `gambit.db`, admin commands), `Gambit.Online.Client` (`RemoteGameSession`, `AccountClient`), Dockerfile, docs/ONLINE.md; `./build.ps1 server` for LAN play |
 | Tools | `import_lichess_puzzles.py`, `Gambit.PuzzleGen` (experiments), `Gambit.BotArena` (ladder measurement), `Gambit.OnlineBot` (plays online, accepts rematches), `ui.ps1`, `ui-scroll.ps1`, `screenshot-quiet.ps1` |
 | Content | 21,162 puzzles from the Lichess puzzle DB (CC0; `tools/import_lichess_puzzles.py`): 400–1,100 per 100-point band from 400 to 2999, 49 practice themes with ≥ 120 each, 25 practice openings with ≥ 50 each; 49 lessons; tactic/mate solutions audited by the engine in tests |
 | Install | `./build.ps1 install` → `%LOCALAPPDATA%\Programs\Gambit` + Start menu shortcut (tested into a scratch folder; not installed for real, the user decides) |
-| Tests | 160 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
+| Tests | 185 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
 
 ## Next steps
 
@@ -26,9 +26,11 @@ by opening, faster engine, onboarding) and the "Left" tooltip bug is fixed (conf
 Proposed to the user on 2026-10-03, in this order (waiting for their pick):
 1. **Single-player polish: done** (2026-10-03): progress tools in Settings, spaced repetition for the
    opening drills, a multi-core analysis board. The puzzle source link was dropped (the user's call).
-2. **Next, when the user says go — server ready to go online, built and tested locally (not deployed):** accounts and sign-in
-   instead of guest tokens, a database instead of ratings.json, handling for abandoned games, name
-   moderation, backups. Hosting itself is ready (Fly.io, docs/ONLINE.md).
+2. **In progress (the user's go, 2026-10-03) — server ready to go online, built and tested locally
+   (not deployed):** accounts with sign-in and invite-only sign-ups ✔, SQLite instead of
+   ratings.json ✔; still to do: repeat-abandonment handling, name moderation, backups off the
+   server. Hosting itself is ready (Fly.io, docs/ONLINE.md); the user chose username + password
+   (no email), SQLite, invite-only.
 3. **Distribution:** version numbers and an update check, MSIX or a signed installer (buying a
    signing certificate is the user's call), an x64 build test.
 4. **Parked unless asked:** bot ladder tuning (BOT-CALIBRATION.md), lessons on zwischenzug /
@@ -41,7 +43,9 @@ Proposed to the user on 2026-10-03, in this order (waiting for their pick):
   cores (max 8) and reaches a depth ~2.2x sooner with 6 threads. Ideas left: more diverse helper
   threads (better SMP scaling), incremental piece-square sums and a pawn hash (~5% each). Staged
   move generation would change move order (and the signature).
-* Online accounts are guest tokens (secret in settings). No sign-in, no moderation yet.
+* Online: accounts are username + password, invite-only; no email, so forgotten passwords are reset
+  by an admin (`reset-password`). Bans reach a connected player at their next connection (their
+  session is ended, so a reconnect fails); an immediate kick is still to do.
 * UI tests: `tools/ui.ps1` drives the app through UI Automation. Board squares are invokable
   elements (`sq-e4`), so moves can be played without the mouse:
   `./tools/ui.ps1 invoke -Name "Play"`, `./tools/ui.ps1 board -Moves "e2e4,g1f3"`.
@@ -214,3 +218,21 @@ Proposed to the user on 2026-10-03, in this order (waiting for their pick):
   time limits, cancellation joins every thread, 3 lines, table round trip). In the app (Debug):
   ~1,000-2,000 kN/s instead of ~300, depth 13 in about 3 s; restarts cleanly on every move, and the
   thread count stays flat over repeated position changes.
+* Group 2, step 1 — accounts (the user chose username + password, SQLite, invite-only):
+  * Server data in one SQLite file (`gambit.db`, `ServerDatabase` with schema versions): users,
+    sessions, invites, ratings and finished games with PGN (replacing ratings.json and PGN files).
+  * `AccountStore`: sign-up with an invite code, PBKDF2 password hashes (ASP.NET Core's hasher),
+    session keys stored as SHA-256 hashes, 180-day sessions renewed by use, five wrong passwords
+    pause a name for ten minutes, bans end sessions. Username and password rules in `NameRules`.
+  * HTTP account API (`/api/register`, `signin`, `signout`, `me`, `password`, `invites`) with a
+    session auth scheme; the game hub requires a signed-in account (protocol v2).
+  * A new server logs a one-time invite for the first account (admin). Members make invites in the
+    app (one use, 14 days, 5 open). Admin commands on the server binary: invite(s), users,
+    reset-password, ban/unban, rename, make/remove-admin, delete-user, backup.
+  * App: Online page sign-in / create-account form, Invite a friend, Sign out; the session key is
+    kept in Windows Credential Manager (per data folder), not in settings.json.
+  * Online bot plays as `<Name>Bot` (password from GAMBIT_BOT_PASSWORD, `--invite` once).
+  * 25 new tests (store, rules, admin commands, API end to end, ratings and games across a restart);
+    the online tests now sign up with invites. Verified in the app against a local server: first
+    account with the logged code (admin), invite, sign out, wrong and right password, saved sign-in
+    after a restart, and a rated game against the online bot stored in the database.

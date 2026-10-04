@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Gambit.Online.Client;
@@ -11,14 +12,13 @@ public enum OnlineState
 }
 
 /// <summary>
-/// Connection to a Gambit server. Wraps the SignalR hub with typed calls and events (raised on the
-/// SignalR thread — consumers marshal to their UI thread). Reconnects automatically and re-registers,
-/// so the server can resume a game in progress.
+/// Connection to a Gambit server as a signed-in account (session key from <see cref="AccountClient"/>).
+/// Wraps the SignalR hub with typed calls and events (raised on the SignalR thread — consumers marshal
+/// to their UI thread). Reconnects automatically and re-registers, so the server can resume a game in progress.
 /// </summary>
 public sealed class OnlineClient : IAsyncDisposable
 {
     private HubConnection? _hub;
-    private string _name = "Guest";
     private readonly HashSet<string> _watching = [];
 
     public OnlineState State { get; private set; } = OnlineState.Disconnected;
@@ -39,14 +39,16 @@ public sealed class OnlineClient : IAsyncDisposable
     public event Action<string>? RematchOffered;
     public event Action<string, bool>? RematchDeclined;
 
-    public async Task ConnectAsync(string serverUrl, string token, string name, CancellationToken ct = default)
+    /// <summary>
+    /// Connects with a session key. Throws <see cref="OnlineAccountException"/> (SignInRequired) when the
+    /// server no longer accepts it.
+    /// </summary>
+    public async Task ConnectAsync(string serverUrl, string sessionToken, CancellationToken ct = default)
     {
         await DisconnectAsync();
-        _name = name;
         ServerUrl = serverUrl.TrimEnd('/');
-        string url = $"{ServerUrl}{OnlineProtocol.HubPath}?token={Uri.EscapeDataString(token)}";
         _hub = new HubConnectionBuilder()
-            .WithUrl(url)
+            .WithUrl($"{ServerUrl}{OnlineProtocol.HubPath}", o => o.AccessTokenProvider = () => Task.FromResult<string?>(sessionToken))
             .WithAutomaticReconnect([TimeSpan.Zero, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(15)])
             .Build();
 
@@ -75,7 +77,7 @@ public sealed class OnlineClient : IAsyncDisposable
         _hub.Reconnected += async _ =>
         {
             SetState(OnlineState.Connected);
-            await _hub.InvokeAsync<PlayerDto>(nameof(IGameServer.Hello), _name, OnlineProtocol.Version);
+            await _hub.InvokeAsync<PlayerDto>(nameof(IGameServer.Hello), "", OnlineProtocol.Version);
             // A new connection isn't in any spectator group yet: watch again and catch up.
             string[] watching;
             lock (_watching) watching = [.. _watching];
@@ -92,8 +94,13 @@ public sealed class OnlineClient : IAsyncDisposable
         try
         {
             await _hub.StartAsync(ct);
-            Me = await _hub.InvokeAsync<PlayerDto>(nameof(IGameServer.Hello), name, OnlineProtocol.Version, ct);
+            Me = await _hub.InvokeAsync<PlayerDto>(nameof(IGameServer.Hello), "", OnlineProtocol.Version, ct);
             SetState(OnlineState.Connected);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            await DisconnectAsync();
+            throw new OnlineAccountException("Please sign in again.", signInRequired: true);
         }
         catch
         {

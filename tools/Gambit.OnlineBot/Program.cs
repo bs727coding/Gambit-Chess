@@ -1,7 +1,9 @@
 // Gambit online bot: plays on a Gambit server as one of the built-in bots.
-//   dotnet run --project tools/Gambit.OnlineBot -- <server-url> <bot-id> <time-control | challenge-code> [games]
+//   dotnet run --project tools/Gambit.OnlineBot -- <server-url> <bot-id> <time-control | challenge-code> [games] [--invite CODE]
 //   e.g. dotnet run --project tools/Gambit.OnlineBot -- http://localhost:5080 harbor 3+2
-// With a challenge code and games > 1 the bot accepts rematch offers (waiting up to 2 minutes for one).
+// The bot plays as the account "<Name>Bot" (e.g. HarborBot) with the password in GAMBIT_BOT_PASSWORD;
+// pass --invite CODE once to create that account. With a challenge code and games > 1 the bot accepts
+// rematch offers (waiting up to 2 minutes for one).
 using Gambit.Core.Board;
 using Gambit.Core.Sessions;
 using Gambit.Engine.Bots;
@@ -51,7 +53,22 @@ client.GameStarted += start =>
     _ = MaybeMove(s);
 };
 
-await client.ConnectAsync(url, $"bot-{profile.Id}-{Environment.MachineName}-{Guid.NewGuid():N}", $"{profile.Name} (bot)");
+string password = Environment.GetEnvironmentVariable("GAMBIT_BOT_PASSWORD") is { Length: > 0 } pw
+    ? pw
+    : throw new InvalidOperationException("Set GAMBIT_BOT_PASSWORD to the bot account's password.");
+string username = $"{profile.Name}Bot";
+string? invite = Array.IndexOf(args, "--invite") is int at and >= 0 && at + 1 < args.Length ? args[at + 1] : null;
+SessionDto account;
+try
+{
+    account = await AccountClient.SignInAsync(url, username, password, "online bot");
+}
+catch (OnlineAccountException) when (invite != null)
+{
+    account = await AccountClient.RegisterAsync(url, username, password, invite, "online bot");
+    Console.WriteLine($"Created the account {username}.");
+}
+await client.ConnectAsync(url, account.Token);
 Console.WriteLine($"Connected to {url} as {client.Me?.Name}");
 if (isCode)
 {

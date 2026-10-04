@@ -25,7 +25,7 @@ public static class ProgressBackup
     private const string SettingsFile = "settings.json";
     private const string CurrentGameFile = "current-game.json";
     private const string GamesFolder = "games";
-    private const string TokenProperty = "onlineToken"; // AppSettings.OnlineToken, camel-cased like the rest of settings.json
+    private const string TokenProperty = "onlineToken"; // the guest sign-in that settings.json held before accounts
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 

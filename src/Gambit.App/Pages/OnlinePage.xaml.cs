@@ -10,11 +10,12 @@ using Windows.ApplicationModel.DataTransfer;
 
 namespace Gambit.App.Pages;
 
-/// <summary>Online lobby: connect to a server, quick pairing by time control, friend challenges.</summary>
+/// <summary>Online lobby: sign in to a server, quick pairing by time control, friend challenges, invites.</summary>
 public sealed partial class OnlinePage : Page
 {
     private static readonly string[] TimeControls = ["1+0", "2+1", "3+0", "3+2", "5+0", "5+3", "10+0", "10+5", "15+10", "30+0"];
     private OnlineService Online => OnlineService.Instance;
+    private bool _creatingAccount;
 
     public OnlinePage()
     {
@@ -79,13 +80,14 @@ public sealed partial class OnlinePage : Page
 
     private void UpdateState(OnlineState state)
     {
+        string? savedName = OnlineCredentials.Get(ServerBox.Text.Trim())?.Username;
         (string text, string color) = state switch
         {
-            OnlineState.Connected => ($"Connected as {Online.Client.Me?.Name ?? App.Profile.Profile.Name}" +
+            OnlineState.Connected => ($"Signed in as {Online.Client.Me?.Name ?? savedName}" +
                                       (Online.Client.Me is PlayerDto me ? $" ({me.Rating}{(me.Provisional ? "?" : "")})" : ""), "#2E7D32"),
             OnlineState.Connecting => ("Connecting…", "#F7C045"),
             OnlineState.Reconnecting => ("Connection lost — reconnecting…", "#F7C045"),
-            _ => ("Not connected", "#8A8A8A"),
+            _ => (savedName != null ? $"Not connected · signed in as {savedName}" : "Not connected", "#8A8A8A"),
         };
         StatusText.Text = text;
         StatusDot.Fill = new SolidColorBrush(Ui.ParseColor(color));
@@ -94,6 +96,9 @@ public sealed partial class OnlinePage : Page
         LobbyGrid.Opacity = WatchCard.Opacity = connected ? 1 : 0.45;
         ConnectButton.Content = connected ? "Disconnect" : "Connect";
         ConnectButton.IsEnabled = state is OnlineState.Connected or OnlineState.Disconnected;
+        SignedInPanel.Visibility = connected ? Visibility.Visible : Visibility.Collapsed;
+        if (connected) AccountPanel.Visibility = Visibility.Collapsed;
+        else InvitePanel.Visibility = Visibility.Collapsed;
         if (!connected)
         {
             StatsText.Text = "";
@@ -176,20 +181,140 @@ public sealed partial class OnlinePage : Page
             await Online.DisconnectAsync();
             return;
         }
-        string url = ServerBox.Text.Trim();
-        if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) || (uri.Scheme != "http" && uri.Scheme != "https"))
-        {
-            ShowError("Enter a server address like http://192.168.1.20:5080 or https://chess.example.com.");
-            return;
-        }
+        if (ServerUrl() is not string url) return;
         try
         {
             await Online.ConnectAsync(url);
+        }
+        catch (OnlineAccountException ex) when (ex.SignInRequired)
+        {
+            await ShowAccountPanelAsync(url, ex.Message);
         }
         catch (Exception ex)
         {
             ShowError($"Couldn't connect: {ex.Message}");
         }
+    }
+
+    /// <summary>The server address from the box, or null (with an error shown) if it isn't one.</summary>
+    private string? ServerUrl()
+    {
+        string url = ServerBox.Text.Trim();
+        if (Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) && uri.Scheme is "http" or "https") return url;
+        ShowError("Enter a server address like http://192.168.1.20:5080 or https://chess.example.com.");
+        return null;
+    }
+
+    // ------------------------------------------------------------------ account
+
+    /// <summary>Shows the sign-in form (keeping "create an account" only if the form was already showing it).</summary>
+    private async Task ShowAccountPanelAsync(string url, string message)
+    {
+        SetAccountMode(AccountPanel.Visibility == Visibility.Visible && _creatingAccount, message);
+        AccountPanel.Visibility = Visibility.Visible;
+        UsernameBox.Text = OnlineCredentials.Get(url)?.Username ?? UsernameBox.Text;
+        UsernameBox.Focus(FocusState.Programmatic);
+        try
+        {
+            ServerInfoDto info = await AccountClient.GetInfoAsync(url);
+            InviteBox.Header = info.InviteOnly ? "Invite code" : "Invite code (optional)";
+        }
+        catch (OnlineAccountException ex)
+        {
+            ShowError(ex.Message);
+        }
+    }
+
+    private void SetAccountMode(bool create, string? message = null)
+    {
+        _creatingAccount = create;
+        AccountTitle.Text = create ? "Create an account" : "Sign in";
+        AccountHint.Text = message ?? (create
+            ? "Pick a username (3 to 20 letters, digits, - or _) and a password of 8 or more characters."
+            : "Sign in with your username and password for this server.");
+        InviteBox.Visibility = ConfirmInput.Visibility = create ? Visibility.Visible : Visibility.Collapsed;
+        AccountButton.Content = create ? "Create account" : "Sign in";
+        SwitchModeButton.Content = create ? "Already have an account? Sign in" : "New here? Create an account";
+    }
+
+    private void SwitchMode_Click(object sender, RoutedEventArgs e)
+    {
+        ErrorBar.IsOpen = false;
+        SetAccountMode(!_creatingAccount);
+    }
+
+    private void AccountField_KeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+    {
+        if (e.Key != Windows.System.VirtualKey.Enter) return;
+        e.Handled = true;
+        Account_Click(sender, new RoutedEventArgs());
+    }
+
+    private async void Account_Click(object sender, RoutedEventArgs e)
+    {
+        ErrorBar.IsOpen = false;
+        if (ServerUrl() is not string url) return;
+        string username = UsernameBox.Text.Trim(), password = PasswordInput.Password;
+        if (username.Length == 0 || password.Length == 0)
+        {
+            ShowError("Enter your username and password.");
+            return;
+        }
+        if (_creatingAccount && password != ConfirmInput.Password)
+        {
+            ShowError("The two passwords don't match.");
+            return;
+        }
+
+        AccountButton.IsEnabled = false;
+        try
+        {
+            if (_creatingAccount) await Online.RegisterAsync(url, username, password, InviteBox.Text.Trim());
+            else await Online.SignInAsync(url, username, password);
+            PasswordInput.Password = ConfirmInput.Password = InviteBox.Text = "";
+            AccountPanel.Visibility = Visibility.Collapsed;
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex.Message);
+        }
+        finally
+        {
+            AccountButton.IsEnabled = true;
+        }
+    }
+
+    private async void SignOut_Click(object sender, RoutedEventArgs e)
+    {
+        ErrorBar.IsOpen = false;
+        string url = Online.Client.ServerUrl ?? ServerBox.Text.Trim();
+        await Online.SignOutAsync(url);
+        UpdateState(Online.Client.State);
+        await ShowAccountPanelAsync(url, "Signed out. Sign in again whenever you like.");
+    }
+
+    private async void Invite_Click(object sender, RoutedEventArgs e)
+    {
+        ErrorBar.IsOpen = false;
+        try
+        {
+            InviteDto invite = await Online.CreateInviteAsync(Online.Client.ServerUrl ?? ServerBox.Text.Trim());
+            InviteCodeText.Text = invite.Code;
+            InviteNote.Text = (invite.ExpiresAt is DateTimeOffset expires ? $"Works once, until {expires.LocalDateTime:MMMM d}. " : "Works once. ")
+                + "Your friend enters it under Create an account, with this server's address.";
+            InvitePanel.Visibility = Visibility.Visible;
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex.Message);
+        }
+    }
+
+    private void CopyInvite_Click(object sender, RoutedEventArgs e)
+    {
+        var package = new DataPackage();
+        package.SetText(InviteCodeText.Text);
+        Clipboard.SetContent(package);
     }
 
     private async Task SeekAsync(string tc)

@@ -3,6 +3,7 @@ using Gambit.Core.Board;
 using Gambit.Core.Games;
 using Gambit.Core.Notation;
 using Gambit.Online;
+using Gambit.Server.Data;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Gambit.Server;
@@ -45,7 +46,7 @@ public sealed class GameRoom(string id, Player white, Player black, TimeControlD
 /// Owns rooms, matchmaking and challenges. Every move is validated with Gambit.Core before it is
 /// broadcast; clocks, flags, aborts and abandonment are decided here, never by clients.
 /// </summary>
-public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerRegistry players, RatingStore ratings, ServerOptions options, ILogger<GameManager> log)
+public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerRegistry players, RatingStore ratings, GameArchive archive, ILogger<GameManager> log, ServerOptions options)
 {
     private readonly ConcurrentDictionary<string, GameRoom> _rooms = new();
     private readonly ConcurrentDictionary<string, string> _activeRoomByPlayer = new();
@@ -443,6 +444,7 @@ public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerReg
     {
         int? whiteChange = null, blackChange = null;
         string result, description;
+        bool rated = false;
         lock (room.Gate)
         {
             if (room.Finished) return;
@@ -451,6 +453,7 @@ public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerReg
             Game g = room.Game;
             if (g.Termination != Termination.Aborted && g.Moves.Count >= 2)
             {
+                rated = true;
                 double whiteScore = g.Result switch { GameResult.WhiteWins => 1, GameResult.BlackWins => 0, _ => 0.5 };
                 (whiteChange, blackChange) = ratings.Rate(room.White.PublicId, room.Black.PublicId, room.Category, whiteScore);
             }
@@ -460,7 +463,7 @@ public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerReg
 
         _activeRoomByPlayer.TryRemove(room.White.PublicId, out _);
         _activeRoomByPlayer.TryRemove(room.Black.PublicId, out _);
-        SavePgn(room);
+        Archive(room, rated, whiteChange, blackChange);
         log.LogInformation("Game {Id} over: {Result}", room.Id, description);
         await hub.Clients.Group(room.Id).GameOver(new GameOverDto(room.Id, result, room.Game.Termination.ToString(), description, whiteChange, blackChange));
     }
@@ -489,16 +492,19 @@ public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerReg
     private static TimeCategory Category(TimeControlDto tc) =>
         new TimeControl(TimeSpan.FromSeconds(tc.InitialSeconds), TimeSpan.FromSeconds(tc.IncrementSeconds)).Category;
 
-    private void SavePgn(GameRoom room)
+    /// <summary>Stores the finished game (aborted ones too, unrated) in the database.</summary>
+    private void Archive(GameRoom room, bool rated, int? whiteChange, int? blackChange)
     {
         try
         {
-            string dir = Directory.CreateDirectory(Path.Combine(options.DataDirectory, "games")).FullName;
-            File.WriteAllText(Path.Combine(dir, $"{DateTime.UtcNow:yyyyMMdd-HHmmss}-{room.Id}.pgn"), Pgn.Write(room.Game));
+            string pgn;
+            lock (room.Gate) pgn = Pgn.Write(room.Game);
+            archive.Save(room.Id, room.White.PublicId, room.Black.PublicId, room.TimeControl.Key, room.Game.ResultString,
+                room.Game.Termination.ToString(), rated, whiteChange, blackChange, room.CreatedAt, DateTimeOffset.UtcNow, pgn);
         }
         catch (Exception ex)
         {
-            log.LogWarning("Saving PGN failed: {Message}", ex.Message);
+            log.LogWarning("Saving game {Id} failed: {Message}", room.Id, ex.Message);
         }
     }
 }

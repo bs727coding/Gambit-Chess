@@ -4,6 +4,7 @@ using Gambit.Core.Sessions;
 using Gambit.Online;
 using Gambit.Online.Client;
 using Gambit.Server;
+using Gambit.Server.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
@@ -35,11 +36,14 @@ public sealed class OnlineTests : IAsyncLifetime
         await _app.DisposeAsync();
     }
 
+    /// <summary>Signs a new player up (with an invite, as on a real server) and connects them.</summary>
     private async Task<OnlineClient> Connect(string name)
     {
+        Invite invite = _app.Services.GetRequiredService<AccountStore>().CreateInvite(null);
+        SessionDto session = await AccountClient.RegisterAsync(_url, name, $"pw-{name}-long-enough", invite.Code, "tests");
         var client = new OnlineClient();
         _clients.Add(client);
-        await client.ConnectAsync(_url, $"token-{name}-{Guid.NewGuid():N}", name);
+        await client.ConnectAsync(_url, session.Token);
         return client;
     }
 
@@ -148,7 +152,7 @@ public sealed class OnlineTests : IAsyncLifetime
     [Fact]
     public async Task Rematch_starts_when_both_agree_with_colors_swapped()
     {
-        OnlineClient alice = await Connect("Ada"), bob = await Connect("Bo");
+        OnlineClient alice = await Connect("Ada"), bob = await Connect("Boe");
         Task<GameStartDto> aStart = Next<GameStartDto>(h => alice.GameStarted += h);
         ChallengeDto ch = await alice.CreateChallengeAsync(new TimeControlDto(300, 0), "white");
         await bob.AcceptChallengeAsync(ch.Code);
@@ -178,7 +182,7 @@ public sealed class OnlineTests : IAsyncLifetime
         Assert.Equal(second.GameId, (await bNext).GameId);
         Assert.NotEqual(first.GameId, second.GameId);
         Assert.Equal("black", second.YourColor);
-        Assert.Equal("Bo", second.White.Name);
+        Assert.Equal("Boe", second.White.Name);
         Assert.Equal(first.TimeControl, second.TimeControl);
 
         // The finished game can't be rematched twice.
@@ -226,7 +230,7 @@ public sealed class OnlineTests : IAsyncLifetime
     [Fact]
     public async Task Remote_sessions_negotiate_a_rematch()
     {
-        OnlineClient alice = await Connect("Cy"), bob = await Connect("Di");
+        OnlineClient alice = await Connect("Cyd"), bob = await Connect("Dia");
         Task<GameStartDto> aStart = Next<GameStartDto>(h => alice.GameStarted += h);
         Task<GameStartDto> bStart = Next<GameStartDto>(h => bob.GameStarted += h);
         ChallengeDto ch = await alice.CreateChallengeAsync(new TimeControlDto(300, 0), "black");

@@ -8,29 +8,85 @@
         <StackPanel MaxWidth="{StaticResource PageMaxWidth}" Padding="32,16,32,32" Spacing="12">
             <StackPanel>
                 <TextBlock Text="Play online" Style="{StaticResource PageTitleStyle}" />
-                <TextBlock Text="Rated games against people, or a private game with a friend using a code." Style="{StaticResource SecondaryTextStyle}" />
+                <TextBlock Text="Rated games against people on a Gambit server, or a private game with a friend using a code." Style="{StaticResource SecondaryTextStyle}" />
             </StackPanel>
 
-            <!-- Connection -->
+            <!-- Connection and account -->
             <Border Style="{StaticResource CardStyle}" Padding="20">
-                <Grid ColumnSpacing="12" RowSpacing="10">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <TextBox x:Name="ServerBox" Header="Server address" PlaceholderText="http://localhost:5080" />
-                    <Button x:Name="ConnectButton" Grid.Column="1" VerticalAlignment="Bottom" Style="{StaticResource AccentButtonStyle}" MinWidth="120"
-                            Click="Connect_Click" Content="Connect" />
-                    <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="10">
+                <StackPanel Spacing="12">
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="ServerBox" Header="Server address" PlaceholderText="http://localhost:5080" />
+                        <Button x:Name="ConnectButton" Grid.Column="1" VerticalAlignment="Bottom" Style="{StaticResource AccentButtonStyle}" MinWidth="120"
+                                Click="Connect_Click" Content="Connect" />
+                    </Grid>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
                         <Ellipse x:Name="StatusDot" Width="10" Height="10" Fill="#8A8A8A" VerticalAlignment="Center" />
                         <TextBlock x:Name="StatusText" Text="Not connected" VerticalAlignment="Center" />
                         <TextBlock x:Name="StatsText" Style="{StaticResource SecondaryTextStyle}" VerticalAlignment="Center" />
                     </StackPanel>
-                </Grid>
+
+                    <!-- Sign in or create an account (when the server needs one) -->
+                    <StackPanel x:Name="AccountPanel" Spacing="10" Visibility="Collapsed" MaxWidth="560" HorizontalAlignment="Left">
+                        <TextBlock x:Name="AccountTitle" Text="Sign in" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,4,0,0" />
+                        <TextBlock x:Name="AccountHint" Style="{StaticResource SecondaryTextStyle}" />
+                        <Grid ColumnSpacing="12" RowSpacing="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBox x:Name="UsernameBox" Header="Username" MaxLength="20" AutomationProperties.Name="Username" />
+                            <PasswordBox x:Name="PasswordInput" Grid.Column="1" Header="Password" MaxLength="128" AutomationProperties.Name="Password"
+                                         KeyDown="AccountField_KeyDown" />
+                            <TextBox x:Name="InviteBox" Grid.Row="1" Header="Invite code" PlaceholderText="ABCD-EFGH" MaxLength="9"
+                                     CharacterCasing="Upper" AutomationProperties.Name="Invite code" KeyDown="AccountField_KeyDown" />
+                            <PasswordBox x:Name="ConfirmInput" Grid.Row="1" Grid.Column="1" Header="Password again" MaxLength="128"
+                                         AutomationProperties.Name="Password again" KeyDown="AccountField_KeyDown" />
+                        </Grid>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Button x:Name="AccountButton" Style="{StaticResource AccentButtonStyle}" MinWidth="120" Content="Sign in" Click="Account_Click" />
+                            <HyperlinkButton x:Name="SwitchModeButton" Content="New here? Create an account" Click="SwitchMode_Click" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Signed in and connected -->
+                    <StackPanel x:Name="SignedInPanel" Orientation="Horizontal" Spacing="8" Visibility="Collapsed">
+                        <Button Click="Invite_Click" AutomationProperties.Name="Invite a friend">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE8FA;" FontSize="14" />
+                                <TextBlock Text="Invite a friend" />
+                            </StackPanel>
+                        </Button>
+                        <Button Content="Sign out" Click="SignOut_Click" />
+                    </StackPanel>
+                    <Border x:Name="InvitePanel" Visibility="Collapsed" CornerRadius="6" Padding="12" HorizontalAlignment="Left"
+                            Background="{ThemeResource SubtleFillColorSecondaryBrush}">
+                        <Grid ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Invite code" Style="{StaticResource CaptionTextBlockStyle}" />
+                                <TextBlock x:Name="InviteCodeText" FontSize="24" FontWeight="SemiBold" IsTextSelectionEnabled="True" CharacterSpacing="100" />
+                                <TextBlock x:Name="InviteNote" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" MaxWidth="360" />
+                            </StackPanel>
+                            <Button Grid.Column="1" VerticalAlignment="Center" Click="CopyInvite_Click" AutomationProperties.Name="Copy invite code">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE8C8;" FontSize="13" />
+                                    <TextBlock Text="Copy" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </StackPanel>
             </Border>
 
             <Grid x:Name="LobbyGrid" ColumnSpacing="12" IsHitTestVisible="False" Opacity="0.45">
@@ -130,7 +186,7 @@
             <InfoBar x:Name="ErrorBar" IsOpen="False" Severity="Error" IsClosable="True" />
 
             <InfoBar IsOpen="True" IsClosable="False" Severity="Informational" Title="Hosting a server"
-                     Message="Run the Gambit server on any PC (./build.ps1 server) and share its address — friends on your network can connect directly. To play over the internet, deploy the server (Docker image included); see docs/ONLINE.md." />
+                     Message="Run the Gambit server on any PC (./build.ps1 server). The first time, it shows an invite code for your own account, which becomes the server's admin; then use Invite a friend to let others join. To play over the internet, deploy the server (see docs/ONLINE.md)." />
         </StackPanel>
     </ScrollViewer>
 </Page>

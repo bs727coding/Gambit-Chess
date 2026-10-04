@@ -99,8 +99,8 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 
 - [~] `Gambit.Server` (ASP.NET Core 10 + SignalR): server-authoritative games using `Gambit.Core`,
       server clocks, matchmaking pools (time control × rating), private challenges via invite code,
-      draw/resign/abort/rematch, reconnection, Glicko-2 ratings ✔ — guest tokens only; registered
-      accounts → Session 8
+      draw/resign/abort/rematch, reconnection, Glicko-2 ratings ✔; accounts with sign-in and invite-only
+      sign-ups, SQLite storage, admin commands ✔ (2026-10-03)
 - [x] `Gambit.Online.Contracts`: shared DTOs + hub interfaces (strongly typed SignalR)
 - [x] Client: `RemoteGameSession : IGameSession`, Online page (connect, quick pair, challenge a friend,
       lobby), connection status UX
@@ -111,7 +111,7 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 - [x] Dockerfile + `fly.toml` + hosting guide (one instance, `/data` volume, forwarded headers);
       deploy to Fly.io / Azure Container Apps / any Docker host — **you** create the account and
       sign in; Claude prepares config + docs
-- [~] Rate limiting ✔, health check ✔, console logging ✔ — production DB (PostgreSQL), TLS/domain still to do
+- [~] Rate limiting ✔, health check ✔, console logging ✔, SQLite database ✔ — TLS/domain still to do
 - [~] Per-user install with Start menu shortcut (`./build.ps1 install`) ✔, app icon ✔ — MSIX packaging + signing, versioning, auto-update still to do
 - [~] Online polish: spectating ✔ — friends list, game history sync still to do
 

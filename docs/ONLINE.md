@@ -3,8 +3,9 @@
 ## How it works
 
 ```
-Gambit app ──SignalR (WebSockets)──► Gambit.Server ──► Gambit.Core (rules) + Glicko-2 ratings
-   RemoteGameSession : IGameSession       GameManager (rooms, clocks, matchmaking, challenges)
+Gambit app ──HTTPS: sign-in, invites (/api)──► Gambit.Server ──► gambit.db (SQLite: accounts, ratings, games)
+           ──SignalR (WebSockets): games ────►   GameManager (rooms, clocks, matchmaking, challenges)
+   RemoteGameSession : IGameSession              Gambit.Core (rules) + Glicko-2 ratings
 ```
 
 * **The server is authoritative.** Every move is checked with `Gambit.Core` before it is broadcast;
@@ -13,18 +14,56 @@ Gambit app ──SignalR (WebSockets)──► Gambit.Server ──► Gambit.Co
 * **The app plays online games through the same game page as bot games** — only the session type
   differs (`RemoteGameSession` instead of `LocalGameSession`). Your moves are applied instantly and
   confirmed by the server; if anything disagrees the app resyncs from the server's move list.
-* **Accounts:** the app creates a random secret token on first use (stored in your settings) — that
-  token *is* your guest account and your ratings follow it. Other players only see a public id
-  derived from it. (Proper accounts are on the roadmap.)
-* **Ratings:** Glicko-2, separately for bullet / blitz / rapid / classical, saved in `ratings.json`.
+* **Accounts:** a username and a password (no email). Servers are **invite-only** by default: a new
+  account needs an invite code. Passwords are stored as salted PBKDF2 hashes; signing in gives the
+  app a session key, which it keeps in Windows Credential Manager (never in settings or backups)
+  and the server keeps only as a hash. Five wrong passwords pause sign-in for that name for ten
+  minutes, and sign-in requests are rate-limited per address.
+* **Ratings:** Glicko-2, separately for bullet / blitz / rapid / classical.
+* **Storage:** everything lives in one SQLite file, `gambit.db` in the data folder: accounts,
+  sign-in sessions, invites, ratings and every finished game with its PGN.
 * **Fair play:** hints, takebacks and the engine are disabled in online games.
-* Finished games are stored as PGN in the server's data folder (`games/`).
+
+## Accounts and invites
+
+* **The first account:** a new server prints a one-time invite code in its log ("No accounts yet …
+  use invite code ABCD-EFGH"). Create your own account with it: that account is the admin.
+* **Inviting people:** in Gambit, **Online → Invite a friend** makes a code that works once and for
+  14 days (up to 5 unused at a time; admins: no limit). Your friend enters the server address, then
+  **Create an account** with the code. Admins can also make codes on the server (below).
+* **Open sign-ups** (anyone who can reach the server): set `Gambit:SignUps` to `Open`.
+
+### Administration
+
+Run the server binary with a command; it works on the same database, also while the server runs:
+
+```
+dotnet run --project src/Gambit.Server -- invite --uses 3 --note "chess club"
+dotnet run --project src/Gambit.Server -- users
+```
+
+| Command | Does |
+|---|---|
+| `invite [--uses N] [--days D] [--admin] [--note TEXT]` | new invite code (default 1 use, 14 days; `--days 0` never expires) |
+| `invites` / `revoke-invite CODE` | list unused codes / cancel one |
+| `users` | list accounts (admins and suspensions marked) |
+| `reset-password USER` | sets and prints a new random password; signs the account out everywhere |
+| `ban USER REASON…` / `unban USER` | suspend (signs out at once, sign-in refused with the reason) / lift |
+| `rename USER NEWNAME` | change a username (shown from their next connection) |
+| `make-admin USER` / `remove-admin USER` | admin rights (admins' invites have no limit) |
+| `delete-user USER --yes` | delete an account, its ratings and sign-ins (finished games keep its id) |
+| `backup FILE` | consistent copy of `gambit.db` (safe while running) |
+
+On Fly.io: `fly ssh console -C "dotnet /app/Gambit.Server.dll users"`. Locally the data folder is
+`GAMBIT_DATA`, or `data/` next to the server binary.
 
 ## Play with friends on your network (easiest)
 
-1. On one PC run: `./build.ps1 server` (allow it through the Windows firewall when asked).
+1. On one PC run: `./build.ps1 server` (allow it through the Windows firewall when asked). Note the
+   invite code it prints the first time.
 2. Find that PC's address: `ipconfig` → IPv4 address, e.g. `192.168.1.20`.
-3. Everyone opens **Online** in Gambit, enters `http://192.168.1.20:5080` and connects.
+3. Open **Online** in Gambit, enter `http://192.168.1.20:5080`, **Connect**, then **Create an
+   account** with that invite code. Use **Invite a friend** to get a code for each friend.
 4. Use **Play a friend** → *Create* and share the 6-character code, or **Quick pairing**.
 
 ## Play over the internet
@@ -43,8 +82,8 @@ Pick one:
 1. **Run exactly one instance.** Games, clocks, seeks and challenge codes live in the server's
    memory. Two instances would split players between them, so turn off autoscaling and
    scale-to-zero (scaling to zero would also end every game in progress).
-2. **Give it a persistent volume at `/data`.** Ratings (`ratings.json`) and the PGN archive are
-   written there; without a volume they reset whenever the container is replaced.
+2. **Give it a persistent volume at `/data`.** The database (`gambit.db`: accounts, ratings, games)
+   lives there; without a volume everything resets whenever the container is replaced.
 3. **Set `ASPNETCORE_FORWARDEDHEADERS_ENABLED=true` behind the host's proxy**, so the per-IP
    connection limit sees real client addresses instead of the proxy's.
 4. WebSockets must be allowed (they are on all the options below). Health check: `GET /health`.
@@ -89,7 +128,11 @@ and forwarded headers on.
 | Setting | Default | Notes |
 |---|---|---|
 | `ASPNETCORE_URLS` | `http://localhost:5000` (`http://+:8080` in Docker) | Listen address |
-| `GAMBIT_DATA` | `./data` next to the server | Ratings + PGN archive |
+| `GAMBIT_DATA` | `./data` next to the server | Where `gambit.db` lives |
+| `Gambit:SignUps` | `Invite` | `Open` lets anyone create an account |
+| `Gambit:MembersCanInvite` / `Gambit:InvitesPerMember` / `Gambit:InviteDays` | `true` / `5` / `14` | Invites made in the app |
+| `Gambit:SessionDays` | `180` | A sign-in ends after this many days unused |
+| `Gambit:AccountRequestsPerMinute` | `20` | Sign-in and sign-up requests per client IP |
 | `Gambit:ReconnectGrace` | `00:01:00` | appsettings.json or env `Gambit__ReconnectGrace` |
 | `Gambit:FirstMoveTimeout` | `00:00:45` | Game aborted if White doesn't move |
 | `Gambit:CallsPerSecond` / `Gambit:CallBurst` | `10` / `30` | Hub calls per connection (token bucket); excess calls fail with "Too many requests" |
@@ -101,7 +144,12 @@ Health check: `GET /health` → `ok`. `GET /` shows players online and games in 
 
 ## Protocol (Gambit.Online.Contracts)
 
-Client → server: `Hello(name, version)`, `Seek(tc)`, `CancelSeek()`, `CreateChallenge(tc, color)`,
+Accounts (HTTP + JSON, `AccountApi`): `GET /api/info`, `POST /api/register`, `POST /api/signin`
+(→ session key), and with `Authorization: Bearer <key>`: `POST /api/signout`, `GET /api/me`,
+`POST /api/password`, `POST|GET /api/invites`. The hub requires the same key (SignalR sends it as
+`?access_token=`); an unknown, expired or suspended session gets HTTP 401.
+
+Client → server: `Hello(name, version)` (the player is the signed-in account), `Seek(tc)`, `CancelSeek()`, `CreateChallenge(tc, color)`,
 `AcceptChallenge(code)`, `MakeMove(gameId, ply, uci)`, `Resign`, `OfferDraw`, `RespondToDraw`, `Rejoin`,
 `OfferRematch(gameId)`, `DeclineRematch(gameId)`, `ListGames()`, `Watch(gameId)`, `Unwatch(gameId)`.
 
@@ -122,5 +170,5 @@ The client re-watches after a reconnect.
 
 ## Next steps (roadmap Session 8)
 
-Real accounts (sign-in), PostgreSQL storage, friends list,
-chat with moderation, and a public deployment.
+Name moderation and repeat-abandonment penalties, backups off the server, friends list, chat with
+moderation, and a public deployment.
