@@ -100,7 +100,7 @@ public static class AdminCommands
             case "rename" when Arg(1) is string user && Arg(2) is string newName:
             {
                 string? error = accounts.Rename(user, newName);
-                return Report(output, error == null, $"{user} is now {newName} (on their next connection).", error ?? "");
+                return Report(output, error == null, $"{user} is now {newName} (within a minute if they are playing).", error ?? "");
             }
             case "make-admin" when Arg(1) is string user:
                 return Report(output, accounts.SetAdmin(user, true), $"{user} is an admin.", $"No account named {user}.");

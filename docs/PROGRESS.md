@@ -15,7 +15,7 @@ natively on Arm64.
 | Tools | `import_lichess_puzzles.py`, `Gambit.PuzzleGen` (experiments), `Gambit.BotArena` (ladder measurement), `Gambit.OnlineBot` (plays online, accepts rematches), `ui.ps1`, `ui-scroll.ps1`, `screenshot-quiet.ps1` |
 | Content | 21,162 puzzles from the Lichess puzzle DB (CC0; `tools/import_lichess_puzzles.py`): 400–1,100 per 100-point band from 400 to 2999, 49 practice themes with ≥ 120 each, 25 practice openings with ≥ 50 each; 49 lessons; tactic/mate solutions audited by the engine in tests |
 | Install | `./build.ps1 install` → `%LOCALAPPDATA%\Programs\Gambit` + Start menu shortcut (tested into a scratch folder; not installed for real, the user decides) |
-| Tests | 187 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
+| Tests | 201 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
 
 ## Next steps
 
@@ -28,7 +28,7 @@ Proposed to the user on 2026-10-03, in this order (waiting for their pick):
    opening drills, a multi-core analysis board. The puzzle source link was dropped (the user's call).
 2. **In progress (the user's go, 2026-10-03) — server ready to go online, built and tested locally
    (not deployed):** accounts with sign-in and invite-only sign-ups ✔, SQLite instead of
-   ratings.json ✔, repeat walkouts ✔; still to do: name moderation, backups off the server. Hosting itself is ready (Fly.io, docs/ONLINE.md); the user chose username + password
+   ratings.json ✔, repeat walkouts ✔, name moderation ✔; still to do: backups off the server. Hosting itself is ready (Fly.io, docs/ONLINE.md); the user chose username + password
    (no email), SQLite, invite-only.
 3. **Distribution:** version numbers and an update check, MSIX or a signed installer (buying a
    signing certificate is the user's call), an x64 build test.
@@ -43,8 +43,7 @@ Proposed to the user on 2026-10-03, in this order (waiting for their pick):
   threads (better SMP scaling), incremental piece-square sums and a pawn hash (~5% each). Staged
   move generation would change move order (and the signature).
 * Online: accounts are username + password, invite-only; no email, so forgotten passwords are reset
-  by an admin (`reset-password`). Bans reach a connected player at their next connection (their
-  session is ended, so a reconnect fails); an immediate kick is still to do.
+  by an admin (`reset-password`). Walkout counts are in memory (a restart forgives).
 * UI tests: `tools/ui.ps1` drives the app through UI Automation. Board squares are invokable
   elements (`sq-e4`), so moves can be played without the mouse:
   `./tools/ui.ps1 invoke -Name "Play"`, `./tools/ui.ps1 board -Moves "e2e4,g1f3"`.
@@ -241,3 +240,8 @@ Proposed to the user on 2026-10-03, in this order (waiting for their pick):
   (`OnlineClient.ServerMessage`), and server notices show on the Online page and as game messages
   (they were dropped before). Tests: end to end (three aborts → paused, the opponent unaffected)
   and the timing with a test clock.
+* Group 2, step 3 — name moderation: offensive usernames are refused at sign-up and rename (strong
+  words anywhere, also with look-alike digits or split by - and _; short words only as a separate
+  word, so Cassandra, Dickens, Peacock, Therapist pass). `AccountWatch` applies admin changes to
+  connected players every 20 s: suspended or deleted accounts are told why and disconnected,
+  renames take effect. Tests: refused and allowed names, a ban and a rename reaching connected players.

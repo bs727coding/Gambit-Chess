@@ -21,7 +21,7 @@ public sealed class GameHub(PlayerRegistry players, GameManager games) : Hub<IGa
         string accountId = Context.UserIdentifier ?? throw new HubException("Please sign in again.");
         string username = Context.User?.FindFirstValue(ClaimTypes.Name) ?? "Player";
 
-        Player p = players.Connect(accountId, username, Context.ConnectionId, out string? replaced);
+        Player p = players.Connect(accountId, username, Context.ConnectionId, Context.Abort, out string? replaced);
         if (replaced != null && replaced != Context.ConnectionId)
             await Clients.Client(replaced).Notice("You signed in to Gambit somewhere else, so this window was disconnected from the game.");
         PlayerDto me = players.ToDto(p, TimeCategory.Blitz);

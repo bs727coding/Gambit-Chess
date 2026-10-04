@@ -35,6 +35,13 @@ Gambit app ──HTTPS: sign-in, invites (/api)──► Gambit.Server ──►
   14 days (up to 5 unused at a time; admins: no limit). Your friend enters the server address, then
   **Create an account** with the code. Admins can also make codes on the server (below).
 * **Open sign-ups** (anyone who can reach the server): set `Gambit:SignUps` to `Open`.
+* **Names:** 3–20 letters, digits, `-` and `_`. Official-looking names (admin, moderator, …) and
+  offensive ones are refused, also when spelled with look-alike digits; short words are only
+  refused as a separate word, so names like Cassandra or Dickens are fine. Admins rename anything
+  that slips through.
+* **Admin changes apply within about 20 seconds:** a suspended or deleted account that is
+  connected is told why and disconnected (a game in progress counts as abandoned if they don't
+  return); a renamed one plays on under the new name.
 
 ### Administration
 
@@ -51,8 +58,8 @@ dotnet run --project src/Gambit.Server -- users
 | `invites` / `revoke-invite CODE` | list unused codes / cancel one |
 | `users` | list accounts (admins and suspensions marked) |
 | `reset-password USER` | sets and prints a new random password; signs the account out everywhere |
-| `ban USER REASON…` / `unban USER` | suspend (signs out at once, sign-in refused with the reason) / lift |
-| `rename USER NEWNAME` | change a username (shown from their next connection) |
+| `ban USER REASON…` / `unban USER` | suspend (disconnected within ~20 s, sign-in refused with the reason) / lift |
+| `rename USER NEWNAME` | change a username (applies within ~20 s) |
 | `make-admin USER` / `remove-admin USER` | admin rights (admins' invites have no limit) |
 | `delete-user USER --yes` | delete an account, its ratings and sign-ins (finished games keep its id) |
 | `backup FILE` | consistent copy of `gambit.db` (safe while running) |
@@ -174,5 +181,4 @@ The client re-watches after a reconnect.
 
 ## Next steps (roadmap Session 8)
 
-Name moderation, backups off the server, friends list, chat with moderation, and a public
-deployment.
+Backups off the server, friends list, chat with moderation, and a public deployment.

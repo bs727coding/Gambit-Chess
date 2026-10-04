@@ -33,6 +33,8 @@ public static class ServerHost
         builder.Services.AddSingleton<Conduct>();
         builder.Services.AddSingleton<GameManager>();
         builder.Services.AddHostedService<GameClockService>();
+        builder.Services.AddSingleton<AccountWatch>();
+        builder.Services.AddHostedService(sp => sp.GetRequiredService<AccountWatch>());
         builder.Services.AddSingleton<CallRateLimitFilter>();
         builder.Services.AddAuthentication(SessionAuthHandler.SchemeName)
             .AddScheme<AuthenticationSchemeOptions, SessionAuthHandler>(SessionAuthHandler.SchemeName, null);

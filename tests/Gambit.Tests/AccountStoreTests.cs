@@ -44,6 +44,25 @@ public sealed class AccountStoreTests : IDisposable
     public void Usernames(string name, bool ok) => Assert.Equal(ok, NameRules.CheckUsername(name) == null);
 
     [Theory]
+    [InlineData("Sh1tHead")]
+    [InlineData("big_dick")]
+    [InlineData("BigDick")]
+    [InlineData("AssMan")]
+    [InlineData("p3n1s-envy")]
+    [InlineData("Sh-i-t_Lord")]
+    public void Offensive_names_are_refused(string name) => Assert.Equal("Please pick a different username.", NameRules.CheckUsername(name));
+
+    [Theory]
+    [InlineData("Cassandra")]
+    [InlineData("Dickens")]
+    [InlineData("Peacock")]
+    [InlineData("Swanky")]
+    [InlineData("Assassin")]
+    [InlineData("Grape_Escape")]
+    [InlineData("Therapist")]
+    public void Innocent_names_with_hidden_words_are_fine(string name) => Assert.Null(NameRules.CheckUsername(name));
+
+    [Theory]
     [InlineData("knight-on-f5", true)]
     [InlineData("short", false)]
     [InlineData("Password123", false)]
@@ -140,7 +159,7 @@ public sealed class AccountStoreTests : IDisposable
         Assert.Contains("suspended", Run("ban", "Dee", "cheating"));
         Assert.True(store.Find("Dee")!.IsBanned);
         Assert.Contains("can play again", Run("unban", "Dee"));
-        Assert.Contains("is now Dex", Run("rename", "Dee", "Dex"));
+        Assert.Contains("Dee is now Dex", Run("rename", "Dee", "Dex"));
         Assert.Contains("is an admin", Run("make-admin", "Dex"));
         Assert.True(store.Find("dex")!.IsAdmin);
 

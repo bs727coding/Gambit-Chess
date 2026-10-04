@@ -149,6 +149,34 @@ public sealed class AccountTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Bans_and_renames_reach_players_who_are_connected()
+    {
+        SessionDto ann = await Register("Ann"), bob = await Register("Bob");
+        await using var annClient = new OnlineClient();
+        await using var bobClient = new OnlineClient();
+        await annClient.ConnectAsync(_url, ann.Token);
+        await bobClient.ConnectAsync(_url, bob.Token);
+        AccountWatch watch = _app.Services.GetRequiredService<AccountWatch>();
+
+        Assert.Null(Accounts.Rename("Ann", "Annie"));
+        await watch.CheckAsync();
+        Assert.Equal("Annie", (await annClient.CreateChallengeAsync(new TimeControlDto(300, 0), "white")).Creator.Name);
+
+        var notice = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var dropped = new TaskCompletionSource<OnlineState>(TaskCreationOptions.RunContinuationsAsynchronously);
+        bobClient.Notice += m => notice.TrySetResult(m);
+        bobClient.StateChanged += s =>
+        {
+            if (s != OnlineState.Connected) dropped.TrySetResult(s);
+        };
+        Assert.True(Accounts.SetBanned("Bob", "cheating"));
+        await watch.CheckAsync();
+        Assert.Equal("This account is suspended: cheating", await notice.Task.WaitAsync(TimeSpan.FromSeconds(10)));
+        await dropped.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.Equal(OnlineState.Connected, annClient.State); // nobody else is affected
+    }
+
+    [Fact]
     public async Task Changing_the_password_signs_out_other_devices()
     {
         SessionDto laptop = await Register("Pat");

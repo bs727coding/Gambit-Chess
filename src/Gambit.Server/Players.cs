@@ -12,6 +12,10 @@ public sealed class Player(string publicId, string name)
     public string PublicId { get; } = publicId;
     public string Name { get; set; } = name;
     public string? ConnectionId { get; set; }
+
+    /// <summary>Closes the current connection (a suspended or deleted account).</summary>
+    public Action? Kick { get; set; }
+
     public bool Connected => ConnectionId != null;
     public DateTimeOffset LastSeen { get; set; } = DateTimeOffset.UtcNow;
 }
@@ -25,12 +29,13 @@ public sealed class PlayerRegistry(RatingStore ratings)
     public int OnlineCount => _byConnection.Count;
 
     /// <summary>Registers a connection for an account; returns the connection it replaced, if any.</summary>
-    public Player Connect(string accountId, string username, string connectionId, out string? replaced)
+    public Player Connect(string accountId, string username, string connectionId, Action kick, out string? replaced)
     {
         Player p = _byId.GetOrAdd(accountId, id => new Player(id, username));
         replaced = p.ConnectionId;
         if (replaced != null) _byConnection.TryRemove(replaced, out _);
         p.ConnectionId = connectionId;
+        p.Kick = kick;
         p.Name = username; // renames take effect on the next connection
         p.LastSeen = DateTimeOffset.UtcNow;
         _byConnection[connectionId] = p;
@@ -38,6 +43,9 @@ public sealed class PlayerRegistry(RatingStore ratings)
     }
 
     public Player? ByConnection(string connectionId) => _byConnection.GetValueOrDefault(connectionId);
+
+    /// <summary>Everyone with a live connection.</summary>
+    public IReadOnlyList<Player> Connected() => [.. _byConnection.Values.Distinct()];
 
     public Player? ById(string accountId) => _byId.GetValueOrDefault(accountId);
 
