@@ -6,11 +6,15 @@ release goes out.
 ## Unreleased
 
 **Bots**
-* The bots from Acorn (250) to Jade (2000) now make mistakes like real players of their rating
+* Every bot from Acorn (250) to Lumen (2400) now makes mistakes like real players of its rating
   (Chess.com rapid scale): on the same positions, a bot blunders, makes mistakes and inaccuracies
   about as often as people rated like it (measured on 70,000 Lichess rapid games). The weakest bots
-  used to blunder three times as often as people at their level; Harbor, Iris and Jade used to
-  play far above their labels.
+  used to blunder three times as often as people at their level; Harbor and up used to play far
+  above their labels.
+* Each bot is a real step up from the one below it in games (checked with thousands of bot games):
+  Dash, Ember, Flint, Iris and Jade were retuned so no two neighbours play alike.
+* Kestrel and Lumen think a little longer (up to 3 and 4 seconds a move), so they play at their
+  calibrated strength on a typical PC.
 * No more random moves: a bot's blunders are now oversights, a natural-looking move that misses
   what the opponent can do next, like a person's.
 

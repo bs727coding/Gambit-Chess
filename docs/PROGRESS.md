@@ -2,67 +2,46 @@
 
 ## Current state (update at every milestone)
 
-Sessions 1–3 and 7 of the roadmap are complete, most of 4–6 and 8. Version 0.2.0: the app builds
-and runs natively on Arm64 (and x64), with Velopack installers and updates from the server.
+Sessions 1–5 and 7 of the roadmap are complete, most of 6 and 8. Version 0.2.0 (plus unreleased
+changes in CHANGELOG.md): the app builds and runs natively on Arm64 (and x64), with Velopack
+installers and updates from the server.
 
 | Area | Status |
 |---|---|
 | Toolchain | .NET SDK 10.0.401 Arm64 (machine-wide). Windows App SDK 2.5.1 via NuGet. No Visual Studio needed. |
-| Gambit.Core | Board, legal movegen (perft-verified, also king-less lesson positions), FEN/SAN/UCI/PGN (incl. variations), Game + draw rules, `MoveTree`, clock, Glicko-2, sessions (`IGameSession`), premove rules, openings (~150, embedded TSV), puzzles (embedded CSV), lessons (embedded JSON) |
-| Gambit.Engine | PVS + TT + QS/SEE + null-move + LMR + MultiPV; PeSTO eval; 13 bots with opening books; `GameReviewer` (parallel, move classes, accuracy) |
-| Gambit.App | Welcome screen (first run), Home, Play (bots, pass-and-play, online), Game (clocks, premoves, hints, takebacks, resume after restart, sounds, online rematch), Game Review (with plain-language explanations), Analysis (multi-core engine lines, position editor, variations), Puzzles (rated, Rush, Survival, daily, themes, openings), Learn (5 courses / 49 lessons, opening review), Online lobby, Profile (stats, rating chart, openings, ~50 achievements), Settings (themes, pieces, sounds, premoves, progress back up / restore / reset, updates); one window per profile |
-| Online | `Gambit.Server` (ASP.NET Core + SignalR, authoritative, rematches, spectators, rate limits; accounts with invite-only sign-up, SQLite `gambit.db`, admin commands), `Gambit.Online.Client` (`RemoteGameSession`, `AccountClient`), Dockerfile, docs/ONLINE.md; `./build.ps1 server` for LAN play |
-| Tools | `import_lichess_puzzles.py`, `Gambit.PuzzleGen` (experiments), `Gambit.BotArena` (ladder measurement), `Gambit.BotCalibration` + `extract_lichess_games.py` (bots vs real players), `Gambit.OnlineBot` (plays online, accepts rematches), `ui.ps1`, `ui-scroll.ps1`, `screenshot-quiet.ps1` |
-| Content | 21,162 puzzles from the Lichess puzzle DB (CC0; `tools/import_lichess_puzzles.py`): 400–1,100 per 100-point band from 400 to 2999, 49 practice themes with ≥ 120 each, 25 practice openings with ≥ 50 each; 49 lessons; tactic/mate solutions audited by the engine in tests |
+| Gambit.Core | Board, legal movegen (perft-verified, also king-less lesson positions), FEN/SAN/UCI/PGN (incl. variations), Game + draw rules, `MoveTree`, clock, Glicko-2, sessions (`IGameSession`), premove rules, openings (~150, embedded TSV), opening explorer (40k Lichess games, embedded move tree), puzzles (embedded CSV), lessons (embedded JSON) |
+| Gambit.Engine | PVS + TT + QS/SEE + null-move + LMR + MultiPV; PeSTO eval; 13 bots with opening books, calibrated against real players (Chess.com rapid scale) and checked in games (docs/BOT-CALIBRATION.md); `GameReviewer` (parallel, move classes, accuracy) |
+| Gambit.App | Welcome screen (first run), Home, Play (bots, pass-and-play with names and board turning, online), Game (clocks, premoves, hints, takebacks, resume after restart, sounds, online rematch), Game Review (with plain-language explanations), Analysis (multi-core engine lines, position editor, variations, opening explorer, play from here), Puzzles (rated, Rush, Survival, daily, themes, openings), Learn (5 courses / 52 lessons, opening review), Online (lobby, friends, direct challenges, chat), Profile (stats, rating chart, openings, ~50 achievements), Settings (board themes and custom colors, highlight color, pieces, sound packs, premoves, chat, progress back up / restore / reset, report a problem, updates); one window per profile |
+| Online | `Gambit.Server` (ASP.NET Core + SignalR, authoritative, rematches, spectators, rate limits; accounts with invite-only sign-up, SQLite `gambit.db` (schema 2), admin commands; friends with live status, direct challenges, chat, game history; protocol 3), `Gambit.Online.Client` (`RemoteGameSession`, `AccountClient`), Dockerfile, docs/ONLINE.md; `./build.ps1 server` for LAN play |
+| Tools | `import_lichess_puzzles.py`, `Gambit.PuzzleGen` (experiments), `Gambit.BotArena` (ladder in games, with `id.Property=value` variants), `build_explorer.py` (explorer data), `Gambit.BotCalibration` + `extract_lichess_games.py` (bots vs real players), `Gambit.OnlineBot` (plays online, accepts rematches), `ui.ps1`, `ui-scroll.ps1`, `screenshot-quiet.ps1` |
+| Content | 21,162 puzzles from the Lichess puzzle DB (CC0; `tools/import_lichess_puzzles.py`): 400–1,100 per 100-point band from 400 to 2999, 49 practice themes with ≥ 120 each, 25 practice openings with ≥ 50 each; 52 lessons; explorer: 14,826 moves from 40,452 Lichess rapid games; tactic/mate solutions audited by the engine in tests |
 | Install | `./build.ps1 package -ServerUrl …` → Velopack Setup.exe + portable zip + update packages for win-arm64 and win-x64 in `artifacts/releases` (docs/RELEASING.md); the server offers them at `/download` and `/releases`. Not installed on this PC (installer tests are the user's). Developer install: `./build.ps1 install` |
-| Tests | 206 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
+| Tests | 236 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
 
 ## Next steps
 
-**The user's list of 2026-10-05 (items 1-4 of "what's left", no Chess960), in progress:**
-1. Finish the bots: Kestrel and Lumen being fitted (grids running), then an arena run. *Open.*
-2. Quick wins: play from any position, pass-and-play names and turning board, plain-http
-   warning, bug report file. *Done.*
-3. Friends, direct challenges, chat, game history sync (protocol 3, schema 2). *Done, checked
-   live with two accounts on a local server.*
-4. Opening explorer, lessons (zwischenzug, X-ray, triangulation), custom board colors /
-   highlight styles / sound packs. *Open.*
+**The user's list of 2026-10-05 is done** (items 1–4 of "what's left"; no Chess960, at their
+request): the bots finished and checked in games, play from any position, pass-and-play names and
+board turning, the plain-http warning, bug report files, friends / direct challenges / chat / game
+history (protocol 3), the opening explorer, three lessons, and board and sound customisation.
 
-**Bot calibration against real players (2026-10-04, at the user's request): Acorn to Jade done.**
-Each bot now blunders, errs and finds the best move about as often as people at its rating
-(Chess.com rapid scale), measured on Lichess rapid games; random moves are gone (oversights
-instead, revision 4). Still to do, in docs/BOT-CALIBRATION.md "Next steps": **fit Kestrel and
-Lumen** (both far stronger than people at 2200/2400; give them 3–5 candidates first; finish the
-2400 people band), and play the new ladder in the arena. Run long calibrations where the PC
-won't sleep: this session's runs were killed twice by sleep. Data in `artifacts/calibration`
-(git-ignored; `artifacts/rapid-games.tsv` holds the extracted games).
+**For the user to try** (can't be checked from here): a real online game with a friend, with their
+PC as the server (LAN or Tailscale, RELEASING.md "Sharing without hosting"); the x64 installer on
+an Intel/AMD PC; the sound packs (Settings > Sound pack plays a sample); the retuned Iris and Jade.
 
-**Priority (from the user, 2026-10-02): a functional, clean, correct app over bot tuning.**
-The user's list of 2026-10-03 is done (QA pass, GamePage view model, inline variations, puzzles
-by opening, faster engine, onboarding) and the "Left" tooltip bug is fixed (confirmed by the user).
+**Candidates, for the user to pick:**
+* Chess960 (left out on 2026-10-05).
+* The explorer with a rating filter or more games: its data is one 150 MB slice of one month
+  (40k games); more needs a bigger Lichess download (ask first: size and source).
+* More people positions: 2400 (Lumen's fit rests on 352) and 3,000 per band (half the noise).
+* Accent color options; the full bishop-and-knight W manoeuvre lesson.
+* From the 2026-10-03 audit: a one-command release upload, walkout counts that survive a server
+  restart, an editable banned-words list (compiled into `NameRules.cs`).
+* No deployment, signing or Fly.io for now (the user, 2026-10-03). Parked unless asked:
+  localization, accessibility (the user excluded it twice).
 
-Proposed to the user on 2026-10-03, in this order (waiting for their pick):
-1. **Single-player polish: done** (2026-10-03): progress tools in Settings, spaced repetition for the
-   opening drills, a multi-core analysis board. The puzzle source link was dropped (the user's call).
-2. **Server ready to go online: done** (2026-10-03, built and tested locally, not deployed):
-   accounts with sign-in and invite-only sign-ups, SQLite, repeat-walkout pauses, name moderation,
-   backups. The user chose username + password (no email), SQLite, invite-only. Going live is the
-   Fly.io steps in docs/ONLINE.md, when the user wants (their account; they sign in themselves).
-3. **Distribution: done** (2026-10-03): Velopack installers for Arm64 and x64, updates from the
-   server (delta packages), a `/download` page, version 0.2.0 + CHANGELOG.md, the x64 build tested
-   under emulation, one window per profile. Code signing is the user's call (RELEASING.md).
-4. **With the user:** the Arm64 installer checked out (install, shortcuts, one window,
-   uninstall). Still open: the x64 installer on an Intel/AMD PC, a real online game with a friend.
-   **No deployment, signing or Fly.io for now (2026-10-03):** friends get the installer file, and the
-   user's PC is the server (LAN or Tailscale), as in RELEASING.md "Sharing without hosting".
-5. **Candidates found in the 2026-10-03 audit** (not started; the user picks): warn before signing
-   in over plain http:// to a non-local server (passwords travel unencrypted with port forwarding),
-   a way for friends to send a log/bug report (logs stay on their PC), a one-command release
-   upload (instead of sftp, ~400 MB a release), walkout counts that survive a server restart,
-   editable banned-words list (now compiled into `NameRules.cs`).
-6. **Parked unless asked:** bot ladder tuning (BOT-CALIBRATION.md), lessons on zwischenzug /
-   X-ray / triangulation, localization, accessibility (keyboard play, Narrator; the user said "no
-   accessibility" when asking for next steps, 2026-10-03).
+**Priority (from the user, 2026-10-02): a functional, clean, correct app over bot tuning** (bot
+work only on request).
 
 ## Known issues / notes
 
@@ -79,8 +58,9 @@ Proposed to the user on 2026-10-03, in this order (waiting for their pick):
   desktop, replacing the user's current desktop shortcut to the development build.
 * The x64 build was tested under emulation on the Snapdragon only, and Windows 10 never
   (`TargetPlatformMinVersion` 10.0.19041).
-* Time-limited bots (Jade and up) get ~1.2x more nodes since the engine speed-up, so they may be a
-  little stronger than BOT-CALIBRATION.md says (not re-measured; bot tuning is parked).
+* Bots are limited by depth or nodes, not time: Kestrel (4M nodes) and Lumen (5M) have time caps
+  of 3 s and 4 s a move, which bind first on a PC slower than ~2M nodes/s per core, so there they
+  play a little below their calibration. Timed games use the clock as before.
 * UI tests: `tools/ui.ps1` drives the app through UI Automation. Board squares are invokable
   elements (`sq-e4`), so moves can be played without the mouse:
   `./tools/ui.ps1 invoke -Name "Play"`, `./tools/ui.ps1 board -Moves "e2e4,g1f3"`.
@@ -351,3 +331,40 @@ Proposed to the user on 2026-10-03, in this order (waiting for their pick):
   is within ~1 point of accuracy of people at its rating. Test: an oversight grabs a defended pawn.
 * Kestrel and Lumen not fitted yet (expensive; see Next steps). The PC slept twice during long runs,
   which killed them; `request_keep_awake` helps against idle sleep only.
+
+### Session 4 — 2026-10-05: the user's list (no Chess960)
+* The user asked what was left to make Gambit the best, then picked items 1–4 except Chess960.
+* Quick wins: "Play from here" on the analysis board (a bot or pass and play, side, time control;
+  practice games are saved and listed but not counted); pass and play asks for both names and can
+  turn the board after each move; a warning before signing in over plain http:// to a server on the
+  internet (`ServerAddress.IsUnencryptedOverInternet`: private, loopback, .local/.lan/.home.arpa and
+  Tailscale addresses don't count); Settings > Report a problem saves a zip of the last 14 days of
+  logs and the settings without the online token.
+* Online with friends (protocol 3, server schema 2): friend requests by username with live
+  online/playing status, direct challenges only the friend can take (busy players decline
+  automatically), chat in online games (200 characters, 5 per 10 s, offensive words masked; Settings
+  can hide it), and `GET /api/games`, so games from other PCs appear in the game list (listed, not
+  counted). Verified live with two accounts on a local server.
+* Lessons 49 → 52: zwischenzug and x-ray (Lichess puzzle positions, each confirmed by the engine at
+  depth 8), triangulation (info and quiz steps: every white king move wins there).
+* Customisation: a Custom board theme (color pickers for both squares), a highlight color for the
+  last move and selection, and sound packs (Classic, Soft, Retro; synthesized by `gen_sounds.py`,
+  levels matched). Checked in the test window, dark and light.
+* Opening explorer: an Explorer tab beside Moves on the analysis board. 40,452 Lichess rapid games
+  (both players 1400+), first 15 moves, lines played ≥ 3 times: a 180 KB tree in Core, replayed at
+  first use with transpositions merged; a click plays the move (`tools/build_explorer.py`).
+* Bots: Kestrel and Lumen fitted (five candidates; Kestrel 92.4 accuracy vs people's 91.9 at 2200;
+  Lumen extrapolated). The first revision-4 arena run (45 games a step) suggested flat steps that
+  were mostly noise; playing the fast pairs on their own (thousands of games) and testing variants
+  showed that in games temperature is what counts and depth barely does. Dash, Ember, Flint, Iris
+  and Jade were retuned (Dash and Flint closer to people than before; Iris and Jade 1.3–1.7
+  accuracy points sharper than people, with their blunder rates); Kestrel and Lumen got 3 s / 4 s
+  time caps so their node budgets bind. Final ladder (bot-vs-bot): Acorn → Bramble +163, Bramble →
+  Clover +152, Clover → Dash +90, Dash → Ember +126, Ember → Flint +120, Flint → Gale +117, Gale →
+  Harbor +151, Harbor → Iris +187, Iris → Jade +228, Jade → Kestrel +133, Kestrel → Lumen +181.
+  docs/BOT-CALIBRATION.md has the details.
+* The PC went into standby twice during arena runs (10:50, 11:57), stalling them;
+  `request_keep_awake` doesn't stop a closed lid or a manual sleep. Two arena runs can't share a
+  results file (the writer locks it): use separate files and append them.
+* Tools: the arena takes `id.Property=value` overrides and lets node/depth-limited bots search to
+  their limits; `ui.ps1 invoke` opens combo boxes.

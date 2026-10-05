@@ -2,7 +2,8 @@
 
 Each bot is labelled with a rating on the **Chess.com rapid** scale. Since revision 4 (2026-10-04)
 a label means: *on the same positions, the bot blunders, makes mistakes and inaccuracies about as
-often as real players of that rating.* This page explains how that is measured and records the
+often as real players of that rating* — and, checked in games since 2026-10-05, *each bot is a
+real step up from the one below it.* This page explains how that is measured and records the
 results. The earlier self-play ladder (revisions 1–3) is kept at the end.
 
 ## Revision 4: calibrated against real players (2026-10-04)
@@ -89,66 +90,136 @@ erred at all.
   on its own band can look stronger on calmer ones. Every bot was therefore also played on one
   shared set of positions, where each must be stronger than the one below it. Two steps came out
   flat and were nudged within the people data's noise: Dash (more oversights, warmer) and Flint
-  (warmer). Iris and Jade consider five candidate moves instead of 3 and 2: with fewer, a
+  (warmer). Games later undid Dash's nudge and took Flint further (below). Iris and Jade consider five candidate moves instead of 3 and 2: with fewer, a
   temperature can't produce the small inaccuracies people make, and the fit used too many
   oversights instead.
+
+The settings now (Dash, Ember, Flint, Iris and Jade as retuned in games on 2026-10-05, below; their
+first fits were temperature 25 / 8%, 35 / 7%, 30 / 5.5%, 60 / 2.5% and 40, noise 60 / 4%):
 
 | Bot | Rating | Depth | Nodes | Candidates | Temperature | Noise | Oversights |
 |---|---|---|---|---|---|---|---|
 | Acorn | 250 | 1 | – | all | 35 | 35 | 15.75% |
 | Bramble | 400 | 1 | – | all | 20 | 20 | 10.75% |
 | Clover | 600 | 2 | – | all | 35 | 35 | 7.5% |
-| Dash | 800 | 2 | – | all | 25 | 25 | 8% |
-| Ember | 1000 | 3 | 40k | 12 | 35 | 35 | 7% |
-| Flint | 1200 | 4 | 80k | 8 | 30 | 30 | 5.5% |
+| Dash | 800 | 2 | – | all | 20 | 20 | 7.5% |
+| Ember | 1000 | 3 | 40k | 12 | 25 | 25 | 8.25% |
+| Flint | 1200 | 4 | 80k | 8 | 40 | 40 | 5.5% |
 | Gale | 1400 | 5 | 150k | 6 | 55 | 55 | 3.75% |
 | Harbor | 1600 | 6 | 300k | 4 | 35 | 35 | 5.75% |
-| Iris | 1800 | 8 | 700k | 5 | 60 | 60 | 2.5% |
-| Jade | 2000 | 10 | 1.5M | 5 | 40 | 60 | 4% |
-| Kestrel | 2200 | 14 | 4M | 1 | – | – | – (not fitted yet) |
-| Lumen | 2400 | – | 3 s | 1 | – | – | – (not fitted yet) |
+| Iris | 1800 | 8 | 700k | 5 | 35 | 35 | 2.5% |
+| Jade | 2000 | 10 | 1.5M | 5 | 20 | 25 | 2.5% |
+| Kestrel | 2200 | 14 | 4M | 5 | 30 | 45 | 1% |
+| Lumen | 2400 | – | 5M | 5 | 30 | 30 | – |
 
 ### The bots, after
 
-On their own bands (Acorn to Gale 1,500 positions each; Harbor 800, Iris 800, Jade 600):
+On their own bands (Acorn to Gale and Kestrel 1,500 positions each; Harbor 800, Iris 800, Jade 600,
+Lumen 352), with the settings above:
 
 | Bot | Rating | Blunders (people → bot) | Mistakes | Inaccuracies | Accuracy | Same move as the person |
 |---|---|---|---|---|---|---|
 | Acorn | 250 | 7.6% → 8.3% | 9.2% → 9.7% | 11.6% → 13.0% | 83.6 → 82.5 | 23% (was 9%) |
 | Bramble | 400 | 7.0% → 7.0% | 9.3% → 7.7% | 12.1% → 12.3% | 84.0 → 84.1 | 30% (was 12%) |
 | Clover | 600 | 5.6% → 4.7% | 8.0% → 8.0% | 12.0% → 15.2% | 85.7 → 85.1 | 27% (was 15%) |
-| Dash | 800 | 4.8% → 6.0% | 8.1% → 7.6% | 11.5% → 13.1% | 85.8 → 84.6 | 29% (was 18%) |
-| Ember | 1000 | 4.1% → 4.0% | 7.1% → 5.7% | 11.6% → 13.6% | 86.8 → 86.6 | 28% (was 22%) |
-| Flint | 1200 | 2.9% → 3.6% | 5.5% → 5.1% | 11.2% → 13.5% | 88.3 → 87.2 | 29% (was 27%) |
+| Dash | 800 | 4.8% → 4.8% | 8.1% → 6.7% | 11.5% → 14.2% | 85.8 → 85.6 | 29% (was 18%) |
+| Ember | 1000 | 4.1% → 4.6% | 7.1% → 4.8% | 11.6% → 12.0% | 86.8 → 86.8 | 28% (was 22%) |
+| Flint | 1200 | 2.9% → 3.0% | 5.5% → 5.5% | 11.2% → 13.1% | 88.3 → 87.6 | 29% (was 27%) |
 | Gale | 1400 | 3.3% → 3.4% | 7.3% → 5.4% | 11.9% → 13.9% | 87.1 → 87.0 | 26% (was 31%) |
 | Harbor | 1600 | 2.8% → 3.5% | 4.9% → 4.8% | 9.0% → 10.1% | 89.2 → 88.6 | |
-| Iris | 1800 | 1.2% → 1.2% | 6.4% → 5.0% | 10.9% → 10.2% | 88.9 → 89.2 | |
-| Jade | 2000 | 2.3% → 2.0% | 3.7% → 4.0% | 9.8% → 9.2% | 89.8 → 89.6 | |
+| Iris | 1800 | 1.2% → 1.2% | 6.4% → 4.5% | 10.9% → 8.5% | 88.9 → **90.2** | 29% |
+| Jade | 2000 | 2.3% → 2.0% | 3.7% → 1.7% | 9.8% → 8.2% | 89.8 → **91.5** | 38% |
+| Kestrel | 2200 | 0.8% → 0.4% | 2.9% → 1.6% | 8.0% → 7.5% | 91.9 → 92.4 | 34% |
+| Lumen | 2400 | 0.9% → 0.0% | 1.7% → 0.6% | 6.0% → 4.8% | 92.5 → **94.2** | 38% |
 
-Every fitted bot is within about one point of accuracy of real players at its rating, and the weak
-bots now play the move a person chose far more often. On shared positions accuracy rises with
-the label: on the 1000 band's positions Acorn 79.3, Bramble 83.6, Clover 83.7, Dash 85.0, Ember
-86.0, Flint 88.1, Gale 88.0 (average loss 115, 92, 82, 76, 74, 61, 57 cp); on the 2000 band's
-Gale 85.5, Harbor 87.1, Iris 88.0, Jade 89.5. Neighbours whose numbers are this close (Bramble
-and Clover, Flint and Gale) are within the measurement noise of about ±0.5.
+Acorn to Harbor and Kestrel are within about one point of accuracy of real players at their rating,
+and the weak bots now play the move a person chose far more often. Iris, Jade and Lumen are 1.3–1.7
+points more accurate than people at theirs, but blunder no more often: that is the price of a
+ladder whose steps are real in games (below). On shared positions accuracy rises with the label
+(first fits, before the retune): on the 1000 band's positions Acorn 79.3, Bramble 83.6, Clover
+83.7, Dash 85.0, Ember 86.0, Flint 88.1, Gale 88.0 (average loss 115, 92, 82, 76, 74, 61, 57 cp);
+on the 2000 band's Gale 85.5, Harbor 87.1, Iris 88.0, Jade 89.5. Neighbours whose numbers are this
+close (Bramble and Clover, Flint and Gale) are within the measurement noise of about ±0.5.
+
+### Kestrel and Lumen (2026-10-05)
+
+With one candidate move a temperature does nothing, so both now weigh five. Kestrel was fitted on
+the 2200 band: temperature 30, noise 45, 1% oversights, and plays 92.4 accuracy there against the
+people's 91.9 (it was 95.9). The 2400 band has only 352 positions (the costliest to score), too few
+to fit on, so Lumen follows the trend from 2000 to 2200: temperature 30, no oversights, capped at
+5M nodes so its strength doesn't depend on the PC. Both now search to their node budgets rather
+than the clock: their time caps went from 1.8 s and 3 s a move (which a typical PC reached first,
+at ~3M nodes/s) to 3 s and 4 s.
+
+### In games: the arena (2026-10-05)
+
+`tools/Gambit.BotArena` plays neighbouring bots against each other (method at the end). The first
+revision-4 run gave each step only 45 games, because the slow top pairs set the pace for all, and
+its ±100 margins misled: Dash → Ember (+23) and Harbor → Iris (−8) looked flat. Playing the fast
+pairs on their own (thousands of games in minutes) and trying variants of a bot with
+`id.Property=value` overrides showed the real picture:
+
+* The low end was fine: Dash → Ember +132 ± 9 over 6,883 games, Ember → Flint +227 ± 10.
+* The middle was squeezed: Harbor to Jade spanned only ~+155 in all, whatever Iris's settings
+  (baseline Harbor → Iris +86 ± 44, Iris → Jade +67 ± 44 over 252 games each).
+* **In games, temperature is what counts.** A deeper search did nothing measurable (Iris at depth 10
+  instead of 8, Jade at 12 instead of 10), while a cooler bot gained 100–250. Per move the same
+  change barely shows, because people at 1600, 1800 and 2000 differ little per move (88.8, 88.8,
+  90.0 accuracy) and a lot in games.
+
+| Change | Games per step | Effect |
+|---|---|---|
+| Ember: temperature 35 → 25, oversights 7% → 8.25% | 7,293 | Dash → Ember +132 → +155, Ember → Flint +227 → +199 |
+| Dash: temperature 25 → 20, oversights 8% → 7.5% (its best fit, before the nudge) | 872 | Clover → Dash +42 → +101, Dash → Ember +162 → +116 |
+| Flint: temperature 30 → 40 | 563 | Ember → Flint +177 → +119, Flint → Gale +56 → +108 |
+| Gale: temperature 55 → 35 with 7% oversights (to keep its blunder rate) | 872 | no gain: the extra oversights cancel the cooler choice |
+| Iris: temperature and noise 60 → 35 | 186 | Harbor → Iris +86 → +201 ± 59 |
+| Jade: temperature 40 → 20, noise 60 → 25, oversights 4% → 2.5% | 339 | Iris (new) → Jade −40 → +169 ± 41 |
+| Iris at depth 10 / Jade at depth 12 (same temperatures) | 78 / 165 | no change within the margins |
+
+Per move, Dash, Ember and Flint match their people as well as or better than before (85.6, 86.8
+and 87.6 accuracy against 85.8, 86.8 and 88.3); Iris and Jade now find the best move a little more
+often than people at their rating, but blunder about as often (table above). The arena now lets bots with a node or depth limit search to it, without their time cap
+(ten games run at once, so the clock would cut Kestrel and Lumen short).
+
+The whole ladder with these settings (each segment played on its own: the fast low end, the middle,
+then the slow top; bot-vs-bot gaps, not human rating gaps):
+
+| Step | Games | Stronger bot scores | Measured gap (±95%) | Labelled gap | Avg plies |
+|---|---|---|---|---|---|
+| Acorn → Bramble | 2061 | 72% (+1409 =144 −508) | +163 ± 17 | 150 | 80 |
+| Bramble → Clover | 2061 | 71% (+1388 =135 −538) | +152 ± 16 | 200 | 86 |
+| Clover → Dash | 546 | 63% (+335 =15 −196) | +90 ± 30 | 200 | 90 |
+| Dash → Ember | 546 | 67% (+364 =8 −174) | +126 ± 31 | 200 | 87 |
+| Ember → Flint | 546 | 67% (+359 =9 −178) | +120 ± 31 | 200 | 90 |
+| Flint → Gale | 546 | 66% (+356 =11 −179) | +117 ± 31 | 200 | 99 |
+| Gale → Harbor | 2061 | 70% (+1438 =28 −595) | +151 ± 16 | 200 | 93 |
+| Harbor → Iris | 267 | 75% (+192 =14 −61) | +187 ± 48 | 200 | 101 |
+| Iris → Jade | 267 | 79% (+207 =7 −53) | +228 ± 51 | 200 | 107 |
+| Jade → Kestrel | 115 | 68% (+73 =11 −31) | +133 ± 68 | 200 | 121 |
+| Kestrel → Lumen | 115 | 74% (+76 =18 −21) | +181 ± 72 | 200 | 132 |
+
+Every step is a real one: the stronger bot scores 63–79% and no margin reaches zero. Bot-vs-bot
+gaps don't convert directly into human rating points, so they aren't expected to equal the labels'
+200. Chained and anchored at Gale = 1400: Acorn 632, Bramble 794, Clover 947, Dash 1037, Ember 1163, Flint 1283, Gale 1400, Harbor 1551, Iris 1737, Jade 1966, Kestrel 2099, Lumen 2280.
 
 ### Caveats
 
 * The rating conversion is the biggest uncertainty, most of all at the extrapolated ends.
 * The yardstick is our own engine at a limited budget. For the strongest bots it is barely
   stronger than the bot, so it sees the errors the bot's noise and oversights add, not its search's.
-* Measured on positions, not in games. Bots still convert won endgames perfectly (revision 2),
-  unlike real beginners, and bot-vs-bot games under revision 4 haven't been played yet.
+* The labels come from positions; the arena only checks that each step is real. Bot-vs-bot gaps
+  aren't human rating gaps (a bot punishes another bot's errors more consistently than people do).
+  Bots still convert won endgames perfectly (revision 2), unlike real beginners.
 * Moves made with less than 30 seconds left were left out, so time-scramble blunders aren't in the
   targets.
 
 ### Next steps
 
-* **Kestrel and Lumen:** both are far stronger than people at 2200/2400. Give them 3–5 candidates
-  (with one, a temperature does nothing) and fit them; finish the 2400 band first (`humans ...
-  1500 2400`, ~350 positions at 5M nodes, best run where the PC won't sleep).
-* Play the revision-4 ladder in the arena to see each step in real games.
-* More positions per band (3,000) would halve the noise that blurs neighbouring bots.
+* More positions per band (3,000) would halve the noise that blurs neighbouring bots, and the
+  2400 band (352 positions) needs more before Lumen can be fitted rather than extrapolated.
+* Kestrel's and Lumen's time caps bind on PCs slower than ~2M nodes/s per core (they then play a
+  little weaker); a quick speed check at startup could scale them.
 
 ### How to repeat it
 
@@ -172,8 +243,9 @@ each other. That shows whether each step is a real step, not what rating it corr
 
 ### Method
 
-`tools/Gambit.BotArena` plays each pair of neighbouring bots against each other: untimed games (each
-bot uses its app settings and `ThinkTimeMs`), alternating colours, opening books on, 400-ply cap,
+`tools/Gambit.BotArena` plays each pair of neighbouring bots against each other: untimed games
+(each bot uses its app settings; since 2026-10-05 a bot with a node or depth limit searches to it
+without its `ThinkTimeMs`), alternating colours, opening books on, 400-ply cap,
 many games in parallel at below-normal priority. Every game is appended to `artifacts/arena.csv`
 (local, git-ignored), so runs accumulate. Each row records a fingerprint of both bots' strength
 settings, and only games played with the current settings count — after tuning a bot, its old
@@ -183,7 +255,12 @@ gap, `400·log10(s / (1 − s))`, with a 95% margin.
 ```
 dotnet run -c Release --project tools/Gambit.BotArena -- 45 artifacts/arena.csv acorn,bramble,clover,dash,ember,flint,gale,harbor,iris,jade,kestrel,lumen
 dotnet run -c Release --project tools/Gambit.BotArena -- 0 artifacts/arena.csv    # summary of what's recorded
+dotnet run -c Release --project tools/Gambit.BotArena -- 5 artifacts/variants.csv harbor,iris,jade iris.Temperature=35
 ```
+
+Games are spread evenly over the pairs, so the slowest pair sets the pace: play the fast low end,
+the middle and the slow top (Jade, Kestrel, Lumen) as separate runs. Overrides try a variant
+without editing the roster; its games are recorded under the variant's fingerprint.
 
 Monolith ("Max") was left out: at 6 s per move its games are very slow, and it has no number to check.
 

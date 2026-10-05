@@ -1,12 +1,17 @@
 // Gambit bot arena: plays neighbouring bots on the ladder against each other to check that every
 // step is a real, even jump in strength.
-//   dotnet run -c Release --project tools/Gambit.BotArena -- <minutes> [results.csv] [bot ids, comma-separated]
+//   dotnet run -c Release --project tools/Gambit.BotArena -- <minutes> [results.csv] [bot ids, comma-separated] [id.Property=value ...]
 //   dotnet run -c Release --project tools/Gambit.BotArena -- 0 artifacts/arena.csv        (summary only)
-// Games are untimed (bots use their ThinkTimeMs, as in untimed games in the app). Every finished game
+// Overrides try other settings without editing the roster (ember.Temperature=20); their games are
+// recorded under that variant's fingerprint, apart from the roster's.
+// Games are untimed. Bots with a node or depth limit search to it, without their ThinkTimeMs: many
+// games run at once, so the clock would cut them short, and on a normal PC the limits (not the clock)
+// bound them in the app too (as in tools/Gambit.BotCalibration). Every finished game
 // is appended to the CSV, so runs accumulate and an interrupted run loses nothing. Each row carries a
 // fingerprint of both bots' strength settings; after a bot is tuned, its old games no longer count.
 using System.Diagnostics;
 using System.Globalization;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using Gambit.Core.Board;
@@ -16,9 +21,11 @@ using Gambit.Engine.Bots;
 
 double minutes = args.Length > 0 ? double.Parse(args[0], CultureInfo.InvariantCulture) : 10;
 string output = Path.GetFullPath(args.Length > 1 ? args[1] : Path.Combine("artifacts", "arena.csv"));
-List<BotProfile> bots = args.Length > 2
+List<string> overrides = args.Skip(3).ToList();
+List<BotProfile> bots = (args.Length > 2
     ? args[2].Split(',', StringSplitOptions.TrimEntries).Select(BotRoster.Get).ToList()
-    : BotRoster.Bots.ToList();
+    : BotRoster.Bots.ToList()).Select(b => Override(b, overrides)).ToList();
+foreach (string o in overrides) Console.WriteLine($"Override: {o}");
 int workers = Math.Max(1, Environment.ProcessorCount - 2);
 // Stay out of the way of whatever else the user is doing.
 Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.BelowNormal;
@@ -73,7 +80,7 @@ Summarize(rows, pairs);
 
 static Row Play(BotProfile low, BotProfile high, bool highIsWhite, Random rng)
 {
-    BotProfile w = highIsWhite ? high : low, b = highIsWhite ? low : high;
+    BotProfile w = Unhurried(highIsWhite ? high : low), b = Unhurried(highIsWhite ? low : high);
     var white = new BotMoveProvider(w, rng.Next(), hashMegabytes: 16) { HumanLikeDelay = false };
     var black = new BotMoveProvider(b, rng.Next(), hashMegabytes: 16) { HumanLikeDelay = false };
     var game = new Game { AutoDrawRules = true };
@@ -88,6 +95,27 @@ static Row Play(BotProfile low, BotProfile high, bool highIsWhite, Random rng)
     return new Row(low.Id, high.Id, highIsWhite, highIsWhite ? whiteScore : 1 - whiteScore, game.Moves.Count, Strength.Pair(low, high));
 }
 
+
+/// <summary>The bot without its time limit, if a node or depth limit bounds its search anyway.</summary>
+static BotProfile Unhurried(BotProfile p) =>
+    p.MaxNodes < long.MaxValue || p.MaxDepth < 64 ? p with { ThinkTimeMs = Math.Max(p.ThinkTimeMs, 60_000) } : p;
+
+/// <summary>Applies "id.Property=value" overrides (e.g. ember.Temperature=20) to a copy of the profile.</summary>
+static BotProfile Override(BotProfile bot, List<string> overrides)
+{
+    foreach (string o in overrides)
+    {
+        int dot = o.IndexOf('.'), eq = o.IndexOf('=');
+        if (dot < 0 || eq < dot || o[..dot] != bot.Id) continue;
+        PropertyInfo prop = typeof(BotProfile).GetProperty(o[(dot + 1)..eq])
+            ?? throw new ArgumentException($"No property {o[(dot + 1)..eq]} on BotProfile");
+        Type type = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+        object value = type.IsEnum ? Enum.Parse(type, o[(eq + 1)..], ignoreCase: true) : Convert.ChangeType(o[(eq + 1)..], type, CultureInfo.InvariantCulture);
+        bot = bot with { };
+        prop.SetValue(bot, value);
+    }
+    return bot;
+}
 
 // Elo gap from a score: D = 400*log10(s / (1 - s)); the 95% margin uses the binomial standard error.
 static void Summarize(List<Row> rows, List<(BotProfile Low, BotProfile High)> pairs)
