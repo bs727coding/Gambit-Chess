@@ -14,6 +14,11 @@ public sealed record BoardTheme(string Id, string Name, Color Light, Color Dark,
     public Color HintColor { get; init; } = ColorHelper.FromArgb(40, 0, 0, 0);
 
     public Color CheckColor { get; init; } = ColorHelper.FromArgb(255, 235, 64, 52);
+
+    /// <summary>The app's accent with this board (buttons, selections): hand-picked, else made from the dark squares.</summary>
+    public Color? AccentColor { get; init; }
+
+    public Color Accent => AccentColor ?? AppAccent.FromSquare(Dark);
 }
 
 public static class BoardThemes
@@ -65,14 +70,14 @@ public static class BoardThemes
 
     public static IReadOnlyList<BoardTheme> All { get; } =
     [
-        new("green", "Tournament green", Hex("#EBECD0"), Hex("#739552"), Hex("#FFFF33", 120)),
-        new("brown", "Walnut", Hex("#F0D9B5"), Hex("#B58863"), Hex("#9BC700", 110)),
-        new("blue", "Glacier", Hex("#DEE3E6"), Hex("#8CA2AD"), Hex("#9BC700", 110)),
-        new("slate", "Slate", Hex("#E3E6EA"), Hex("#7A8696"), Hex("#4CC2FF", 100)),
-        new("purple", "Amethyst", Hex("#F0F1F0"), Hex("#8476BA"), Hex("#FFFF33", 105)),
-        new("coral", "Coral", Hex("#F4E3D7"), Hex("#D08B6D"), Hex("#FFE14D", 120)),
-        new("midnight", "Midnight", Hex("#A4ADBD"), Hex("#4C566A"), Hex("#88C0D0", 130)),
-        new("mono", "Graphite", Hex("#D9D9D9"), Hex("#8C8C8C"), Hex("#FFD54F", 120)),
+        new("green", "Tournament green", Hex("#EBECD0"), Hex("#739552"), Hex("#FFFF33", 120)) { AccentColor = Hex("#5A8A35") },
+        new("brown", "Walnut", Hex("#F0D9B5"), Hex("#B58863"), Hex("#9BC700", 110)) { AccentColor = Hex("#A86F45") },
+        new("blue", "Glacier", Hex("#DEE3E6"), Hex("#8CA2AD"), Hex("#9BC700", 110)) { AccentColor = Hex("#4A7F99") },
+        new("slate", "Slate", Hex("#E3E6EA"), Hex("#7A8696"), Hex("#4CC2FF", 100)) { AccentColor = Hex("#50709A") },
+        new("purple", "Amethyst", Hex("#F0F1F0"), Hex("#8476BA"), Hex("#FFFF33", 105)) { AccentColor = Hex("#7558C0") },
+        new("coral", "Coral", Hex("#F4E3D7"), Hex("#D08B6D"), Hex("#FFE14D", 120)) { AccentColor = Hex("#C0603C") },
+        new("midnight", "Midnight", Hex("#A4ADBD"), Hex("#4C566A"), Hex("#88C0D0", 130)) { AccentColor = Hex("#5E81AC") },
+        new("mono", "Graphite", Hex("#D9D9D9"), Hex("#8C8C8C"), Hex("#FFD54F", 120)) { AccentColor = Hex("#677386") },
     ];
 
     public static BoardTheme Get(string id) => All.FirstOrDefault(t => t.Id == id) ?? All[0];

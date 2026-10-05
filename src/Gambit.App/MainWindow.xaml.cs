@@ -25,6 +25,7 @@ public sealed partial class MainWindow : Window
     };
 
     private bool _suppressNavigation;
+    private readonly Microsoft.UI.Dispatching.DispatcherQueueTimer _accentTimer;
     private readonly Queue<AchievementDef> _achievementQueue = new();
     private bool _showingAchievement;
 
@@ -48,13 +49,24 @@ public sealed partial class MainWindow : Window
 
         SizeAndCenter();
         ApplyTheme();
+        _accentTimer = DispatcherQueue.CreateTimer();
+        _accentTimer.Interval = TimeSpan.FromMilliseconds(250);
+        _accentTimer.IsRepeating = false;
+        _accentTimer.Tick += (_, _) => ApplyAccent();
         App.Settings.Current.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(AppSettings.Theme)) ApplyTheme();
+            // The accent follows the board theme (debounced: a color picker changes it continuously).
+            if (e.PropertyName is nameof(AppSettings.BoardTheme) or nameof(AppSettings.CustomDarkSquare) or nameof(AppSettings.CustomLightSquare))
+            {
+                _accentTimer.Stop();
+                _accentTimer.Start();
+            }
         };
         RootGrid.ActualThemeChanged += (_, _) => UpdateCaptionButtons();
 
         NavView.ItemInvoked += NavView_ItemInvoked;
+        NavView.Loaded += (_, _) => OpenPaneOnHover();
         AchievementService.Instance.Unlocked += def => DispatcherQueue.TryEnqueue(() =>
         {
             _achievementQueue.Enqueue(def);
@@ -77,6 +89,28 @@ public sealed partial class MainWindow : Window
             NavView.Visibility = Visibility.Visible;
             if (next == "home") ContentFrame.Navigate(typeof(HomePage), null, new EntranceNavigationTransitionInfo()); // shows the new name and suggestions
             else NavigateTo(next);
+        };
+    }
+
+    /// <summary>
+    /// The menu is an icon rail; resting the mouse on it for a moment opens it over the page with the
+    /// labels, and it closes again when the mouse leaves (the button at the top still opens it too).
+    /// </summary>
+    private void OpenPaneOnHover()
+    {
+        if (Helpers.Ui.FindDescendant(NavView, "PaneContentGrid") is not FrameworkElement pane) return;
+        Microsoft.UI.Dispatching.DispatcherQueueTimer timer = DispatcherQueue.CreateTimer();
+        timer.Interval = TimeSpan.FromMilliseconds(400);
+        timer.IsRepeating = false;
+        timer.Tick += (_, _) => NavView.IsPaneOpen = true;
+        pane.PointerEntered += (_, e) =>
+        {
+            if (!NavView.IsPaneOpen && e.Pointer.PointerDeviceType == Microsoft.UI.Input.PointerDeviceType.Mouse) timer.Start();
+        };
+        pane.PointerExited += (_, _) =>
+        {
+            timer.Stop();
+            NavView.IsPaneOpen = false;
         };
     }
 
@@ -210,6 +244,21 @@ public sealed partial class MainWindow : Window
             _ => ElementTheme.Default,
         };
         UpdateCaptionButtons();
+    }
+
+    /// <summary>Takes the accent from the board theme and re-applies the theme so every brush picks it up.</summary>
+    private void ApplyAccent()
+    {
+        Windows.UI.Color accent = Helpers.BoardSettings.CurrentTheme(App.Settings.Current).Accent;
+        if (accent == Theming.AppAccent.Current) return;
+        Theming.AppAccent.Apply(accent);
+        ElementTheme requested = RootGrid.RequestedTheme;
+        RootGrid.RequestedTheme = RootGrid.ActualTheme == ElementTheme.Dark ? ElementTheme.Light : ElementTheme.Dark;
+        DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.High, () =>
+        {
+            RootGrid.RequestedTheme = requested;
+            UpdateCaptionButtons();
+        });
     }
 
     private void UpdateCaptionButtons()

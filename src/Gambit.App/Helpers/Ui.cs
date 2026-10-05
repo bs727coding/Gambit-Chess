@@ -20,6 +20,18 @@ public static class Ui
 
     public static SolidColorBrush Brush(string hex, byte alpha = 255) => new(ParseColor(hex, alpha));
 
+    /// <summary>The first element named <paramref name="name"/> below <paramref name="root"/> in the visual tree (template parts too).</summary>
+    public static FrameworkElement? FindDescendant(DependencyObject root, string name)
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            DependencyObject child = VisualTreeHelper.GetChild(root, i);
+            if (child is FrameworkElement fe && fe.Name == name) return fe;
+            if (FindDescendant(child, name) is FrameworkElement found) return found;
+        }
+        return null;
+    }
+
     /// <summary>
     /// Theme-neutral helpers for code-built UI. (Looking up theme brushes from Application resources in
     /// code follows the *system* theme, not the app's chosen theme, so code-built elements use the

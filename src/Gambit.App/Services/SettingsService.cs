@@ -48,6 +48,11 @@ public sealed partial class AppSettings : ObservableObject
     [ObservableProperty] public partial string LastWhiteName { get; set; } = "";
     [ObservableProperty] public partial string LastBlackName { get; set; } = "";
     [ObservableProperty] public partial bool PassAndPlayFlip { get; set; }
+    [ObservableProperty] public partial bool PassAndPlayTakebacks { get; set; } = true;
+    [ObservableProperty] public partial string PassAndPlayTimeControl { get; set; } = "unlimited";
+
+    /// <summary>The Play page's last tab: "computer", "passandplay" or "online".</summary>
+    [ObservableProperty] public partial string LastPlayMode { get; set; } = "computer";
 
     /// <summary>Show the chat panel in online games.</summary>
     [ObservableProperty] public partial bool ShowChat { get; set; } = true;

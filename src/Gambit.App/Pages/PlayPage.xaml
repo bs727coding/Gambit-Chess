@@ -5,18 +5,19 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Gambit.App.Pages">
 
-    <Grid Padding="32,16,32,24" RowSpacing="16">
+    <Page.Resources>
+        <CollectionViewSource x:Name="BotTiers" IsSourceGrouped="True" />
+    </Page.Resources>
+
+    <Grid Padding="32,16,32,24" RowSpacing="8">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <StackPanel>
-            <TextBlock Text="Play" Style="{StaticResource PageTitleStyle}" />
-            <TextBlock Text="Pick an opponent. Bots run entirely on your PC — from total beginner to full engine strength."
-                       Style="{StaticResource SecondaryTextStyle}" />
-        </StackPanel>
+        <TextBlock Text="Play" Style="{StaticResource PageTitleStyle}" />
 
         <InfoBar x:Name="ResumeBar" Grid.Row="1" IsOpen="False" IsClosable="False" Severity="Informational"
                  Title="Game in progress" Message="You have an unfinished game.">
@@ -25,147 +26,232 @@
             </InfoBar.ActionButton>
         </InfoBar>
 
-        <Grid Grid.Row="2" ColumnSpacing="24">
+        <SelectorBar x:Name="ModeTabs" Grid.Row="2" Margin="-12,0,0,0" SelectionChanged="ModeTabs_SelectionChanged">
+            <SelectorBarItem x:Name="ComputerTab" Text="Computer" Tag="computer" AutomationProperties.Name="Computer">
+                <SelectorBarItem.Icon>
+                    <FontIcon Glyph="&#xE99A;" />
+                </SelectorBarItem.Icon>
+            </SelectorBarItem>
+            <SelectorBarItem x:Name="PassAndPlayTab" Text="Pass and play" Tag="passandplay" AutomationProperties.Name="Pass and play">
+                <SelectorBarItem.Icon>
+                    <FontIcon Glyph="&#xE716;" />
+                </SelectorBarItem.Icon>
+            </SelectorBarItem>
+            <SelectorBarItem x:Name="OnlineTab" Text="Online" Tag="online" AutomationProperties.Name="Online">
+                <SelectorBarItem.Icon>
+                    <FontIcon Glyph="&#xE774;" />
+                </SelectorBarItem.Icon>
+            </SelectorBarItem>
+        </SelectorBar>
+
+        <!-- ============================================================ Computer -->
+        <Grid x:Name="ComputerView" Grid.Row="3" ColumnSpacing="24">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="360" />
+                <ColumnDefinition Width="340" />
             </Grid.ColumnDefinitions>
 
-            <!-- Bot roster -->
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel Spacing="8" Padding="0,0,8,16">
-                    <TextBlock Text="Computer opponents" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                    <GridView x:Name="BotGrid" SelectionMode="Single" IsItemClickEnabled="False"
-                              SelectionChanged="BotGrid_SelectionChanged" Padding="0">
-                        <GridView.ItemTemplate>
-                            <DataTemplate x:DataType="local:BotCardModel">
-                                <Grid Width="150" Height="172" Padding="8" RowSpacing="4">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="*" />
-                                    </Grid.RowDefinitions>
-                                    <Grid HorizontalAlignment="Center" Margin="0,6,0,4">
-                                        <Border Width="64" Height="64" CornerRadius="32" Background="{x:Bind AvatarBrush}">
-                                            <TextBlock Text="{x:Bind Monogram}" FontSize="27" FontWeight="SemiBold" Foreground="White"
-                                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                        </Border>
-                                        <Border Width="22" Height="22" CornerRadius="11" HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                                                Margin="0,0,-4,-2" Background="#2E7D32" Visibility="{x:Bind BeatenVisibility}"
-                                                ToolTipService.ToolTip="You've beaten this bot">
-                                            <FontIcon Glyph="&#xE73E;" FontSize="12" Foreground="White" />
-                                        </Border>
-                                    </Grid>
-                                    <TextBlock Grid.Row="1" Text="{x:Bind Name}" HorizontalAlignment="Center" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                                    <TextBlock Grid.Row="2" Text="{x:Bind RatingText}" HorizontalAlignment="Center"
+            <GridView x:Name="BotGrid" SelectionMode="Single" IsItemClickEnabled="False"
+                      SelectionChanged="BotGrid_SelectionChanged" Padding="0,0,0,16" AutomationProperties.Name="Bots">
+                <GridView.GroupStyle>
+                    <GroupStyle>
+                        <GroupStyle.HeaderTemplate>
+                            <DataTemplate x:DataType="local:BotTier">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="{x:Bind Title}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <TextBlock Text="{x:Bind Range}" Style="{StaticResource CaptionTextBlockStyle}" VerticalAlignment="Center"
                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                    <TextBlock Grid.Row="3" Text="{x:Bind RecordText}" HorizontalAlignment="Center" VerticalAlignment="Bottom"
-                                               Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
-                                </Grid>
+                                </StackPanel>
                             </DataTemplate>
-                        </GridView.ItemTemplate>
-                    </GridView>
+                        </GroupStyle.HeaderTemplate>
+                    </GroupStyle>
+                </GridView.GroupStyle>
+                <GridView.ItemTemplate>
+                    <DataTemplate x:DataType="local:BotCardModel">
+                        <Grid Width="184" Height="64" Padding="10,8" ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid VerticalAlignment="Center">
+                                <Border Width="40" Height="40" CornerRadius="20" Background="{x:Bind AvatarBrush}">
+                                    <TextBlock Text="{x:Bind Monogram}" FontSize="17" FontWeight="SemiBold" Foreground="White"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <Border Width="16" Height="16" CornerRadius="8" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                        Margin="0,0,-3,-2" Background="#2E7D32" Visibility="{x:Bind BeatenVisibility}"
+                                        ToolTipService.ToolTip="You've beaten this bot">
+                                    <FontIcon Glyph="&#xE73E;" FontSize="9" Foreground="White" />
+                                </Border>
+                            </Grid>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="{x:Bind Name}" Style="{StaticResource BodyStrongTextBlockStyle}" TextWrapping="NoWrap" />
+                                <TextBlock Text="{x:Bind RatingText}" Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="NoWrap" />
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </GridView.ItemTemplate>
+            </GridView>
 
-                    <TextBlock Text="Other ways to play" Style="{StaticResource SectionHeaderStyle}" />
-                    <Grid ColumnSpacing="12">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="16" Click="HotSeat_Click" AutomationProperties.Name="Pass and play">
-                            <Grid ColumnSpacing="14">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <FontIcon Glyph="&#xE716;" FontSize="24" />
-                                <StackPanel Grid.Column="1">
-                                    <TextBlock Text="Pass and play" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                                    <TextBlock Text="Two players on this PC" Style="{StaticResource SecondaryTextStyle}" />
+            <!-- The chosen bot and the game's settings -->
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+                <Border Style="{StaticResource CardStyle}" Padding="20" VerticalAlignment="Top" Margin="0,0,0,8">
+                    <StackPanel Spacing="14">
+                        <Grid ColumnSpacing="14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid x:Name="DetailAvatar" Width="48" Height="48" />
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock x:Name="DetailName" Style="{StaticResource SubtitleTextBlockStyle}" />
+                                <TextBlock x:Name="DetailRating" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid ColumnSpacing="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <ToggleButton x:Name="WhiteToggle" AutomationProperties.Name="Play as White" HorizontalAlignment="Stretch" Click="ColorToggle_Click" Tag="white" Padding="6,5"
+                                          ToolTipService.ToolTip="Play as White">
+                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                    <TextBlock Text="&#x2654;" FontFamily="Segoe UI Symbol" FontSize="16" VerticalAlignment="Center" />
+                                    <TextBlock Text="White" VerticalAlignment="Center" />
                                 </StackPanel>
-                            </Grid>
-                        </Button>
-                        <Button Grid.Column="1" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="16" Click="Online_Click" AutomationProperties.Name="Play online">
-                            <Grid ColumnSpacing="14">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <FontIcon Glyph="&#xE774;" FontSize="24" />
-                                <StackPanel Grid.Column="1">
-                                    <TextBlock Text="Play online" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                                    <TextBlock Text="Rated matchmaking and private games with friends" Style="{StaticResource SecondaryTextStyle}" />
+                            </ToggleButton>
+                            <ToggleButton x:Name="RandomToggle" AutomationProperties.Name="Random color" Grid.Column="1" HorizontalAlignment="Stretch" Click="ColorToggle_Click" Tag="random" Padding="6,5"
+                                          ToolTipService.ToolTip="White or Black at random">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE8B1;" FontSize="14" VerticalAlignment="Center" />
+                                    <TextBlock Text="Random" VerticalAlignment="Center" />
                                 </StackPanel>
-                            </Grid>
+                            </ToggleButton>
+                            <ToggleButton x:Name="BlackToggle" AutomationProperties.Name="Play as Black" Grid.Column="2" HorizontalAlignment="Stretch" Click="ColorToggle_Click" Tag="black" Padding="6,5"
+                                          ToolTipService.ToolTip="Play as Black">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="&#x265A;" FontFamily="Segoe UI Symbol" FontSize="16" VerticalAlignment="Center" />
+                                    <TextBlock Text="Black" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </ToggleButton>
+                        </Grid>
+
+                        <ComboBox x:Name="TimeControlBox" Header="Time control" HorizontalAlignment="Stretch" SelectionChanged="TimeControlBox_SelectionChanged" />
+                        <Grid>
+                            <TextBlock Text="Allow takebacks" VerticalAlignment="Center" />
+                            <ToggleSwitch x:Name="TakebacksSwitch" HorizontalAlignment="Right" MinWidth="0" OnContent="" OffContent="" Toggled="TakebacksSwitch_Toggled"
+                                          AutomationProperties.Name="Allow takebacks" />
+                        </Grid>
+
+                        <Button x:Name="PlayButton" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Stretch" Padding="12,10" Click="Play_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <FontIcon Glyph="&#xE768;" FontSize="16" />
+                                <TextBlock x:Name="PlayButtonText" Text="Play" FontSize="16" FontWeight="SemiBold" />
+                            </StackPanel>
                         </Button>
-                    </Grid>
+
+                        <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                        <TextBlock x:Name="DetailBio" Style="{StaticResource SecondaryTextStyle}" />
+                        <TextBlock x:Name="DetailRecord" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                    </StackPanel>
+                </Border>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- ============================================================ Pass and play -->
+        <Grid x:Name="PassAndPlayView" Grid.Row="3" ColumnSpacing="24" Visibility="Collapsed">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="340" />
+            </Grid.ColumnDefinitions>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="16" MaxWidth="560" HorizontalAlignment="Left" Padding="0,0,0,16">
+                    <TextBlock Style="{StaticResource SecondaryTextStyle}"
+                               Text="Two players on this PC, taking turns at the same board. The game is saved like any other, but doesn't count toward your record." />
+                    <Border Style="{StaticResource CardStyle}" Padding="20">
+                        <Grid ColumnSpacing="12" RowSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="&#x2654;" FontFamily="Segoe UI Symbol" FontSize="26" VerticalAlignment="Bottom" Margin="0,0,0,2" />
+                            <TextBox x:Name="WhiteNameBox" Grid.Column="1" Header="White" MaxLength="24" AutomationProperties.Name="White player's name" />
+                            <Button Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" Click="SwapNames_Click" AutomationProperties.Name="Swap colors"
+                                    ToolTipService.ToolTip="Swap who plays White">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon Glyph="&#xE8AB;" FontSize="14" />
+                                    <TextBlock Text="Swap colors" />
+                                </StackPanel>
+                            </Button>
+                            <TextBlock Grid.Row="2" Text="&#x265A;" FontFamily="Segoe UI Symbol" FontSize="26" VerticalAlignment="Bottom" Margin="0,0,0,2" />
+                            <TextBox x:Name="BlackNameBox" Grid.Row="2" Grid.Column="1" Header="Black" MaxLength="24" AutomationProperties.Name="Black player's name" />
+                        </Grid>
+                    </Border>
                 </StackPanel>
             </ScrollViewer>
 
-            <!-- Selected bot + game options -->
             <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
-            <Border Style="{StaticResource CardStyle}" Padding="20" VerticalAlignment="Top" Margin="0,0,0,8">
-                <StackPanel Spacing="14">
+                <Border Style="{StaticResource CardStyle}" Padding="20" VerticalAlignment="Top" Margin="0,0,0,8">
+                    <StackPanel Spacing="14">
+                        <TextBlock Text="Game settings" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <ComboBox x:Name="PassTimeControlBox" Header="Time control" HorizontalAlignment="Stretch" />
+                        <Grid>
+                            <TextBlock Text="Turn the board after each move" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,60,0" />
+                            <ToggleSwitch x:Name="FlipSwitch" HorizontalAlignment="Right" MinWidth="0" OnContent="" OffContent=""
+                                          AutomationProperties.Name="Turn the board after each move" />
+                        </Grid>
+                        <Grid>
+                            <TextBlock Text="Allow takebacks" VerticalAlignment="Center" />
+                            <ToggleSwitch x:Name="PassTakebacksSwitch" HorizontalAlignment="Right" MinWidth="0" OnContent="" OffContent=""
+                                          AutomationProperties.Name="Allow takebacks in pass and play" />
+                        </Grid>
+                        <Button x:Name="StartPassAndPlayButton" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Stretch" Padding="12,10"
+                                Click="StartPassAndPlay_Click" AutomationProperties.Name="Start game">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <FontIcon Glyph="&#xE768;" FontSize="16" />
+                                <TextBlock Text="Start game" FontSize="16" FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- ============================================================ Online -->
+        <ScrollViewer x:Name="OnlineView" Grid.Row="3" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+            <StackPanel Spacing="16" MaxWidth="640" HorizontalAlignment="Left" Padding="0,0,0,16">
+                <TextBlock Style="{StaticResource SecondaryTextStyle}"
+                           Text="Rated games against people on a Gambit server: quick pairing by time control, private games with a code, your friends list and games to watch." />
+                <Border Style="{StaticResource CardStyle}" Padding="20">
                     <Grid ColumnSpacing="16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <Grid x:Name="DetailAvatar" Width="72" Height="72" />
+                        <Ellipse x:Name="OnlineDot" Width="10" Height="10" VerticalAlignment="Center" Fill="#8A8A8A" />
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock x:Name="DetailName" Style="{StaticResource SubtitleTextBlockStyle}" />
-                            <TextBlock x:Name="DetailRating" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                            <TextBlock x:Name="DetailStyle" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                       TextWrapping="Wrap" Visibility="Collapsed" />
+                            <TextBlock x:Name="OnlineStatusText" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock x:Name="OnlineServerText" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         </StackPanel>
+                        <Button Grid.Column="2" Style="{StaticResource AccentButtonStyle}" Padding="16,8" Click="Online_Click" AutomationProperties.Name="Open the online lobby">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="Open the lobby" />
+                                <FontIcon Glyph="&#xE72A;" FontSize="12" />
+                            </StackPanel>
+                        </Button>
                     </Grid>
-                    <TextBlock x:Name="DetailTagline" FontStyle="Italic" TextWrapping="Wrap" />
-                    <TextBlock x:Name="DetailBio" Style="{StaticResource SecondaryTextStyle}" />
-                    <TextBlock x:Name="DetailRecord" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
-
-                    <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
-
-                    <TextBlock Text="I play as" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                    <Grid ColumnSpacing="8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <ToggleButton x:Name="WhiteToggle" AutomationProperties.Name="Play as White" HorizontalAlignment="Stretch" Click="ColorToggle_Click" Tag="white">
-                            <StackPanel Spacing="2">
-                                <TextBlock Text="&#x2654;" FontFamily="Segoe UI Symbol" FontSize="22" HorizontalAlignment="Center" />
-                                <TextBlock Text="White" HorizontalAlignment="Center" />
-                            </StackPanel>
-                        </ToggleButton>
-                        <ToggleButton x:Name="RandomToggle" AutomationProperties.Name="Random color" Grid.Column="1" HorizontalAlignment="Stretch" Click="ColorToggle_Click" Tag="random">
-                            <StackPanel Spacing="2">
-                                <FontIcon Glyph="&#xE8B1;" FontSize="20" Margin="0,3,0,3" />
-                                <TextBlock Text="Random" HorizontalAlignment="Center" />
-                            </StackPanel>
-                        </ToggleButton>
-                        <ToggleButton x:Name="BlackToggle" AutomationProperties.Name="Play as Black" Grid.Column="2" HorizontalAlignment="Stretch" Click="ColorToggle_Click" Tag="black">
-                            <StackPanel Spacing="2">
-                                <TextBlock Text="&#x265A;" FontFamily="Segoe UI Symbol" FontSize="22" HorizontalAlignment="Center" />
-                                <TextBlock Text="Black" HorizontalAlignment="Center" />
-                            </StackPanel>
-                        </ToggleButton>
-                    </Grid>
-
-                    <ComboBox x:Name="TimeControlBox" Header="Time control" HorizontalAlignment="Stretch" SelectionChanged="TimeControlBox_SelectionChanged" />
-
-                    <ToggleSwitch x:Name="TakebacksSwitch" Header="Allow takebacks" OnContent="On" OffContent="Off" Toggled="TakebacksSwitch_Toggled" />
-
-                    <Button x:Name="PlayButton" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Stretch" Padding="12,10" Click="Play_Click">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <FontIcon Glyph="&#xE768;" FontSize="16" />
-                            <TextBlock x:Name="PlayButtonText" Text="Play" FontSize="16" FontWeight="SemiBold" />
-                        </StackPanel>
-                    </Button>
-                </StackPanel>
-            </Border>
-            </ScrollViewer>
-        </Grid>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </Page>

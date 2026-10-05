@@ -51,6 +51,7 @@ public partial class App : Application
         Log.Info($"{AppInfo.DisplayName} {AppInfo.Version} starting ({AppInfo.Architecture})");
         Settings = new SettingsService();
         Profile = new ProfileService();
+        Theming.AppAccent.Apply(Helpers.BoardSettings.CurrentTheme(Settings.Current).Accent);
         Window = new MainWindow();
         if (AppPaths.IsTestProfile)
         {
