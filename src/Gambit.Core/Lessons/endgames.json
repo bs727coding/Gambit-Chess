@@ -152,6 +152,43 @@
       ]
     },
     {
+      "id": "triangulation",
+      "title": "Triangulation",
+      "summary": "Lose a move with the king to put the opponent in zugzwang.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "8/1p1k4/1P6/2PK4/8/8/8/8 w - - 0 1",
+          "arrows": ["d5e5", "e5d4", "d4d5"],
+          "highlights": ["d5"],
+          "text": "With Black to move here, Black would have to give way and lose. With White to move, White would like to pass the move to Black. A king can't pass, but it can walk a triangle: d5-e5-d4-d5 takes three moves and returns to the same square. Black's king, short of room, can only step back and forth and can't keep pace."
+        },
+        {
+          "kind": "quiz",
+          "fen": "8/1p1k4/1P6/2PK4/8/8/8/8 w - - 0 1",
+          "text": "Why a triangle of three moves, and not simply Kd4 and back to d5?",
+          "choices": ["Two moves there and back bring the same position back with the same side to move; three moves hand the move to Black", "The king is safer on e5", "To stop Black's b-pawn"],
+          "answer": 0,
+          "success": "Right: an odd number of moves hands the move over. Black can't copy the triangle, so the same position returns with Black to move."
+        },
+        {
+          "kind": "info",
+          "fen": "8/1p1k4/1P6/2PK4/8/8/8/8 b - - 0 1",
+          "arrows": ["c5c6"],
+          "highlights": ["c7", "d6"],
+          "text": "The same position with Black to move is zugzwang: every move makes it worse. After ...Kc8, White's king steps to d6 and heads for c7; after ...Ke7, c5-c6! breaks through and a pawn queens."
+        },
+        {
+          "kind": "quiz",
+          "fen": "8/1p1k4/1P6/2PK4/8/8/8/8 b - - 0 1",
+          "text": "Black to move. How does this end?",
+          "choices": ["White wins", "It's a draw"],
+          "answer": 0,
+          "success": "Yes. With Black to move, every king move lets White in. That is exactly what the triangle achieved."
+        }
+      ]
+    },
+    {
       "id": "square-rule",
       "title": "The square rule",
       "summary": "Can the king catch the pawn?",

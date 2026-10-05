@@ -1,7 +1,7 @@
 {
   "id": "tactics",
   "title": "Tactics",
-  "description": "Forks, pins, skewers, discovered and double checks, decoys, deflections, overloaded and trapped pieces: the tricks that win material.",
+  "description": "Forks, pins, skewers, discovered and double checks, decoys, deflections, in-between moves, x-rays, overloaded and trapped pieces: the tricks that win material.",
   "glyph": "",
   "color": "#C62828",
   "lessons": [
@@ -234,6 +234,82 @@
           "text": "Deflect the rook from the back rank.",
           "hint": "Offer a queen trade the rook would have to recapture.",
           "success": "The rook took the bait and left the back rank. If Black doesn't recapture, White is simply a queen up."
+        }
+      ]
+    },
+    {
+      "id": "zwischenzug",
+      "title": "Zwischenzug",
+      "summary": "An in-between move before the expected recapture.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "r1bqk2r/ppp3pp/2n2b2/3Q4/8/2N2N2/PPP1PPPP/R3KB1R b KQkq - 0 8",
+          "arrows": ["f6c3", "d8d5"],
+          "highlights": ["d5", "c3"],
+          "text": "A zwischenzug (German for 'in-between move') is a forcing move played before the move everyone expects. White's queen has just taken on d5. Taking back at once with ...Qxd5 only trades queens, because the knight on c3 guards d5. But nothing forces Black to recapture right away."
+        },
+        {
+          "kind": "moves",
+          "fen": "r1bqk2r/ppp3pp/2n2b2/3Q4/8/2N2N2/PPP1PPPP/R3KB1R b KQkq - 0 8",
+          "moves": ["Bxc3+", "bxc3", "Qxd5"],
+          "text": "Win the queen with an in-between move.",
+          "hint": "Before taking back, remove the piece that guards d5, with check.",
+          "success": "Check first, recapture second: the guard is gone and Black wins the queen for a bishop."
+        },
+        {
+          "kind": "moves",
+          "fen": "3R1rk1/1Q3ppp/1p6/p7/8/6P1/Pq2PP1P/2R3K1 b - - 0 21",
+          "moves": ["Qxc1+", "Kg2", "Rxd8"],
+          "text": "White's rook just took on d8. You'll take it back, but is there something better first?",
+          "hint": "Grab something with check, then take back on d8.",
+          "success": "Qxc1+ takes a rook with check, and Rxd8 then takes the other one: a whole rook up."
+        },
+        {
+          "kind": "moves",
+          "fen": "4r3/p5k1/1p5p/1q6/1P1pR2p/8/1PPQ2P1/5R1K b - - 0 36",
+          "moves": ["Qxf1+", "Kh2", "Rxe4"],
+          "text": "Your rook on e8 can take back on e4. Look for an in-between capture first.",
+          "hint": "Which capture comes with check?",
+          "success": "The check bought the time to take both rooks."
+        }
+      ]
+    },
+    {
+      "id": "x-ray",
+      "title": "X-ray",
+      "summary": "A piece that works through another piece.",
+      "steps": [
+        {
+          "kind": "info",
+          "fen": "Q1q3k1/p4ppp/8/4b3/2r5/7P/PP3NP1/3R3K w - - 6 31",
+          "arrows": ["a8d8", "d1d8"],
+          "highlights": ["c8"],
+          "text": "An x-ray is a piece that attacks or defends through another piece. White's queen on a8 looks along the back rank through Black's queen on c8. So a rook on d8 would be defended twice over: once the black queen takes it, White's queen takes back."
+        },
+        {
+          "kind": "moves",
+          "fen": "Q1q3k1/p4ppp/8/4b3/2r5/7P/PP3NP1/3R3K w - - 6 31",
+          "moves": ["Rd8+", "Qxd8", "Qxd8#"],
+          "text": "Use the x-ray on the back rank.",
+          "hint": "Check on d8, even though the black queen covers it.",
+          "success": "Qxd8 was forced, and the queen behind it took back with mate."
+        },
+        {
+          "kind": "moves",
+          "fen": "rn2r1k1/pp3bp1/2p4p/7Q/3P4/2qB4/P1P2PPP/R3R1K1 w - - 0 16",
+          "moves": ["Rxe8+", "Bxe8", "Qxe8#"],
+          "text": "The queen on h5 looks through the bishop on f7 at e8. Make use of it.",
+          "hint": "Take the rook on e8 with check.",
+          "success": "When the bishop left f7 to take back, it opened the queen's x-ray: mate."
+        },
+        {
+          "kind": "moves",
+          "fen": "8/5pk1/1p3pp1/4p2q/2Pr4/1P4P1/1R2QPP1/6K1 b - - 7 36",
+          "moves": ["Rd1+", "Qxd1", "Qxd1+"],
+          "text": "Black's queen on h5 eyes d1 through White's queen on e2. Win the queen.",
+          "hint": "Check on d1: the white queen has to take, and then?",
+          "success": "The rook lured White's queen onto your queen's line: rook for queen."
         }
       ]
     }
