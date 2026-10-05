@@ -8,8 +8,10 @@ lessons, review your games, earn achievements, and play online against friends.
 
 * **A quick welcome** on first launch: your name and how much chess you've played set your first
   suggested opponent and starting puzzle rating.
-* **Play vs 13 bots** (Acorn ≈250 → Monolith, full strength) with personalities and opening books;
-  clocks, premoves, hints, takebacks, draw offers, resignation, pass-and-play, and resume after restarting.
+* **Play vs 13 bots** (Acorn ≈250 → Monolith, full strength) with personalities and opening books,
+  rated on the Chess.com rapid scale and calibrated to err as often as real players of that rating
+  ([docs/BOT-CALIBRATION.md](docs/BOT-CALIBRATION.md)); clocks, premoves, hints, takebacks, draw
+  offers, resignation, pass-and-play with names, and resume after restarting.
 * **Game Review** — every position analysed in parallel on all cores: Brilliant/Great/Best …
   Mistake/Blunder classifications with plain-language reasons ("this hangs your knight", "allows
   mate in 2"), accuracy for both sides, eval graph, best-move and refutation arrows.
@@ -17,17 +19,21 @@ lessons, review your games, earn achievements, and play online against friends.
   (Glicko-2) with ranks, Puzzle Rush (3 min / 5 min / Survival), a daily puzzle with streaks, and
   practice by 49 themes (mate patterns, forks, pins, skewers, deflection, endgame types…) or by
   opening (25 openings, from the Sicilian to the King's Gambit).
-* **Lessons** — 5 courses, 49 interactive lessons: how pieces move (with star-collecting
-  mini-games), checkmate patterns, tactics, openings (Italian, Ruy Lopez, Scotch, Sicilian,
-  French, Caro-Kann, Queen's Gambit, London, King's Indian, English) and endgames (two-bishop and bishop-knight mates, opposition, key squares, Lucena, Philidor…).
+* **Lessons** — 5 courses, 52 interactive lessons: how pieces move (with star-collecting
+  mini-games), checkmate patterns, tactics (forks to zwischenzug and x-rays), openings (Italian, Ruy Lopez, Scotch, Sicilian,
+  French, Caro-Kann, Queen's Gambit, London, King's Indian, English) and endgames (two-bishop and bishop-knight mates, opposition, key squares, triangulation, Lucena, Philidor…).
   The opening lines come back for review at growing intervals (spaced repetition).
-* **Online play** — quick pairing by time control or private games with a friend code (with rematches), against a
+* **Online play** — quick pairing by time control or private games with a friend code (with rematches), a
+  friends list with direct challenges, in-game chat, and your games synced to every PC, against a
   self-hostable server (ASP.NET Core + SignalR, authoritative, rated). See [docs/ONLINE.md](docs/ONLINE.md).
-* **Analysis board** with a multi-line engine on several cores, evaluation bar, opening names, a position editor and FEN/PGN import/export.
+* **Analysis board** with a multi-line engine on several cores, evaluation bar, opening names, an
+  opening explorer (what 40,000 Lichess players chose in the position and how it went), a position
+  editor, FEN/PGN import/export, and "Play from here" against a bot or a friend.
 * **Profile & achievements** — ~50 achievements, per-bot records, puzzle rating history, openings
   you play, and a PGN archive of every game. Back up, restore or reset your progress in Settings.
-* **Windows 11 design** — Mica, Fluent controls, light/dark theme, accent color, 8 board themes,
-  4 piece sets (three original vector sets), synthesized sound effects.
+* **Windows 11 design** — Mica, Fluent controls, light/dark theme, accent color, 8 board themes
+  or your own square colors, a choice of highlight color, 4 piece sets (three original vector
+  sets), and three packs of synthesized sound effects.
 * **Accessible board** — every square is a UI Automation element ("e4, white pawn").
 
 See [docs/ROADMAP.md](docs/ROADMAP.md) for what's next and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)

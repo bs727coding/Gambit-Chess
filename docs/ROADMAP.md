@@ -69,19 +69,19 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
       multiple choice, play-it-out vs bot from position), arrows + square highlights, hints
 - [x] Lesson player UI with progress, stars/score, retry; course map with unlock progression
 - [x] Content validator test (all FENs/moves legal, all steps reachable)
-- [~] Courses: **Basics** (pieces, check, mate, special moves) ✔, **Checkmate patterns** ✔,
+- [x] Courses: **Basics** (pieces, check, mate, special moves) ✔, **Checkmate patterns** ✔,
       **Tactics**: fork, pin, skewer, discovered attack, double check, removing the defender,
-      overloading, trapped pieces, decoy, deflection ✔ (back rank is in Checkmate patterns) —
-      zwischenzug and X-ray still to write
+      overloading, trapped pieces, decoy, deflection, zwischenzug, X-ray ✔ (back rank is in
+      Checkmate patterns)
 
 ## Session 5 — Lessons II: openings + endgames
 
 - [x] **Opening principles** + opening courses with main lines, ideas and traps: Italian, Ruy Lopez,
       Scotch, Sicilian (incl. Alapin), French, Caro-Kann, Queen's Gambit (QGD, QGA, Slav), London,
       King's Indian, English ✔ — drilled with a "play the line" trainer
-- [~] **Endgames**: K+Q, K+R, two-bishop and bishop+knight mates, opposition, key squares, square rule, Lucena,
-      Philidor, wrong bishop (rook-pawn draws), rooks behind passed pawns ✔ — triangulation
-      still to write; the B+N lesson teaches the corner rule, not the full W manoeuvre
+- [x] **Endgames**: K+Q, K+R, two-bishop and bishop+knight mates, opposition, key squares, triangulation,
+      square rule, Lucena, Philidor, wrong bishop (rook-pawn draws), rooks behind passed pawns ✔
+      (the B+N lesson teaches the corner rule, not the full W manoeuvre)
 - [x] Opening trainer: "play the line" drills in each opening lesson, reviewed with spaced repetition
       (Learn → Opening review: Leitner boxes, 1 → 120 days)
 
@@ -92,8 +92,8 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
       openings played, puzzle themes heat-map, streaks, time played
 - [x] Achievements (~50): data-driven definitions, progress tracking, unlock toasts, achievement gallery
 - [x] First-run welcome: name + experience level → first suggested bot and starting puzzle rating
-- [~] Themes: 8 board themes ✔, 4 piece sets ✔, live preview ✔ — custom colors, highlight styles, sound packs,
-      accent options; live preview in Settings
+- [~] Themes: 8 board themes ✔, 4 piece sets ✔, live preview ✔, custom board colors ✔, highlight color ✔,
+      sound packs (Classic, Soft, Retro) ✔ — accent color options not done (the app follows the Windows accent)
 
 ## Session 7 — Online multiplayer (server + client)
 
@@ -124,8 +124,8 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
 ## Backlog / stretch
 
 - Stronger engine (NNUE-style eval; multithreaded search ✔ for the analysis board); bots calibrated against real
-  players ✔ for Acorn–Jade (docs/BOT-CALIBRATION.md), Kestrel/Lumen still to fit
-- Opening explorer, endgame tablebase (syzygy) probing; richer coach explanations (Game Review
-  already explains hung pieces, allowed/missed mates and forks)
+  players ✔ (Acorn–Lumen, docs/BOT-CALIBRATION.md)
+- Opening explorer ✔ (analysis board, 40k Lichess games); endgame tablebase (syzygy) probing; richer
+  coach explanations (Game Review already explains hung pieces, allowed/missed mates and forks)
 - Accessibility pass (Narrator, keyboard-only play, high contrast), localization
 - Cloud sync of profile, web/mobile client reusing `Gambit.Core`

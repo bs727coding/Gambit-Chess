@@ -22,7 +22,8 @@ src/
     Games/                  Game (history, repetition, result), MoveTree (variations), TimeControl, ChessClock
     Rating/                 Glicko2 (puzzle rating and online ratings)
     Sessions/               IGameSession, IMoveProvider, LocalGameSession, PlayerInfo, event args
-    Openings/ Puzzles/ Lessons/   embedded data (TSV / CSV / JSON) + catalogs
+    Openings/ Puzzles/ Lessons/   embedded data (TSV / CSV / JSON) + catalogs; OpeningExplorer (moves
+                            people played, from Lichess games; transpositions merged by Zobrist key)
   Gambit.Engine/            net10.0 — search + evaluation + bots + review
     Evaluation/             Tapered PeSTO evaluation (+ mobility, pawn structure, king safety, mop-up)
     Search/                 Iterative deepening PVS, TT, quiescence + SEE, pruning/reductions, MultiPV
