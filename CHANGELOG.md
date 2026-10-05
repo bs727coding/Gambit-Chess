@@ -3,6 +3,16 @@
 The version is set in `Directory.Build.props`; [docs/RELEASING.md](docs/RELEASING.md) explains how a
 release goes out.
 
+## Unreleased
+
+**Online**
+* When this copy and the server run different versions of Gambit, the Online page says so right
+  under the server address ("Update required", or that the server needs an update) and offers the
+  update; it also says so if the server is updated while you're connected. Connection and sign-in
+  problems now show there too, instead of at the bottom of the page.
+* The server's message to an older copy names the fix (Settings → Updates), and `/api/info` reports
+  the server's version.
+
 ## 0.3.0 — 2026-10-05
 
 Friends, chat and an opening explorer; bots that err like real players; your own board colors.

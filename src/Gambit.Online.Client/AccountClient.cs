@@ -11,6 +11,13 @@ public sealed class OnlineAccountException(string message, bool signInRequired =
     public bool SignInRequired { get; } = signInRequired;
 }
 
+/// <summary>The server speaks another version of the online protocol: one side needs updating before playing there.</summary>
+public sealed class OnlineVersionException(string message, bool updateRequired) : Exception(message)
+{
+    /// <summary>True when this app is the older one (update Gambit); false when the server is.</summary>
+    public bool UpdateRequired { get; } = updateRequired;
+}
+
 /// <summary>Account calls to a Gambit server (<see cref="AccountApi"/>): sign up, sign in, invites.</summary>
 public static class AccountClient
 {

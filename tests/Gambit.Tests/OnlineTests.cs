@@ -8,6 +8,8 @@ using Gambit.Server.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Gambit.Tests;
@@ -402,5 +404,47 @@ public sealed class OnlineTests : IAsyncLifetime
         b.OfferRematch(); // accepts
         GameStartDto next = await aNext;
         Assert.Equal("white", next.YourColor); // Alice had Black
+    }
+
+    [Fact]
+    public void A_version_mismatch_says_which_side_needs_updating()
+    {
+        OnlineVersionException? newer = OnlineClient.VersionProblem(new ServerInfoDto("Gambit server", OnlineProtocol.Version + 1, true, "9.0.0"));
+        Assert.NotNull(newer);
+        Assert.True(newer.UpdateRequired);
+        Assert.Contains("Update Gambit", newer.Message);
+        Assert.Contains("9.0.0", newer.Message);
+
+        OnlineVersionException? older = OnlineClient.VersionProblem(new ServerInfoDto("Gambit server", OnlineProtocol.Version - 1, true));
+        Assert.NotNull(older);
+        Assert.False(older.UpdateRequired);
+        Assert.Contains("update the server", older.Message);
+
+        Assert.Null(OnlineClient.VersionProblem(new ServerInfoDto("Gambit server", OnlineProtocol.Version, true)));
+    }
+
+    [Fact]
+    public async Task The_server_reports_its_version_and_matches_this_app()
+    {
+        ServerInfoDto info = await AccountClient.GetInfoAsync(_url);
+        Assert.Equal(OnlineProtocol.Version, info.ProtocolVersion);
+        Assert.Matches(@"^\d+\.\d+\.\d+", info.Version);
+        Assert.Null(OnlineClient.VersionProblem(info));
+        Assert.Null(await OnlineClient.VersionProblemAsync(_url));
+    }
+
+    [Fact]
+    public async Task An_older_app_is_told_to_update()
+    {
+        // What a copy from before the last protocol change sends: the server says to update Gambit.
+        (_, string token) = await Join("Oldtimer");
+        await using HubConnection hub = new HubConnectionBuilder()
+            .WithUrl($"{_url.TrimEnd('/')}{OnlineProtocol.HubPath}", o => o.AccessTokenProvider = () => Task.FromResult<string?>(token))
+            .Build();
+        await hub.StartAsync();
+        HubException old = await Assert.ThrowsAsync<HubException>(() => hub.InvokeAsync<PlayerDto>(nameof(IGameServer.Hello), "", OnlineProtocol.Version - 1));
+        Assert.Contains("Update Gambit to play online", OnlineClient.ServerMessage(old));
+        HubException newer = await Assert.ThrowsAsync<HubException>(() => hub.InvokeAsync<PlayerDto>(nameof(IGameServer.Hello), "", OnlineProtocol.Version + 1));
+        Assert.Contains("update the server", OnlineClient.ServerMessage(newer));
     }
 }

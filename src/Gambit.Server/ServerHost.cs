@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Threading.RateLimiting;
 using Gambit.Online;
 using Gambit.Server.Data;
@@ -9,6 +10,10 @@ namespace Gambit.Server;
 /// <summary>Builds the server app (used by Program and by in-process integration tests).</summary>
 public static class ServerHost
 {
+    /// <summary>This server's version (Directory.Build.props), e.g. "0.3.0".</summary>
+    public static string Version { get; } =
+        (typeof(ServerHost).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "").Split('+')[0];
+
     /// <summary>Settings from the "Gambit" configuration section, with GAMBIT_DATA overriding the data folder.</summary>
     public static ServerOptions LoadOptions(IConfiguration configuration)
     {
@@ -74,7 +79,7 @@ public static class ServerHost
         app.MapGet("/", (GameManager games) =>
         {
             LobbyStatsDto s = games.Stats();
-            return Results.Text($"Gambit server · protocol v{OnlineProtocol.Version} · {s.PlayersOnline} online · {s.GamesInProgress} games in progress");
+            return Results.Text($"Gambit server {Version} · protocol v{OnlineProtocol.Version} · {s.PlayersOnline} online · {s.GamesInProgress} games in progress");
         });
 
         // A brand-new server has no accounts: print the code that creates the first one (an admin).

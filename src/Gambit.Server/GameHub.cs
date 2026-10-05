@@ -19,7 +19,10 @@ public sealed class GameHub(PlayerRegistry players, GameManager games, AccountSt
 
     public async Task<PlayerDto> Hello(string name, int protocolVersion)
     {
-        if (protocolVersion != OnlineProtocol.Version) throw new HubException("Please update Gambit to play online.");
+        if (protocolVersion < OnlineProtocol.Version)
+            throw new HubException("This server runs a newer version of Gambit. Update Gambit to play online (Settings → Updates).");
+        if (protocolVersion > OnlineProtocol.Version)
+            throw new HubException("This server runs an older version of Gambit than yours. Ask whoever runs it to update the server.");
         string accountId = Context.UserIdentifier ?? throw new HubException("Please sign in again.");
         string username = Context.User?.FindFirstValue(ClaimTypes.Name) ?? "Player";
 

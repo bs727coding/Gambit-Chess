@@ -42,7 +42,7 @@ public static class AccountEndpoints
 {
     public static void MapAccountApi(this WebApplication app, ServerOptions options)
     {
-        app.MapGet(AccountApi.Info, () => new ServerInfoDto("Gambit server", OnlineProtocol.Version, options.SignUps == SignUpMode.Invite));
+        app.MapGet(AccountApi.Info, () => new ServerInfoDto("Gambit server", OnlineProtocol.Version, options.SignUps == SignUpMode.Invite, ServerHost.Version));
 
         // Signing in and up: rate-limited per address on top of the per-name lockout in AccountStore.
         app.MapPost(AccountApi.Register, (RegisterRequest req, AccountStore accounts, ILogger<AccountStore> log) =>

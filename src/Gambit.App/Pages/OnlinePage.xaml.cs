@@ -21,6 +21,7 @@ public sealed partial class OnlinePage : Page
     private static readonly string[] TimeControls = ["1+0", "2+1", "3+0", "3+2", "5+0", "5+3", "10+0", "10+5", "15+10", "30+0"];
     private OnlineService Online => OnlineService.Instance;
     private bool _creatingAccount;
+    private OnlineVersionException? _versionProblem; // shown in ConnectionBar
 
     public OnlinePage()
     {
@@ -62,8 +63,11 @@ public sealed partial class OnlinePage : Page
         Online.GameOpened += OnGameOpened;
         Online.NoticeReceived += OnNotice;
         Online.FriendsChanged += ShowFriends;
+        Online.VersionProblemChanged += ShowVersionProblem;
+        UpdateService.Instance.Changed += UpdateConnectionBarButton;
         ShowFriends();
         UpdateState(Online.Client.State);
+        ShowVersionProblem();
         if (Online.Client.Stats is LobbyStatsDto stats) OnStatsChanged(stats);
     }
 
@@ -75,6 +79,8 @@ public sealed partial class OnlinePage : Page
         Online.GameOpened -= OnGameOpened;
         Online.NoticeReceived -= OnNotice;
         Online.FriendsChanged -= ShowFriends;
+        Online.VersionProblemChanged -= ShowVersionProblem;
+        UpdateService.Instance.Changed -= UpdateConnectionBarButton;
     }
 
     private void OnNotice(string message)
@@ -103,11 +109,21 @@ public sealed partial class OnlinePage : Page
                                       (Online.Client.Me is PlayerDto me ? $" ({me.Rating}{(me.Provisional ? "?" : "")})" : ""), "#2E7D32"),
             OnlineState.Connecting => ("Connecting…", "#F7C045"),
             OnlineState.Reconnecting => ("Connection lost — reconnecting…", "#F7C045"),
-            _ => (savedName != null ? $"Not connected · signed in as {savedName}" : "Not connected", "#8A8A8A"),
+            _ => ((savedName != null ? $"Not connected · signed in as {savedName}" : "Not connected") + (_versionProblem ?? Online.VersionProblem) switch
+            {
+                { UpdateRequired: true } => " · update required",
+                not null => " · the server needs an update",
+                null => "",
+            }, "#8A8A8A"),
         };
         StatusText.Text = text;
         StatusDot.Fill = new SolidColorBrush(Ui.ParseColor(color));
         bool connected = state == OnlineState.Connected;
+        if (connected)
+        {
+            ConnectionBar.IsOpen = false;
+            _versionProblem = null;
+        }
         LobbyGrid.IsHitTestVisible = WatchCard.IsHitTestVisible = FriendsCard.IsHitTestVisible = connected;
         LobbyGrid.Opacity = WatchCard.Opacity = FriendsCard.Opacity = connected ? 1 : 0.45;
         ConnectButton.Content = connected ? "Disconnect" : "Connect";
@@ -192,7 +208,7 @@ public sealed partial class OnlinePage : Page
 
     private async void Connect_Click(object sender, RoutedEventArgs e)
     {
-        ErrorBar.IsOpen = false;
+        ErrorBar.IsOpen = ConnectionBar.IsOpen = false;
         if (Online.IsConnected)
         {
             await Online.DisconnectAsync();
@@ -209,7 +225,7 @@ public sealed partial class OnlinePage : Page
         }
         catch (Exception ex)
         {
-            ShowError($"Couldn't connect: {ex.Message}");
+            ShowConnectionProblem(ex);
         }
     }
 
@@ -218,7 +234,7 @@ public sealed partial class OnlinePage : Page
     {
         string url = ServerBox.Text.Trim();
         if (Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) && uri.Scheme is "http" or "https") return url;
-        ShowError("Enter a server address like http://192.168.1.20:5080 or https://chess.example.com.");
+        ShowConnectionMessage("Couldn't connect", "Enter a server address like http://192.168.1.20:5080 or https://chess.example.com.");
         return null;
     }
 
@@ -227,20 +243,30 @@ public sealed partial class OnlinePage : Page
     /// <summary>Shows the sign-in form (keeping "create an account" only if the form was already showing it).</summary>
     private async Task ShowAccountPanelAsync(string url, string message)
     {
+        // Only for a server that answers and runs this version: otherwise say why, without the form.
+        ServerInfoDto info;
+        try
+        {
+            info = await AccountClient.GetInfoAsync(url);
+        }
+        catch (Exception ex)
+        {
+            AccountPanel.Visibility = Visibility.Collapsed;
+            ShowConnectionProblem(ex);
+            return;
+        }
+        if (OnlineClient.VersionProblem(info) is OnlineVersionException version)
+        {
+            ShowVersionProblem(version);
+            return;
+        }
+
         SetAccountMode(AccountPanel.Visibility == Visibility.Visible && _creatingAccount, message);
         AccountPanel.Visibility = Visibility.Visible;
         InsecureBar.IsOpen = ServerAddress.IsUnencryptedOverInternet(url);
+        InviteBox.Header = info.InviteOnly ? "Invite code" : "Invite code (optional)";
         UsernameBox.Text = OnlineCredentials.Get(url)?.Username ?? UsernameBox.Text;
         UsernameBox.Focus(FocusState.Programmatic);
-        try
-        {
-            ServerInfoDto info = await AccountClient.GetInfoAsync(url);
-            InviteBox.Header = info.InviteOnly ? "Invite code" : "Invite code (optional)";
-        }
-        catch (OnlineAccountException ex)
-        {
-            ShowError(OnlineClient.ServerMessage(ex));
-        }
     }
 
     private void SetAccountMode(bool create, string? message = null)
@@ -270,17 +296,18 @@ public sealed partial class OnlinePage : Page
 
     private async void Account_Click(object sender, RoutedEventArgs e)
     {
-        ErrorBar.IsOpen = false;
+        ErrorBar.IsOpen = ConnectionBar.IsOpen = false;
         if (ServerUrl() is not string url) return;
+        string title = _creatingAccount ? "Couldn't create the account" : "Couldn't sign in";
         string username = UsernameBox.Text.Trim(), password = PasswordInput.Password;
         if (username.Length == 0 || password.Length == 0)
         {
-            ShowError("Enter your username and password.");
+            ShowConnectionMessage(title, "Enter your username and password.");
             return;
         }
         if (_creatingAccount && password != ConfirmInput.Password)
         {
-            ShowError("The two passwords don't match.");
+            ShowConnectionMessage(title, "The two passwords don't match.");
             return;
         }
 
@@ -292,9 +319,16 @@ public sealed partial class OnlinePage : Page
             PasswordInput.Password = ConfirmInput.Password = InviteBox.Text = "";
             AccountPanel.Visibility = Visibility.Collapsed;
         }
+        catch (OnlineVersionException ex)
+        {
+            // Signed in (the sign-in is saved), but this copy and the server need the same version to play.
+            PasswordInput.Password = ConfirmInput.Password = InviteBox.Text = "";
+            AccountPanel.Visibility = Visibility.Collapsed;
+            ShowVersionProblem(ex);
+        }
         catch (Exception ex)
         {
-            ShowError(OnlineClient.ServerMessage(ex));
+            ShowConnectionProblem(ex, title);
         }
         finally
         {
@@ -559,5 +593,106 @@ public sealed partial class OnlinePage : Page
     {
         ErrorBar.Message = message;
         ErrorBar.IsOpen = true;
+    }
+
+    // ------------------------------------------------------------------ connection problems
+
+    /// <summary>
+    /// Why connecting or signing in failed, under the status line next to the button just pressed. When
+    /// the server runs another version of Gambit, it says which side needs updating.
+    /// </summary>
+    private void ShowConnectionProblem(Exception ex, string title = "Couldn't connect")
+    {
+        if (ex is OnlineVersionException version) ShowVersionProblem(version);
+        else ShowConnectionMessage(title, OnlineClient.ServerMessage(ex));
+    }
+
+    private void ShowConnectionMessage(string title, string message)
+    {
+        _versionProblem = null;
+        ErrorBar.IsOpen = false;
+        ConnectionBar.Severity = InfoBarSeverity.Error;
+        ConnectionBar.Title = title;
+        ConnectionBar.Message = message;
+        ConnectionBarButton.Visibility = Visibility.Collapsed;
+        ConnectionBar.IsOpen = true;
+        UpdateState(Online.Client.State); // the status line follows the address just tried
+    }
+
+    /// <summary>Shows the version problem the last connection attempt found (e.g. a reconnect turned down), if any.</summary>
+    private void ShowVersionProblem()
+    {
+        if (Online.VersionProblem is OnlineVersionException version) ShowVersionProblem(version);
+        else UpdateState(Online.Client.State);
+    }
+
+    private void ShowVersionProblem(OnlineVersionException version)
+    {
+        _versionProblem = version;
+        ErrorBar.IsOpen = false;
+        AccountPanel.Visibility = Visibility.Collapsed; // no use signing in until the versions match
+        ConnectionBar.Severity = InfoBarSeverity.Warning;
+        ConnectionBar.Title = version.UpdateRequired ? "Update required" : "The server needs an update";
+        ConnectionBar.Message = version.Message;
+        ConnectionBar.IsOpen = true;
+        UpdateConnectionBarButton();
+        UpdateState(Online.Client.State);
+    }
+
+    /// <summary>Offers the update that lets this copy play on the server again (copies installed with Setup update themselves).</summary>
+    private void UpdateConnectionBarButton()
+    {
+        if (_versionProblem is not { UpdateRequired: true } version || !ConnectionBar.IsOpen)
+        {
+            ConnectionBarButton.Visibility = Visibility.Collapsed;
+            return;
+        }
+        UpdateService updates = UpdateService.Instance;
+        if (!updates.IsInstalled)
+        {
+            ConnectionBar.Message = $"{version.Message} This copy doesn't update itself: install the new version from {ServerBox.Text.Trim().TrimEnd('/')}/download.";
+            ConnectionBarButton.Visibility = Visibility.Collapsed;
+            return;
+        }
+        ConnectionBarButton.Content = updates.Available != null ? $"Update to {updates.AvailableVersion} and restart" : "Check for updates";
+        ConnectionBarButton.IsEnabled = true;
+        ConnectionBarButton.Visibility = Visibility.Visible;
+    }
+
+    private async void ConnectionBarButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_versionProblem is not OnlineVersionException version) return;
+        UpdateService updates = UpdateService.Instance;
+        ConnectionBarButton.IsEnabled = false;
+        if (updates.Available == null)
+        {
+            ConnectionBar.Message = "Looking for an update…";
+            if (await updates.CheckAsync() == null)
+            {
+                ConnectionBar.Message = $"{version.Message} The server doesn't offer the new version yet: ask whoever runs it to add the release.";
+                ConnectionBarButton.IsEnabled = true;
+            }
+            else
+            {
+                ConnectionBar.Message = version.Message;
+            }
+            return; // the check updates the button ("Update to … and restart")
+        }
+        if (UpdateService.WaitReason is string wait)
+        {
+            ConnectionBar.Message = wait;
+            ConnectionBarButton.IsEnabled = true;
+            return;
+        }
+        try
+        {
+            await updates.UpdateAndRestartAsync(percent => DispatcherQueue.TryEnqueue(() => ConnectionBar.Message = $"Downloading the update… {percent}%"));
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"Update failed: {ex.Message}");
+            ConnectionBar.Message = $"The update didn't work: {ex.Message}";
+            ConnectionBarButton.IsEnabled = true;
+        }
     }
 }

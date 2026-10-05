@@ -51,13 +51,22 @@ public sealed class OnlineClient : IAsyncDisposable
     public event Action<ChatDto>? ChatMessage;
 
     /// <summary>
+    /// The server turned down a reconnection, for instance because it was updated to a newer version
+    /// meanwhile; the client has disconnected. An <see cref="OnlineVersionException"/> says which side
+    /// needs updating.
+    /// </summary>
+    public event Action<Exception>? Rejected;
+
+    /// <summary>
     /// Connects with a session key. Throws <see cref="OnlineAccountException"/> (SignInRequired) when the
-    /// server no longer accepts it.
+    /// server no longer accepts it, and <see cref="OnlineVersionException"/> when it runs another version
+    /// of the online protocol.
     /// </summary>
     public async Task ConnectAsync(string serverUrl, string sessionToken, CancellationToken ct = default)
     {
         await DisconnectAsync();
         ServerUrl = serverUrl.TrimEnd('/');
+        if (await VersionProblemAsync(ServerUrl, ct) is OnlineVersionException version) throw version;
         _hub = new HubConnectionBuilder()
             .WithUrl($"{ServerUrl}{OnlineProtocol.HubPath}", o => o.AccessTokenProvider = () => Task.FromResult<string?>(sessionToken))
             .WithAutomaticReconnect([TimeSpan.Zero, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(15)])
@@ -91,8 +100,19 @@ public sealed class OnlineClient : IAsyncDisposable
         };
         _hub.Reconnected += async _ =>
         {
+            try
+            {
+                await _hub.InvokeAsync<PlayerDto>(nameof(IGameServer.Hello), "", OnlineProtocol.Version);
+            }
+            catch (Exception ex)
+            {
+                // Turned down, e.g. the server came back updated: stop retrying and say why.
+                Exception reason = await VersionProblemAsync(ServerUrl!, CancellationToken.None) ?? ex;
+                await DisconnectAsync();
+                Rejected?.Invoke(reason);
+                return;
+            }
             SetState(OnlineState.Connected);
-            await _hub.InvokeAsync<PlayerDto>(nameof(IGameServer.Hello), "", OnlineProtocol.Version);
             // A new connection isn't in any spectator group yet: watch again and catch up.
             string[] watching;
             lock (_watching) watching = [.. _watching];
@@ -172,6 +192,33 @@ public sealed class OnlineClient : IAsyncDisposable
     {
         lock (_watching) _watching.Remove(gameId);
         if (_hub is { State: HubConnectionState.Connected } hub) await hub.InvokeAsync(nameof(IGameServer.Unwatch), gameId);
+    }
+
+    /// <summary>
+    /// Asks the server which protocol version it speaks (no sign-in needed): an exception saying which
+    /// side needs updating, or null when they match or the server can't tell (connecting then says why).
+    /// </summary>
+    public static async Task<OnlineVersionException?> VersionProblemAsync(string serverUrl, CancellationToken ct = default)
+    {
+        try
+        {
+            return VersionProblem(await AccountClient.GetInfoAsync(serverUrl, ct));
+        }
+        catch (Exception) when (!ct.IsCancellationRequested)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Which side needs updating when <paramref name="server"/> speaks another protocol version than this app, or null.</summary>
+    public static OnlineVersionException? VersionProblem(ServerInfoDto server)
+    {
+        string version = server.Version is { Length: > 0 } v ? $" ({v})" : "";
+        if (server.ProtocolVersion > OnlineProtocol.Version)
+            return new OnlineVersionException($"This server runs a newer version of Gambit{version}. Update Gambit to play online.", updateRequired: true);
+        if (server.ProtocolVersion < OnlineProtocol.Version)
+            return new OnlineVersionException($"This server runs an older version of Gambit{version} than yours. Ask whoever runs it to update the server.", updateRequired: false);
+        return null;
     }
 
     /// <summary>The server's own words from a failed hub call ("... HubException: message"), else the exception's message.</summary>

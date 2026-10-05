@@ -55,7 +55,7 @@ public sealed record AccountDto(string Id, string Username, bool IsAdmin, DateTi
 public sealed record InviteDto(string Code, DateTimeOffset? ExpiresAt, int UsesLeft);
 
 /// <summary>What the server is and allows (shown before signing in).</summary>
-public sealed record ServerInfoDto(string Name, int ProtocolVersion, bool InviteOnly);
+public sealed record ServerInfoDto(string Name, int ProtocolVersion, bool InviteOnly, string? Version = null);
 
 /// <summary>Body of a failed account request: a message to show the player.</summary>
 public sealed record ApiError(string Message);

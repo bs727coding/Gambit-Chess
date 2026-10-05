@@ -45,6 +45,11 @@ public sealed class OnlineService
         Client.FriendsChanged += () => _queue.TryEnqueue(() => _ = RefreshFriendsAsync());
         Client.ChallengeReceived += c => _queue.TryEnqueue(() => _ = AnswerChallengeAsync(c));
         Client.ChallengeDeclined += (_, by) => _queue.TryEnqueue(() => NoticeReceived?.Invoke($"{by} declined your challenge."));
+        Client.Rejected += ex => _queue.TryEnqueue(() =>
+        {
+            if (ex is OnlineVersionException version) SetVersionProblem(version);
+            else NoticeReceived?.Invoke(OnlineClient.ServerMessage(ex));
+        });
     }
 
     /// <summary>Create on the UI thread (first access happens from a page).</summary>
@@ -56,6 +61,20 @@ public sealed class OnlineService
 
     /// <summary>The signed-in account is one of the server's admins (it can download the server's database).</summary>
     public bool IsAdmin { get; private set; }
+
+    /// <summary>The server runs another version of Gambit (found by the last connection attempt), or null.</summary>
+    public OnlineVersionException? VersionProblem { get; private set; }
+
+    /// <summary>Raised when <see cref="VersionProblem"/> changes.</summary>
+    public event Action? VersionProblemChanged;
+
+    private void SetVersionProblem(OnlineVersionException? problem)
+    {
+        VersionProblem = problem;
+        // This copy is the older one: look for the update now, so Home and the Online page can offer it.
+        if (problem?.UpdateRequired == true && UpdateService.Instance.Available == null) _ = UpdateService.Instance.CheckAsync();
+        VersionProblemChanged?.Invoke();
+    }
 
     public event Action<OnlineState>? StateChanged;
     public event Action<LobbyStatsDto>? StatsChanged;
@@ -71,17 +90,27 @@ public sealed class OnlineService
 
     /// <summary>
     /// Connects with the sign-in saved for this server. Throws <see cref="OnlineAccountException"/>
-    /// (SignInRequired) when there is none or the server no longer accepts it.
+    /// (SignInRequired) when there is none or the server no longer accepts it, and
+    /// <see cref="OnlineVersionException"/> when the server runs another version of Gambit.
     /// </summary>
     public async Task ConnectAsync(string serverUrl)
     {
         App.Settings.Current.OnlineServerUrl = serverUrl;
-        if (OnlineCredentials.Get(serverUrl) is not OnlineCredentials.SavedSignIn saved)
-            throw new OnlineAccountException("Sign in, or create an account, to play on this server.", signInRequired: true);
+        VersionProblem = null; // this attempt says whether there still is one
         try
         {
+            // First, because signing in is no use until this copy and the server run the same version.
+            if (await OnlineClient.VersionProblemAsync(serverUrl) is OnlineVersionException version) throw version;
+            if (OnlineCredentials.Get(serverUrl) is not OnlineCredentials.SavedSignIn saved)
+                throw new OnlineAccountException("Sign in, or create an account, to play on this server.", signInRequired: true);
             IsAdmin = (await AccountClient.GetAccountAsync(serverUrl, saved.Token)).IsAdmin;
             await Client.ConnectAsync(serverUrl, saved.Token);
+            SetVersionProblem(null);
+        }
+        catch (OnlineVersionException ex)
+        {
+            SetVersionProblem(ex);
+            throw;
         }
         catch (OnlineAccountException ex) when (ex.SignInRequired)
         {

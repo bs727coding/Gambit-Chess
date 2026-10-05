@@ -29,6 +29,13 @@
                         <TextBlock x:Name="StatsText" Style="{StaticResource SecondaryTextStyle}" VerticalAlignment="Center" />
                     </StackPanel>
 
+                    <!-- Why connecting or signing in didn't work, next to the button just pressed (an update required, a wrong password…) -->
+                    <InfoBar x:Name="ConnectionBar" IsOpen="False" IsClosable="True" Severity="Error">
+                        <InfoBar.ActionButton>
+                            <Button x:Name="ConnectionBarButton" Visibility="Collapsed" Click="ConnectionBarButton_Click" />
+                        </InfoBar.ActionButton>
+                    </InfoBar>
+
                     <!-- Sign in or create an account (when the server needs one) -->
                     <StackPanel x:Name="AccountPanel" Spacing="10" Visibility="Collapsed" MaxWidth="560" HorizontalAlignment="Left">
                         <TextBlock x:Name="AccountTitle" Text="Sign in" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,4,0,0" />
