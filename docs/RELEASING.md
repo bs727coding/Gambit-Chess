@@ -54,8 +54,10 @@ No deployment and no signing: friends install from a file you send, and your PC 
    `http://<your Tailscale IP>:5080`. Campus and public Wi-Fi often block connections between
    devices; Tailscale gets around that. Each friend needs an invite code (Online → Invite a friend).
 3. **Updates:** raise the version and run `./build.ps1 package`, then copy the new files into your
-   server's releases folder:
+   server's releases folder (the server makes it the first time it starts; `New-Item` makes it
+   if the server hasn't run yet):
    ```powershell
+   New-Item -ItemType Directory -Force "$env:LOCALAPPDATA\Gambit Server\releases" | Out-Null
    Copy-Item artifacts\releases\* "$env:LOCALAPPDATA\Gambit Server\releases" -Force
    ```
    A friend's Gambit finds the update the next time it starts while your server is reachable at
