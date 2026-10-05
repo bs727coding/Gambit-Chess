@@ -1,3 +1,8 @@
+using Windows.System;
+using Microsoft.UI.Xaml.Shapes;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Automation;
+using Microsoft.UI.Text;
 using Gambit.App.Helpers;
 using Gambit.App.Services;
 using Gambit.Online;
@@ -56,6 +61,8 @@ public sealed partial class OnlinePage : Page
         Online.StatsChanged += OnStatsChanged;
         Online.GameOpened += OnGameOpened;
         Online.NoticeReceived += OnNotice;
+        Online.FriendsChanged += ShowFriends;
+        ShowFriends();
         UpdateState(Online.Client.State);
         if (Online.Client.Stats is LobbyStatsDto stats) OnStatsChanged(stats);
     }
@@ -67,6 +74,7 @@ public sealed partial class OnlinePage : Page
         Online.StatsChanged -= OnStatsChanged;
         Online.GameOpened -= OnGameOpened;
         Online.NoticeReceived -= OnNotice;
+        Online.FriendsChanged -= ShowFriends;
     }
 
     private void OnNotice(string message)
@@ -100,8 +108,8 @@ public sealed partial class OnlinePage : Page
         StatusText.Text = text;
         StatusDot.Fill = new SolidColorBrush(Ui.ParseColor(color));
         bool connected = state == OnlineState.Connected;
-        LobbyGrid.IsHitTestVisible = WatchCard.IsHitTestVisible = connected;
-        LobbyGrid.Opacity = WatchCard.Opacity = connected ? 1 : 0.45;
+        LobbyGrid.IsHitTestVisible = WatchCard.IsHitTestVisible = FriendsCard.IsHitTestVisible = connected;
+        LobbyGrid.Opacity = WatchCard.Opacity = FriendsCard.Opacity = connected ? 1 : 0.45;
         ConnectButton.Content = connected ? "Disconnect" : "Connect";
         ConnectButton.IsEnabled = state is OnlineState.Connected or OnlineState.Disconnected;
         SignedInPanel.Visibility = connected ? Visibility.Visible : Visibility.Collapsed;
@@ -339,6 +347,122 @@ public sealed partial class OnlinePage : Page
             await Online.DownloadServerBackupAsync(url, file.Path);
             Log.Info("Server database downloaded");
             DoneBar.Message = $"Saved a copy of the server's database to {file.Path}.";
+            DoneBar.IsOpen = true;
+        }
+        catch (Exception ex)
+        {
+            ShowError(OnlineClient.ServerMessage(ex));
+        }
+    }
+
+    // ------------------------------------------------------------------ friends
+
+    private void ShowFriends()
+    {
+        FriendsList.Children.Clear();
+        FriendsDto? f = Online.Friends;
+        bool none = f == null || f.Friends.Count + f.Incoming.Count + f.Outgoing.Count == 0;
+        NoFriendsText.Visibility = none ? Visibility.Visible : Visibility.Collapsed;
+        if (f == null) return;
+        foreach (string name in f.Incoming)
+            FriendsList.Children.Add(FriendRow(name, "wants to be your friend", null,
+                ("Accept", () => AddFriendAsync(name)), ("Decline", () => RemoveFriendAsync(name))));
+        foreach (FriendDto friend in f.Friends)
+            FriendsList.Children.Add(FriendRow(friend.Username, friend.Status switch { "online" => "Online", "playing" => "Playing a game", _ => "Offline" },
+                friend.Status, friend.Status == "online" ? ("Challenge", () => ChallengeFriendAsync(friend.Username)) : null,
+                ("Remove", () => ConfirmRemoveAsync(friend.Username))));
+        foreach (string name in f.Outgoing)
+            FriendsList.Children.Add(FriendRow(name, "hasn't answered yet", null, null, ("Cancel", () => RemoveFriendAsync(name))));
+    }
+
+    /// <summary>A friend (or request) with its status and up to two buttons.</summary>
+    private static Grid FriendRow(string name, string status, string? presence,
+        (string Label, Func<Task> Run)? first, (string Label, Func<Task> Run)? second)
+    {
+        var grid = new Grid { ColumnSpacing = 10, MaxWidth = 560, HorizontalAlignment = HorizontalAlignment.Left };
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 220 });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        string dot = presence switch { "online" => "#2E7D32", "playing" => "#EF6C00", "offline" => "#8A8A8A", _ => "#5C6BC0" };
+        grid.Children.Add(new Ellipse { Width = 10, Height = 10, VerticalAlignment = VerticalAlignment.Center, Fill = Ui.Brush(dot) });
+        var text = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+        text.Children.Add(new TextBlock { Text = name, FontWeight = FontWeights.SemiBold });
+        text.Children.Add(new TextBlock { Text = status, Opacity = 0.7, FontSize = 12 });
+        Grid.SetColumn(text, 1);
+        grid.Children.Add(text);
+        int column = 2;
+        foreach (var action in new[] { first, second })
+        {
+            if (action is (string label, Func<Task> run))
+            {
+                var button = new Button { Content = label, VerticalAlignment = VerticalAlignment.Center };
+                AutomationProperties.SetName(button, $"{label} {name}");
+                button.Click += async (_, _) => await run();
+                Grid.SetColumn(button, column);
+                grid.Children.Add(button);
+            }
+            column++;
+        }
+        return grid;
+    }
+
+    private async void AddFriend_Click(object sender, RoutedEventArgs e) => await AddFriendAsync(FriendNameBox.Text.Trim());
+
+    private async void FriendNameBox_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key != VirtualKey.Enter) return;
+        e.Handled = true;
+        await AddFriendAsync(FriendNameBox.Text.Trim());
+    }
+
+    private async Task AddFriendAsync(string name)
+    {
+        if (name.Length == 0) return;
+        try
+        {
+            await Online.AddFriendAsync(name);
+            FriendNameBox.Text = "";
+        }
+        catch (Exception ex)
+        {
+            ShowError(OnlineClient.ServerMessage(ex));
+        }
+    }
+
+    private async Task RemoveFriendAsync(string name)
+    {
+        try
+        {
+            await Online.RemoveFriendAsync(name);
+        }
+        catch (Exception ex)
+        {
+            ShowError(OnlineClient.ServerMessage(ex));
+        }
+    }
+
+    private async Task ConfirmRemoveAsync(string name)
+    {
+        var dialog = new ContentDialog
+        {
+            Title = $"Remove {name} from your friends?",
+            Content = "You can add each other again any time.",
+            PrimaryButtonText = "Remove",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close,
+        };
+        if (await Dialogs.ShowAsync(dialog, XamlRoot) == ContentDialogResult.Primary) await RemoveFriendAsync(name);
+    }
+
+    private async Task ChallengeFriendAsync(string name)
+    {
+        string tc = ChallengeTime.SelectedItem as string ?? "10+0";
+        string color = ChallengeColor.SelectedIndex switch { 1 => "white", 2 => "black", _ => "random" };
+        try
+        {
+            await Online.ChallengeFriendAsync(name, tc, color);
+            DoneBar.Message = $"Challenge sent to {name} ({tc.Replace("+", " | ")}). The game starts when they accept.";
             DoneBar.IsOpen = true;
         }
         catch (Exception ex)

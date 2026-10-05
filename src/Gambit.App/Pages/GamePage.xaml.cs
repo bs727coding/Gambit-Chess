@@ -1,3 +1,6 @@
+using Microsoft.UI.Xaml.Documents;
+using Microsoft.UI.Text;
+using System.Collections.Specialized;
 using Gambit.App.Controls;
 using Gambit.App.Helpers;
 using Gambit.App.Services;
@@ -45,6 +48,7 @@ public sealed partial class GamePage : Page
         Board.BoardSizeChanged += (_, size) => TopBar.Width = BottomBar.Width = size;
 
         _vm.GameStarted += Vm_GameStarted;
+        _vm.Chat.CollectionChanged += Chat_CollectionChanged;
         _vm.Changed += (_, _) => RefreshAll();
         _vm.BoardChanged += Vm_BoardChanged;
         _vm.MovesChanged += (_, _) => RefreshMoveList();
@@ -109,6 +113,9 @@ public sealed partial class GamePage : Page
 
     private void Vm_GameStarted(object? sender, EventArgs e)
     {
+        ChatLines.Children.Clear();
+        ChatBox.Text = "";
+        ChatPanel.Visibility = _vm.CanChat && App.Settings.Current.ShowChat ? Visibility.Visible : Visibility.Collapsed;
         ChatBubble.Visibility = Visibility.Collapsed;
         Toast.IsOpen = false;
         Board.ClearPremove();
@@ -136,6 +143,50 @@ public sealed partial class GamePage : Page
             SetupPlayerBars();
             RefreshAll();
         });
+    }
+
+    // ------------------------------------------------------------------ chat (online games)
+
+    private void Chat_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.Action == NotifyCollectionChangedAction.Reset)
+        {
+            ChatLines.Children.Clear();
+            return;
+        }
+        foreach (ChatLine line in e.NewItems?.OfType<ChatLine>() ?? [])
+        {
+            var text = new TextBlock { TextWrapping = TextWrapping.Wrap };
+            text.Inlines.Add(new Run { Text = line.Mine ? "You: " : $"{line.From}: ", FontWeight = FontWeights.SemiBold });
+            text.Inlines.Add(new Run { Text = line.Text });
+            ChatLines.Children.Add(text);
+        }
+        ChatScroll.UpdateLayout();
+        ChatScroll.ChangeView(null, ChatScroll.ScrollableHeight, null, disableAnimation: true);
+    }
+
+    private async Task SendChatAsync()
+    {
+        string text = ChatBox.Text;
+        if (string.IsNullOrWhiteSpace(text)) return;
+        ChatBox.Text = "";
+        if (await _vm.SendChatAsync(text) is string problem)
+        {
+            ChatBox.Text = text;
+            Toast.Title = "Message not sent";
+            Toast.Message = problem;
+            Toast.Severity = InfoBarSeverity.Warning;
+            Toast.IsOpen = true;
+        }
+    }
+
+    private async void SendChat_Click(object sender, RoutedEventArgs e) => await SendChatAsync();
+
+    private async void ChatBox_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key != VirtualKey.Enter) return;
+        e.Handled = true;
+        await SendChatAsync();
     }
 
     /// <summary>

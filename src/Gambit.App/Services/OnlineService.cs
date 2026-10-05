@@ -1,3 +1,5 @@
+using Microsoft.UI.Xaml.Controls;
+using Gambit.App.Helpers;
 using Gambit.App.Pages;
 using Gambit.Online;
 using Gambit.Online.Client;
@@ -27,6 +29,22 @@ public sealed class OnlineService
             if (_current?.GameId != g.GameId) OpenGame(g);
         });
         Client.Notice += m => _queue.TryEnqueue(() => NoticeReceived?.Invoke(m));
+        Client.Welcomed += (_, _) => _queue.TryEnqueue(() =>
+        {
+            _ = RefreshFriendsAsync();
+            _ = SyncGamesAsync();
+        });
+        Client.StateChanged += s =>
+        {
+            if (s == OnlineState.Disconnected) _queue.TryEnqueue(() =>
+            {
+                Friends = null;
+                FriendsChanged?.Invoke();
+            });
+        };
+        Client.FriendsChanged += () => _queue.TryEnqueue(() => _ = RefreshFriendsAsync());
+        Client.ChallengeReceived += c => _queue.TryEnqueue(() => _ = AnswerChallengeAsync(c));
+        Client.ChallengeDeclined += (_, by) => _queue.TryEnqueue(() => NoticeReceived?.Invoke($"{by} declined your challenge."));
     }
 
     /// <summary>Create on the UI thread (first access happens from a page).</summary>
@@ -45,6 +63,11 @@ public sealed class OnlineService
 
     /// <summary>Raised just before navigating to a new online game (lets the lobby reset its UI).</summary>
     public event Action? GameOpened;
+
+    /// <summary>Your friends and open requests on the connected server, or null when not known.</summary>
+    public FriendsDto? Friends { get; private set; }
+
+    public event Action? FriendsChanged;
 
     /// <summary>
     /// Connects with the sign-in saved for this server. Throws <see cref="OnlineAccountException"/>
@@ -113,6 +136,95 @@ public sealed class OnlineService
             : throw new OnlineAccountException("Sign in first.", signInRequired: true);
 
     public Task DisconnectAsync() => Client.DisconnectAsync();
+
+    // ------------------------------------------------------------------ friends
+
+    /// <summary>The connected server and the saved session key for it, or null.</summary>
+    private (string Url, string Token)? Session =>
+        Client.ServerUrl is string url && OnlineCredentials.Get(url) is OnlineCredentials.SavedSignIn saved ? (url, saved.Token) : null;
+
+    public async Task RefreshFriendsAsync()
+    {
+        if (Session is not (string url, string token)) return;
+        try
+        {
+            Friends = await AccountClient.GetFriendsAsync(url, token);
+            FriendsChanged?.Invoke();
+        }
+        catch (Exception ex)
+        {
+            Log.Info($"Friends not loaded: {ex.Message}");
+        }
+    }
+
+    /// <summary>Asks someone to be friends, or accepts their request. Throws with the server's reason.</summary>
+    public async Task AddFriendAsync(string username)
+    {
+        if (Session is not (string url, string token)) throw new OnlineAccountException("Sign in first.", signInRequired: true);
+        Friends = await AccountClient.AddFriendAsync(url, token, username);
+        FriendsChanged?.Invoke();
+    }
+
+    /// <summary>Removes a friend, declines their request or withdraws yours.</summary>
+    public async Task RemoveFriendAsync(string username)
+    {
+        if (Session is not (string url, string token)) throw new OnlineAccountException("Sign in first.", signInRequired: true);
+        Friends = await AccountClient.RemoveFriendAsync(url, token, username);
+        FriendsChanged?.Invoke();
+    }
+
+    public Task ChallengeFriendAsync(string username, string timeControl, string color) =>
+        Client.ChallengeFriendAsync(username, ParseTimeControl(timeControl), color);
+
+    /// <summary>A friend's challenge: asks the user (any page), or declines when they're already playing online.</summary>
+    private async Task AnswerChallengeAsync(ChallengeDto c)
+    {
+        try
+        {
+            if (GamePage.HasActiveOnlineGame)
+            {
+                await Client.DeclineChallengeAsync(c.Code);
+                return;
+            }
+            string colors = c.Color switch { "white" => "you play Black", "black" => "you play White", _ => "colors at random" };
+            var dialog = new ContentDialog
+            {
+                Title = $"{c.Creator.Name} challenges you",
+                Content = $"{c.TimeControl.Key.Replace("+", " | ")} · {colors}",
+                PrimaryButtonText = "Play",
+                CloseButtonText = "Decline",
+                DefaultButton = ContentDialogButton.Primary,
+            };
+            if (await Dialogs.ShowAsync(dialog, App.Window.Content?.XamlRoot) == ContentDialogResult.Primary)
+            {
+                if (!await Client.AcceptChallengeAsync(c.Code)) NoticeReceived?.Invoke($"{c.Creator.Name}'s challenge isn't open anymore.");
+            }
+            else
+            {
+                await Client.DeclineChallengeAsync(c.Code);
+            }
+        }
+        catch (Exception ex)
+        {
+            NoticeReceived?.Invoke(OnlineClient.ServerMessage(ex));
+        }
+    }
+
+    /// <summary>Adds your online games from other PCs to the game list (see ProfileService.ImportOnlineGames).</summary>
+    public async Task SyncGamesAsync()
+    {
+        if (Session is not (string url, string token) || Client.Me is not PlayerDto me) return;
+        try
+        {
+            List<GameRecordDto> games = await AccountClient.GetGamesAsync(url, token, 100);
+            int added = App.Profile.ImportOnlineGames(games, me.Name);
+            if (added > 0) Log.Info($"Added {added} online game(s) from the server to the game list");
+        }
+        catch (Exception ex)
+        {
+            Log.Info($"Online games not synced: {ex.Message}");
+        }
+    }
 
     /// <summary>How this PC shows up among an account's sign-ins on the server.</summary>
     private static string Device => $"Gambit on {Environment.MachineName}";

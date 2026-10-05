@@ -60,6 +60,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <Grid Padding="8,4,8,0">
                         <StackPanel Margin="0,0,120,0">
@@ -70,6 +71,26 @@
                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Top" Margin="0,3,0,0" />
                     </Grid>
                     <controls:MoveListView x:Name="MoveList" Grid.Row="1" PlySelected="MoveList_PlySelected" />
+
+                    <!-- Chat with the opponent (online games) -->
+                    <StackPanel x:Name="ChatPanel" Grid.Row="2" Spacing="6" Padding="8,0,8,4" Visibility="Collapsed">
+                        <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                        <TextBlock Text="Chat" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <ScrollViewer x:Name="ChatScroll" MaxHeight="120" VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="ChatLines" Spacing="2" />
+                        </ScrollViewer>
+                        <Grid ColumnSpacing="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="ChatBox" PlaceholderText="Say something nice" MaxLength="200" AutomationProperties.Name="Chat message"
+                                     KeyDown="ChatBox_KeyDown" />
+                            <Button Grid.Column="1" Click="SendChat_Click" AutomationProperties.Name="Send chat message" ToolTipService.ToolTip="Send (Enter)">
+                                <FontIcon Glyph="&#xE724;" FontSize="14" />
+                            </Button>
+                        </Grid>
+                    </StackPanel>
                 </Grid>
             </Border>
 

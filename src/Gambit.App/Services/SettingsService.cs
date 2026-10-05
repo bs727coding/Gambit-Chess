@@ -38,6 +38,9 @@ public sealed partial class AppSettings : ObservableObject
     [ObservableProperty] public partial string LastWhiteName { get; set; } = "";
     [ObservableProperty] public partial string LastBlackName { get; set; } = "";
     [ObservableProperty] public partial bool PassAndPlayFlip { get; set; }
+
+    /// <summary>Show the chat panel in online games.</summary>
+    [ObservableProperty] public partial bool ShowChat { get; set; } = true;
 }
 
 /// <summary>Loads settings at startup and saves them (debounced) whenever a property changes.</summary>

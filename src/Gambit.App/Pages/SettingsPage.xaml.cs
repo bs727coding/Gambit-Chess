@@ -36,6 +36,7 @@ public sealed partial class SettingsPage : Page
         QueenSwitch.IsOn = s.AutoQueen;
         PremoveSwitch.IsOn = s.Premoves;
         ResignSwitch.IsOn = s.ConfirmResign;
+        ChatSwitch.IsOn = s.ShowChat;
         SoundSwitch.IsOn = s.SoundEnabled;
 
         AboutTitle.Text = $"{AppInfo.DisplayName} {AppInfo.Version}";
@@ -145,6 +146,7 @@ public sealed partial class SettingsPage : Page
         s.AutoQueen = QueenSwitch.IsOn;
         s.Premoves = PremoveSwitch.IsOn;
         s.ConfirmResign = ResignSwitch.IsOn;
+        s.ShowChat = ChatSwitch.IsOn;
         bool soundWasOn = s.SoundEnabled;
         s.SoundEnabled = SoundSwitch.IsOn;
         if (!soundWasOn && s.SoundEnabled) SoundService.Play(GameSound.Move);

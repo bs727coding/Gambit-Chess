@@ -167,6 +167,19 @@
                 </StackPanel>
                 <ToggleSwitch x:Name="ResignSwitch" Grid.Column="2" MinWidth="0" Toggled="Switch_Toggled" />
             </Grid>
+            <Grid Style="{StaticResource SettingRowStyle}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <FontIcon Glyph="&#xE8BD;" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="Chat in online games" />
+                    <TextBlock Text="Show messages from your opponent and let you write back" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+                <ToggleSwitch x:Name="ChatSwitch" Grid.Column="2" MinWidth="0" Toggled="Switch_Toggled" AutomationProperties.Name="Chat in online games" />
+            </Grid>
 
             <Grid Style="{StaticResource SettingRowStyle}">
                 <Grid.ColumnDefinitions>

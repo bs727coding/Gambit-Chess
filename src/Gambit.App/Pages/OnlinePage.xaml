@@ -167,6 +167,28 @@
                 </Border>
             </Grid>
 
+            <!-- Friends -->
+            <Border x:Name="FriendsCard" Style="{StaticResource CardStyle}" Padding="20" IsHitTestVisible="False" Opacity="0.45">
+                <StackPanel Spacing="12">
+                    <StackPanel>
+                        <TextBlock Text="Friends" Style="{StaticResource SubtitleTextBlockStyle}" FontSize="18" />
+                        <TextBlock Text="See when your friends are online and challenge them directly (time and colors from Play a friend)."
+                                   Style="{StaticResource SecondaryTextStyle}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Grid ColumnSpacing="8" MaxWidth="480" HorizontalAlignment="Left">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="FriendNameBox" PlaceholderText="Their username" MaxLength="20" AutomationProperties.Name="Friend's username"
+                                 KeyDown="FriendNameBox_KeyDown" />
+                        <Button Grid.Column="1" Content="Add friend" Click="AddFriend_Click" />
+                    </Grid>
+                    <StackPanel x:Name="FriendsList" Spacing="8" />
+                    <TextBlock x:Name="NoFriendsText" Text="No friends yet. Add someone by their username: they'll see your request." Style="{StaticResource SecondaryTextStyle}" />
+                </StackPanel>
+            </Border>
+
             <!-- Live games -->
             <Border x:Name="WatchCard" Style="{StaticResource CardStyle}" Padding="20" IsHitTestVisible="False" Opacity="0.45">
                 <StackPanel Spacing="12">

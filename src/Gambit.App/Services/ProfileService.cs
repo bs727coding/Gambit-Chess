@@ -1,3 +1,5 @@
+using Gambit.Core.Openings;
+using Gambit.Online;
 using System.Text.Json.Serialization;
 using Gambit.Core.Board;
 using Gambit.Core.Games;
@@ -31,6 +33,9 @@ public sealed class GameRecord
 
     /// <summary>Played from a set-up position: listed, but not counted in the record or statistics.</summary>
     public bool Practice { get; set; }
+
+    /// <summary>The game's id on the online server (online games), so the server's copy isn't added twice.</summary>
+    public string? OnlineId { get; set; }
 
     /// <summary>
     /// The PGN file, or null if it is gone. Profiles store full paths, so a profile restored from a
@@ -104,7 +109,7 @@ public sealed class ProfileService
 
     /// <summary>Records a finished game and stores its PGN. Returns the stored record.</summary>
     public GameRecord RecordGame(Game game, string opponent, string? botId, int? opponentRating, Color? playerColor, TimeControl timeControl,
-        bool practice = false)
+        bool practice = false, string? onlineId = null)
     {
         string outcome = playerColor is not Color pc || game.Result == GameResult.Draw
             ? "draw"
@@ -123,6 +128,7 @@ public sealed class ProfileService
             TimeControl = timeControl.DisplayName,
             Opening = game.Tags.GetValueOrDefault("Opening"),
             Practice = practice,
+            OnlineId = onlineId,
         };
 
         try
@@ -170,6 +176,55 @@ public sealed class ProfileService
         Save();
         Changed?.Invoke(this, EventArgs.Empty);
         return record;
+    }
+
+    /// <summary>
+    /// Adds the online games the server has and this PC doesn't (played on another PC) to the game list
+    /// and archive. They're listed, not counted: the record and statistics stay as played here.
+    /// Returns how many were added.
+    /// </summary>
+    public int ImportOnlineGames(IEnumerable<GameRecordDto> server, string myName)
+    {
+        PlayerProfile p = Profile;
+        var local = p.RecentGames.Where(g => g.BotId == null && g.PlayerColor != "both")
+            .Select(g => new OnlineHistory.LocalGame(g.OnlineId, g.Opponent, g.PlayedAt)).ToList();
+        int added = 0;
+        foreach (GameRecordDto g in OnlineHistory.Missing(server, local, myName))
+        {
+            if (OnlineHistory.ToGame(g) is not Game game) continue;
+            Color me = OnlineHistory.PlayedWhite(g, myName) ? Color.White : Color.Black;
+            if (OpeningBook.Identify(game) is Opening opening) game.Tags["Opening"] = opening.Name;
+            var record = new GameRecord
+            {
+                PlayedAt = g.EndedAt,
+                Opponent = OnlineHistory.Opponent(g, myName),
+                PlayerColor = me == Color.White ? "white" : "black",
+                Outcome = game.Result == GameResult.Draw ? "draw" : game.Winner == me ? "win" : "loss",
+                Result = game.ResultString,
+                Termination = game.ResultDescription,
+                Moves = (game.Moves.Count + 1) / 2,
+                TimeControl = OnlineHistory.ParseTimeControl(g.TimeControl).DisplayName,
+                Opening = game.Tags.GetValueOrDefault("Opening"),
+                OnlineId = g.Id,
+            };
+            try
+            {
+                string file = Path.Combine(AppPaths.Games, $"{record.PlayedAt.ToLocalTime():yyyyMMdd-HHmmss}-{record.Id[..6]}.pgn");
+                File.WriteAllText(file, g.Pgn);
+                record.PgnFile = file;
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"Saving PGN failed: {ex.Message}");
+            }
+            p.RecentGames.Add(record);
+            added++;
+        }
+        if (added == 0) return 0;
+        p.RecentGames = [.. p.RecentGames.OrderByDescending(r => r.PlayedAt).Take(MaxRecent)];
+        Save();
+        Changed?.Invoke(this, EventArgs.Empty);
+        return added;
     }
 
     /// <summary>A new profile that hasn't seen the welcome screen yet.</summary>

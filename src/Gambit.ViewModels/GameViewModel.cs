@@ -1,9 +1,11 @@
+using System.Collections.ObjectModel;
 using Gambit.Core.Board;
 using Gambit.Core.Games;
 using Gambit.Core.Openings;
 using Gambit.Core.Sessions;
 using Gambit.Engine.Bots;
 using Gambit.Engine.Search;
+using Gambit.Online;
 using Gambit.Online.Client;
 
 namespace Gambit.ViewModels;
@@ -50,7 +52,10 @@ public sealed record Captures(IReadOnlyList<Piece> Pieces, int Advantage);
 /// <summary>A finished game for the profile: stats, archive and achievements.</summary>
 /// <summary>A finished game for the profile. <paramref name="Practice"/>: kept, but not counted (<see cref="GameSetup.IsPractice"/>).</summary>
 public sealed record FinishedGame(Game Game, string Opponent, BotProfile? Bot, int? OpponentRating, Color? PlayerColor, TimeControl TimeControl,
-    bool Practice = false);
+    bool Practice = false, string? OnlineId = null);
+
+/// <summary>A line of chat in an online game; <paramref name="Mine"/> when the user wrote it.</summary>
+public sealed record ChatLine(string From, string Text, bool Mine);
 
 /// <summary>What the game view model needs from the app: the profile, storage and sounds.</summary>
 public interface IGameHost
@@ -213,7 +218,12 @@ public sealed class GameViewModel : IDisposable
         session.ChatReceived += Session_ChatReceived;
         session.DrawOfferAnswered += Session_DrawOfferAnswered;
         session.DrawOfferReceived += Session_DrawOfferReceived;
-        if (session is RemoteGameSession remote) remote.RematchChanged += Remote_RematchChanged;
+        Chat.Clear();
+        if (session is RemoteGameSession remote)
+        {
+            remote.RematchChanged += Remote_RematchChanged;
+            remote.PlayerChat += Remote_PlayerChat;
+        }
 
         GameStarted?.Invoke(this, EventArgs.Empty);
         if (playStartSound) _host.Play(GameCue.Start);
@@ -235,6 +245,7 @@ public sealed class GameViewModel : IDisposable
         if (session is RemoteGameSession remote)
         {
             remote.RematchChanged -= Remote_RematchChanged;
+            remote.PlayerChat -= Remote_PlayerChat;
             remote.DeclineRematch(); // moving on: answer or withdraw any pending rematch offer
         }
         session.Dispose();
@@ -599,10 +610,41 @@ public sealed class GameViewModel : IDisposable
             OpponentRating: Setup.Bot?.Rating ?? onlineOpponent?.Rating,
             PlayerColor: Setup.IsHotSeat ? null : Setup.HumanColor,
             TimeControl: Setup.TimeControl,
-            Practice: Setup.IsPractice));
+            Practice: Setup.IsPractice,
+            OnlineId: (Session as RemoteGameSession)?.GameId));
     }
 
     private static string Monogram(string name) => name.Length > 0 ? name[..1].ToUpperInvariant() : "?";
+
+    // ------------------------------------------------------------------ chat (online games)
+
+    /// <summary>The players' chat in the current online game.</summary>
+    public ObservableCollection<ChatLine> Chat { get; } = [];
+
+    /// <summary>The user plays the current online game (not watching it), so they can chat.</summary>
+    public bool CanChat => Session is RemoteGameSession { IsSpectator: false };
+
+    /// <summary>Sends a chat line to the opponent; returns the server's reason when it refused, else null.</summary>
+    public async Task<string?> SendChatAsync(string text)
+    {
+        if (Session is not RemoteGameSession { IsSpectator: false } remote || string.IsNullOrWhiteSpace(text)) return null;
+        try
+        {
+            await remote.SendChatAsync(text.Trim());
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return OnlineClient.ServerMessage(ex);
+        }
+    }
+
+    private void Remote_PlayerChat(object? sender, ChatDto message)
+    {
+        if (sender is not RemoteGameSession remote) return;
+        string mine = (remote.LocalColor == Color.White ? remote.White : remote.Black).Name;
+        Chat.Add(new ChatLine(message.From, message.Text, message.From == mine));
+    }
 
     /// <summary>A side's name in pass and play ("Alice"), otherwise "White" or "Black".</summary>
     private string SideName(Color side) =>
