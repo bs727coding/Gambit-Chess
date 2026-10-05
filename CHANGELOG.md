@@ -14,6 +14,20 @@ release goes out.
 * No more random moves: a bot's blunders are now oversights, a natural-looking move that misses
   what the opponent can do next, like a person's.
 
+**Play**
+* Play from any position: "Play from here" on the analysis board, against a bot or pass and play
+  (practice games: saved, not counted).
+* Pass and play asks for the players' names and can turn the board after each move.
+
+**Online** (server and app need updating together: protocol 3)
+* Friends: add by username, see who's online or playing, challenge them directly.
+* Chat with your opponent during and after online games (Settings can hide it).
+* Your online games from other PCs appear in your game list.
+* A warning before signing in to a server over plain http:// on the internet.
+
+**Other**
+* Settings > Report a problem saves a zip of recent logs to send to whoever runs your server.
+
 ## 0.2.0 — 2026-10-03
 
 The first version with installers.

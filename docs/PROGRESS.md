@@ -19,6 +19,15 @@ and runs natively on Arm64 (and x64), with Velopack installers and updates from 
 
 ## Next steps
 
+**The user's list of 2026-10-05 (items 1-4 of "what's left", no Chess960), in progress:**
+1. Finish the bots: Kestrel and Lumen being fitted (grids running), then an arena run. *Open.*
+2. Quick wins: play from any position, pass-and-play names and turning board, plain-http
+   warning, bug report file. *Done.*
+3. Friends, direct challenges, chat, game history sync (protocol 3, schema 2). *Done, checked
+   live with two accounts on a local server.*
+4. Opening explorer, lessons (zwischenzug, X-ray, triangulation), custom board colors /
+   highlight styles / sound packs. *Open.*
+
 **Bot calibration against real players (2026-10-04, at the user's request): Acorn to Jade done.**
 Each bot now blunders, errs and finds the best move about as often as people at its rating
 (Chess.com rapid scale), measured on Lichess rapid games; random moves are gone (oversights

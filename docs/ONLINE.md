@@ -67,6 +67,21 @@ dotnet run --project src/Gambit.Server -- users
 On Fly.io: `fly ssh console -C "dotnet /app/Gambit.Server.dll users"`. Locally the data folder is
 `GAMBIT_DATA`, or `data/` next to the server binary.
 
+## Friends, chat and game history
+
+* **Friends:** on the Online page, add someone by their username. They see the request at once (if
+  they're online) and accept or decline it; asking someone who already asked you accepts. Your
+  list shows who is online, playing or offline, and updates live.
+* **Challenge a friend:** "Challenge" sends the challenge straight to them (time and colors from
+  "Play a friend"); they get a pop-up to play or decline, and only they can take it. A friend who
+  is playing an online game is busy and declines automatically.
+* **Chat:** the two players of an online game can chat on the game page, also after the game ends.
+  Lines are up to 200 characters, at most 5 per 10 seconds; words the username filter refuses
+  are shown as asterisks; spectators don't see the chat. Settings > Chat in online games hides it.
+* **Your games:** the server keeps every finished game with its moves. When you connect, the app
+  adds the games you played on other PCs to your game list (listed, not counted in your local
+  record), so Profile and Game Review see them everywhere you sign in.
+
 ## Backups and restoring
 
 Everything is in one file, `gambit.db`, so a backup is one file. There are three layers:
@@ -198,15 +213,20 @@ Health check: `GET /health` → `ok`. `GET /` shows players online and games in 
 
 Accounts (HTTP + JSON, `AccountApi`): `GET /api/info`, `POST /api/register`, `POST /api/signin`
 (→ session key), and with `Authorization: Bearer <key>`: `POST /api/signout`, `GET /api/me`,
-`POST /api/password`, `POST|GET /api/invites`. The hub requires the same key (SignalR sends it as
-`?access_token=`); an unknown, expired or suspended session gets HTTP 401.
+`POST /api/password`, `POST|GET /api/invites`, `GET /api/friends` (friends with status, requests),
+`POST /api/friends` (ask or accept), `POST /api/friends/remove` (remove, decline or cancel),
+`GET /api/games?count=&before=` (your finished games with PGN). The hub requires the same key
+(SignalR sends it as `?access_token=`); an unknown, expired or suspended session gets HTTP 401.
 
 Client → server: `Hello(name, version)` (the player is the signed-in account), `Seek(tc)`, `CancelSeek()`, `CreateChallenge(tc, color)`,
 `AcceptChallenge(code)`, `MakeMove(gameId, ply, uci)`, `Resign`, `OfferDraw`, `RespondToDraw`, `Rejoin`,
-`OfferRematch(gameId)`, `DeclineRematch(gameId)`, `ListGames()`, `Watch(gameId)`, `Unwatch(gameId)`.
+`OfferRematch(gameId)`, `DeclineRematch(gameId)`, `ListGames()`, `Watch(gameId)`, `Unwatch(gameId)`,
+`ChallengeFriend(username, tc, color)`, `DeclineChallenge(code)`, `SendChat(gameId, text)`.
 
 Server → client: `Welcome`, `GameStarted`, `MovePlayed`, `GameOver`, `DrawOffered`, `DrawDeclined`,
-`OpponentConnection`, `Resync`, `Notice`, `RematchOffered`, `RematchDeclined(gameId, unavailable)`.
+`OpponentConnection`, `Resync`, `Notice`, `RematchOffered`, `RematchDeclined(gameId, unavailable)`,
+`FriendsChanged` (fetch the list again), `ChallengeReceived(challenge)`, `ChallengeDeclined(code, byName)`,
+`ChatMessage(chat)`. Protocol 3 added friends, direct challenges and chat.
 
 Moves travel as UCI strings with a ply number, so duplicates and out-of-order messages are detected.
 Bump `OnlineProtocol.Version` for incompatible changes (older apps are told to update).
@@ -222,4 +242,4 @@ The client re-watches after a reconnect.
 
 ## Next steps (roadmap Session 8)
 
-Friends list, chat with moderation, and a public deployment (Fly.io, above).
+Friends ✔, chat ✔ and game history ✔ are in; a public deployment (Fly.io, above) is the user's call.

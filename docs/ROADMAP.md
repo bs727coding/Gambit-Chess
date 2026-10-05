@@ -118,7 +118,8 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
       server ✔, versioning (0.2.0, commit in About, CHANGELOG.md) ✔, auto-update from the server with
       delta packages ✔, x64 build tested (emulated) ✔, one window per profile ✔, app icon ✔ — code
       signing is the user's call (costs, docs/RELEASING.md); MSIX not used (needs a trusted certificate)
-- [~] Online polish: spectating ✔ — friends list, game history sync still to do
+- [x] Online polish: spectating ✔, friends with live status ✔, direct friend challenges ✔, in-game chat
+      with masking and limits ✔, game history synced to every PC ✔
 
 ## Backlog / stretch
 
