@@ -11,7 +11,8 @@ public static class BoardSettings
     public static void ApplyUserSettings(this ChessBoardControl board)
     {
         AppSettings s = App.Settings.Current;
-        if (board.Theme.Id != s.BoardTheme) board.Theme = BoardThemes.Get(s.BoardTheme);
+        BoardTheme theme = CurrentTheme(s);
+        if (board.Theme != theme) board.Theme = theme;
         if (board.PieceSet.Id != s.PieceSet) board.PieceSet = PieceSets.Get(s.PieceSet);
         board.ShowLegalMoves = s.ShowLegalMoves;
         board.ShowCoordinates = s.ShowCoordinates;
@@ -19,4 +20,8 @@ public static class BoardSettings
         board.AnimateMoves = s.AnimateMoves;
         board.AutoQueen = s.AutoQueen;
     }
+
+    /// <summary>The board theme <paramref name="s"/> describes: built-in or custom, with the chosen highlight.</summary>
+    public static BoardTheme CurrentTheme(AppSettings s) =>
+        BoardThemes.ForSettings(s.BoardTheme, s.CustomLightSquare, s.CustomDarkSquare, s.HighlightColor);
 }

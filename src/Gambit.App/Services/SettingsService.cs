@@ -24,6 +24,16 @@ public sealed partial class AppSettings : ObservableObject
     [ObservableProperty] public partial bool ConfirmResign { get; set; } = true;
     [ObservableProperty] public partial bool SoundEnabled { get; set; } = true;
 
+    /// <summary>The squares of the "custom" board theme, as #RRGGBB.</summary>
+    [ObservableProperty] public partial string CustomLightSquare { get; set; } = "#EAE4D3";
+    [ObservableProperty] public partial string CustomDarkSquare { get; set; } = "#4E8C87";
+
+    /// <summary>Last-move and selection highlight (BoardThemes.Highlights); "theme" keeps the board theme's.</summary>
+    [ObservableProperty] public partial string HighlightColor { get; set; } = "theme";
+
+    /// <summary>Which sound effects play (SoundService.Packs).</summary>
+    [ObservableProperty] public partial string SoundPack { get; set; } = "classic";
+
     // Last choices on the Play page.
     [ObservableProperty] public partial string LastBotId { get; set; } = "acorn";
     [ObservableProperty] public partial string LastColor { get; set; } = "white";

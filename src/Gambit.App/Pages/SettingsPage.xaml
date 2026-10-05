@@ -57,13 +57,52 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <FontIcon Glyph="&#xE771;" VerticalAlignment="Center" />
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock Text="Board theme" />
-                            <TextBlock Text="Square colors and highlights" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Text="Square colors, or pick your own with Custom" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         </StackPanel>
                         <VariableSizedWrapGrid x:Name="ThemeSwatches" Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" ItemWidth="120" ItemHeight="104" />
+                        <StackPanel x:Name="CustomColorsPanel" Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="8" Visibility="Collapsed">
+                            <Button x:Name="LightSquareButton" AutomationProperties.Name="Light squares">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Border x:Name="LightSquareChip" Width="18" Height="18" CornerRadius="4" BorderThickness="1" BorderBrush="{ThemeResource ControlStrongStrokeColorDefaultBrush}" />
+                                    <TextBlock Text="Light squares" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <Button.Flyout>
+                                    <Flyout>
+                                        <ColorPicker x:Name="LightSquarePicker" IsAlphaEnabled="False" IsMoreButtonVisible="False" IsColorChannelTextInputVisible="False" IsHexInputVisible="True" ColorChanged="SquarePicker_ColorChanged" />
+                                    </Flyout>
+                                </Button.Flyout>
+                            </Button>
+                            <Button x:Name="DarkSquareButton" AutomationProperties.Name="Dark squares">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Border x:Name="DarkSquareChip" Width="18" Height="18" CornerRadius="4" BorderThickness="1" BorderBrush="{ThemeResource ControlStrongStrokeColorDefaultBrush}" />
+                                    <TextBlock Text="Dark squares" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <Button.Flyout>
+                                    <Flyout>
+                                        <ColorPicker x:Name="DarkSquarePicker" IsAlphaEnabled="False" IsMoreButtonVisible="False" IsColorChannelTextInputVisible="False" IsHexInputVisible="True" ColorChanged="SquarePicker_ColorChanged" />
+                                    </Flyout>
+                                </Button.Flyout>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Style="{StaticResource SettingRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Glyph="&#xE7E6;" VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Highlight color" />
+                            <TextBlock Text="The last move and the selected piece" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <ComboBox x:Name="HighlightBox" Grid.Column="2" VerticalAlignment="Center" MinWidth="180" SelectionChanged="HighlightBox_SelectionChanged" AutomationProperties.Name="Highlight color" />
                     </Grid>
                 </StackPanel>
 
@@ -193,6 +232,19 @@
                     <TextBlock Text="Move, capture, check and game sounds" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
                 <ToggleSwitch x:Name="SoundSwitch" Grid.Column="2" MinWidth="0" Toggled="Switch_Toggled" AutomationProperties.Name="Sounds" />
+            </Grid>
+            <Grid Style="{StaticResource SettingRowStyle}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <FontIcon Glyph="&#xE8D6;" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="Sound pack" />
+                    <TextBlock Text="Classic wooden pieces, soft felt taps or retro blips" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+                <ComboBox x:Name="SoundPackBox" Grid.Column="2" VerticalAlignment="Center" MinWidth="180" SelectionChanged="SoundPackBox_SelectionChanged" AutomationProperties.Name="Sound pack" />
             </Grid>
             <TextBlock Text="Your progress" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,20,0,6" />
             <Grid Style="{StaticResource SettingRowStyle}">

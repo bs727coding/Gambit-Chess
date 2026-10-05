@@ -25,6 +25,11 @@ release goes out.
 * Your online games from other PCs appear in your game list.
 * A warning before signing in to a server over plain http:// on the internet.
 
+**Look and sound**
+* A custom board theme: pick the light and dark square colors yourself.
+* A choice of highlight color for the last move and the selected piece.
+* Sound packs: Classic, Soft (felt taps, gentle bells) and Retro (8-bit blips).
+
 **Other**
 * Settings > Report a problem saves a zip of recent logs to send to whoever runs your server.
 

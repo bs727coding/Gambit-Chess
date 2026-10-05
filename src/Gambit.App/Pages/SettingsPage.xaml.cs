@@ -6,6 +6,7 @@ using Gambit.Core.Board;
 using Gambit.ViewModels;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
@@ -28,6 +29,14 @@ public sealed partial class SettingsPage : Page
         ThemeBox.SelectedIndex = (int)s.Theme;
         foreach (PieceSet set in PieceSets.All) PieceBox.Items.Add(set.Name);
         PieceBox.SelectedIndex = Math.Max(0, PieceSets.All.ToList().FindIndex(p => p.Id == s.PieceSet));
+        foreach (var highlight in BoardThemes.Highlights) HighlightBox.Items.Add(highlight.Name);
+        HighlightBox.SelectedIndex = Math.Max(0, BoardThemes.Highlights.ToList().FindIndex(h => h.Id == s.HighlightColor));
+        foreach (var pack in SoundService.Packs) SoundPackBox.Items.Add(pack.Name);
+        SoundPackBox.SelectedIndex = Math.Max(0, SoundService.Packs.ToList().FindIndex(p => p.Id == s.SoundPack));
+        SoundPackBox.IsEnabled = s.SoundEnabled;
+        BoardTheme custom = BoardThemes.Custom(s.CustomLightSquare, s.CustomDarkSquare);
+        LightSquarePicker.Color = custom.Light;
+        DarkSquarePicker.Color = custom.Dark;
 
         LegalSwitch.IsOn = s.ShowLegalMoves;
         CoordSwitch.IsOn = s.ShowCoordinates;
@@ -58,8 +67,9 @@ public sealed partial class SettingsPage : Page
 
     private void BuildSwatches()
     {
+        AppSettings s = App.Settings.Current;
         ThemeSwatches.Children.Clear();
-        foreach (BoardTheme theme in BoardThemes.All)
+        foreach (BoardTheme theme in BoardThemes.All.Append(BoardThemes.Custom(s.CustomLightSquare, s.CustomDarkSquare)))
         {
             var mini = new Grid { Width = 64, Height = 64, CornerRadius = new CornerRadius(4) };
             for (int i = 0; i < 2; i++)
@@ -78,7 +88,7 @@ public sealed partial class SettingsPage : Page
                 }
             }
 
-            bool selected = App.Settings.Current.BoardTheme == theme.Id;
+            bool selected = s.BoardTheme == theme.Id;
             var frame = new Border
             {
                 Child = mini,
@@ -101,6 +111,7 @@ public sealed partial class SettingsPage : Page
                 Tag = theme.Id,
             };
             ToolTipService.SetToolTip(button, theme.Name);
+            AutomationProperties.SetName(button, theme.Name);
             button.Click += (_, _) =>
             {
                 App.Settings.Current.BoardTheme = theme.Id;
@@ -109,12 +120,43 @@ public sealed partial class SettingsPage : Page
             };
             ThemeSwatches.Children.Add(button);
         }
+
+        // Custom: the square colors are picked below the swatches.
+        CustomColorsPanel.Visibility = s.BoardTheme == BoardThemes.CustomId ? Visibility.Visible : Visibility.Collapsed;
+        BoardTheme mine = BoardThemes.Custom(s.CustomLightSquare, s.CustomDarkSquare);
+        LightSquareChip.Background = new SolidColorBrush(mine.Light);
+        DarkSquareChip.Background = new SolidColorBrush(mine.Dark);
+    }
+
+    private void SquarePicker_ColorChanged(ColorPicker sender, ColorChangedEventArgs args)
+    {
+        if (_loading) return;
+        AppSettings s = App.Settings.Current;
+        string hex = BoardThemes.ToHex(args.NewColor);
+        if (sender == LightSquarePicker) s.CustomLightSquare = hex;
+        else s.CustomDarkSquare = hex;
+        BuildSwatches();
+        ApplyPreview();
+    }
+
+    private void HighlightBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading || HighlightBox.SelectedIndex < 0) return;
+        App.Settings.Current.HighlightColor = BoardThemes.Highlights[HighlightBox.SelectedIndex].Id;
+        ApplyPreview();
+    }
+
+    private async void SoundPackBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading || SoundPackBox.SelectedIndex < 0) return;
+        App.Settings.Current.SoundPack = SoundService.Packs[SoundPackBox.SelectedIndex].Id;
+        await SoundService.PlaySampleAsync();
     }
 
     private void ApplyPreview()
     {
         AppSettings s = App.Settings.Current;
-        Preview.Theme = BoardThemes.Get(s.BoardTheme);
+        Preview.Theme = BoardSettings.CurrentTheme(s);
         if (Preview.PieceSet.Id != s.PieceSet) Preview.PieceSet = PieceSets.Get(s.PieceSet);
         Preview.ShowCoordinates = s.ShowCoordinates;
         Preview.ShowLegalMoves = s.ShowLegalMoves;
@@ -150,6 +192,7 @@ public sealed partial class SettingsPage : Page
         bool soundWasOn = s.SoundEnabled;
         s.SoundEnabled = SoundSwitch.IsOn;
         if (!soundWasOn && s.SoundEnabled) SoundService.Play(GameSound.Move);
+        SoundPackBox.IsEnabled = s.SoundEnabled;
         ApplyPreview();
     }
 

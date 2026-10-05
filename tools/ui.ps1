@@ -3,7 +3,7 @@
     Drives the running Gambit app for development checks (UI Automation + targeted board clicks).
 .EXAMPLE
     ./tools/ui.ps1 list                      # dump named elements
-    ./tools/ui.ps1 invoke -Name "Play"       # invoke/select an element by name (no mouse)
+    ./tools/ui.ps1 invoke -Name "Play"       # invoke/select an element by name (no mouse); opens a combo box
     ./tools/ui.ps1 type -Name "Your name" -Text "Sam"  # set a text box (no keyboard)
     ./tools/ui.ps1 value -AutomationId ServerBox       # read a text box
     ./tools/ui.ps1 board -Moves "e2e4,g1f3"  # click squares on the board (mouse; window must be in front)
@@ -85,7 +85,7 @@ switch ($Action) {
             $hit = ($AutomationId -and $cur.AutomationId -eq $AutomationId) -or ($Name -and $cur.Name -eq $Name)
             if (-not $hit) { continue }
             $ps = $cand.GetSupportedPatterns()
-            if ($ps -contains [System.Windows.Automation.InvokePattern]::Pattern -or $ps -contains [System.Windows.Automation.SelectionItemPattern]::Pattern -or $ps -contains [System.Windows.Automation.TogglePattern]::Pattern) {
+            if ($ps -contains [System.Windows.Automation.InvokePattern]::Pattern -or $ps -contains [System.Windows.Automation.SelectionItemPattern]::Pattern -or $ps -contains [System.Windows.Automation.TogglePattern]::Pattern -or $ps -contains [System.Windows.Automation.ExpandCollapsePattern]::Pattern) {
                 if (-not $cur.IsOffscreen -or $AutomationId) { $el = $cand; break }
                 if (-not $offscreen) { $offscreen = $cand }
             }
@@ -99,6 +99,9 @@ switch ($Action) {
             $el.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select()
         } elseif ($patterns -contains [System.Windows.Automation.TogglePattern]::Pattern) {
             $el.GetCurrentPattern([System.Windows.Automation.TogglePattern]::Pattern).Toggle()
+        } elseif ($patterns -contains [System.Windows.Automation.ExpandCollapsePattern]::Pattern) {
+            # A combo box: opens its list, so its items can be invoked by name next.
+            $el.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern).Expand()
         } else {
             throw "Element '$Name' supports no invoke/select/toggle pattern."
         }

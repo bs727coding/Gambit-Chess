@@ -18,11 +18,49 @@ public sealed record BoardTheme(string Id, string Name, Color Light, Color Dark,
 
 public static class BoardThemes
 {
+    /// <summary>The theme whose square colors the user picks (Settings: CustomLightSquare, CustomDarkSquare).</summary>
+    public const string CustomId = "custom";
+
     private static Color Hex(string hex, byte alpha = 255)
     {
         hex = hex.TrimStart('#');
         return ColorHelper.FromArgb(alpha,
             Convert.ToByte(hex[..2], 16), Convert.ToByte(hex[2..4], 16), Convert.ToByte(hex[4..6], 16));
+    }
+
+    /// <summary>Parses "#RRGGBB" (the # is optional); null if <paramref name="hex"/> isn't a color.</summary>
+    public static Color? TryParse(string? hex)
+    {
+        hex = hex?.Trim().TrimStart('#');
+        if (hex is not { Length: 6 } || !uint.TryParse(hex, System.Globalization.NumberStyles.HexNumber, null, out uint rgb)) return null;
+        return ColorHelper.FromArgb(255, (byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
+    }
+
+    /// <summary>"#RRGGBB" for <paramref name="color"/> (alpha left out).</summary>
+    public static string ToHex(Color color) => $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+
+    /// <summary>Colors for the last-move and selection highlight; "theme" (no color) keeps the board theme's own.</summary>
+    public static IReadOnlyList<(string Id, string Name, Color? Color)> Highlights { get; } =
+    [
+        ("theme", "Match the board", null),
+        ("yellow", "Yellow", Hex("#FFFF33", 120)),
+        ("green", "Green", Hex("#9BC700", 115)),
+        ("blue", "Blue", Hex("#4CC2FF", 115)),
+        ("purple", "Purple", Hex("#B388FF", 135)),
+        ("orange", "Orange", Hex("#FF9F1C", 125)),
+        ("red", "Red", Hex("#FF5252", 105)),
+    ];
+
+    /// <summary>The custom theme with the given square colors (unreadable ones fall back to defaults).</summary>
+    public static BoardTheme Custom(string? light, string? dark) =>
+        new(CustomId, "Custom", TryParse(light) ?? Hex("#EAE4D3"), TryParse(dark) ?? Hex("#4E8C87"), Hex("#FFFF33", 120));
+
+    /// <summary>The theme the settings describe: built-in or custom, with the chosen highlight color.</summary>
+    public static BoardTheme ForSettings(string themeId, string? customLight, string? customDark, string? highlight)
+    {
+        BoardTheme theme = themeId == CustomId ? Custom(customLight, customDark) : Get(themeId);
+        Color? color = Highlights.FirstOrDefault(h => h.Id == highlight).Color;
+        return color is Color c ? theme with { Highlight = c } : theme;
     }
 
     public static IReadOnlyList<BoardTheme> All { get; } =
