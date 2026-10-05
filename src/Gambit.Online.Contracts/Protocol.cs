@@ -5,8 +5,8 @@ public static class OnlineProtocol
 {
     public const string HubPath = "/hub/game";
 
-    /// <summary>2: accounts (sign-in, invites) replaced guest tokens.</summary>
-    public const int Version = 2;
+    /// <summary>2: accounts (sign-in, invites) replaced guest tokens. 3: friends, direct challenges, chat.</summary>
+    public const int Version = 3;
 }
 
 /// <summary>A player as seen by others.</summary>
@@ -45,6 +45,9 @@ public sealed record LobbyStatsDto(int PlayersOnline, int GamesInProgress, IRead
 /// <summary>A game in progress that can be watched.</summary>
 public sealed record LiveGameDto(string GameId, PlayerDto White, PlayerDto Black, TimeControlDto TimeControl, int Plies, int Spectators);
 
+/// <summary>A chat line between the two players of a game (offensive words already masked by the server).</summary>
+public sealed record ChatDto(string GameId, string From, string Text, DateTimeOffset At);
+
 /// <summary>Server → client calls.</summary>
 public interface IGameClient
 {
@@ -63,6 +66,17 @@ public interface IGameClient
 
     /// <summary>A rematch offer was declined or withdrawn; <paramref name="unavailable"/> = the other player left or is busy.</summary>
     Task RematchDeclined(string gameId, bool unavailable);
+
+    /// <summary>The friend list changed (a request, an answer, a friend came online or started a game): fetch it again.</summary>
+    Task FriendsChanged();
+
+    /// <summary>A friend challenges you; accept with AcceptChallenge(code), or DeclineChallenge(code).</summary>
+    Task ChallengeReceived(ChallengeDto challenge);
+
+    /// <summary>The friend you challenged declined (or couldn't play).</summary>
+    Task ChallengeDeclined(string code, string byName);
+
+    Task ChatMessage(ChatDto message);
 }
 
 /// <summary>Client → server calls (implemented by the hub).</summary>
@@ -93,4 +107,13 @@ public interface IGameServer
     Task<GameStartDto?> Watch(string gameId);
 
     Task Unwatch(string gameId);
+
+    /// <summary>Challenges a friend who is online: they are asked straight away (no code to share).</summary>
+    Task<ChallengeDto> ChallengeFriend(string username, TimeControlDto timeControl, string color);
+
+    /// <summary>Turns down a friend's challenge.</summary>
+    Task DeclineChallenge(string code);
+
+    /// <summary>Sends a chat line to the other player of a game you play in.</summary>
+    Task SendChat(string gameId, string text);
 }

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Gambit.Core.Games;
 using Gambit.Online;
+using Gambit.Server.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
@@ -11,7 +12,8 @@ namespace Gambit.Server;
 /// all game logic lives in <see cref="GameManager"/>.
 /// </summary>
 [Authorize]
-public sealed class GameHub(PlayerRegistry players, GameManager games) : Hub<IGameClient>, IGameServer
+public sealed class GameHub(PlayerRegistry players, GameManager games, AccountStore accounts, FriendStore friendships, FriendNotifier friends)
+    : Hub<IGameClient>, IGameServer
 {
     private Player Me => players.ByConnection(Context.ConnectionId) ?? throw new HubException("Say Hello first.");
 
@@ -27,6 +29,7 @@ public sealed class GameHub(PlayerRegistry players, GameManager games) : Hub<IGa
         PlayerDto me = players.ToDto(p, TimeCategory.Blitz);
         await Clients.Caller.Welcome(me, games.Stats());
         await games.OnConnectedAsync(p);
+        await friends.FriendsOfAsync(p.PublicId); // now online
         return me;
     }
 
@@ -63,10 +66,31 @@ public sealed class GameHub(PlayerRegistry players, GameManager games) : Hub<IGa
 
     public Task Unwatch(string gameId) => games.UnwatchAsync(Context.ConnectionId, gameId);
 
+    public async Task<ChallengeDto> ChallengeFriend(string username, TimeControlDto timeControl, string color)
+    {
+        Player me = Me;
+        if (accounts.Find(username) is not Account other || !friendships.AreFriends(me.PublicId, other.Id))
+            throw new HubException("You can challenge your friends this way. Add them as a friend first.");
+        if (players.ById(other.Id) is not { ConnectionId: string conn }) throw new HubException($"{other.Username} isn't online right now.");
+        if (games.IsPlaying(other.Id)) throw new HubException($"{other.Username} is playing a game right now.");
+        if (games.IsPlaying(me.PublicId)) throw new HubException("Finish your game first.");
+        ChallengeDto challenge = games.CreateChallenge(me, timeControl, color, other.Id);
+        await Clients.Client(conn).ChallengeReceived(challenge);
+        return challenge;
+    }
+
+    public Task DeclineChallenge(string code) => games.DeclineChallengeAsync(Me, code);
+
+    public Task SendChat(string gameId, string text) => games.SendChatAsync(Me, gameId, text);
+
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         games.RemoveSpectator(Context.ConnectionId);
-        if (players.Disconnect(Context.ConnectionId) is Player p) await games.OnDisconnectedAsync(p);
+        if (players.Disconnect(Context.ConnectionId) is Player p)
+        {
+            await games.OnDisconnectedAsync(p);
+            if (!p.Connected) await friends.FriendsOfAsync(p.PublicId); // now offline
+        }
         await base.OnDisconnectedAsync(exception);
     }
 }

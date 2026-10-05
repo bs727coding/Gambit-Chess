@@ -58,6 +58,7 @@ public sealed class RemoteGameSession : IGameSession
         _client.Resync += OnResync;
         _client.RematchOffered += OnRematchOffered;
         _client.RematchDeclined += OnRematchDeclined;
+        _client.ChatMessage += OnChatMessage;
     }
 
     public string GameId { get; }
@@ -95,6 +96,9 @@ public sealed class RemoteGameSession : IGameSession
     public event EventHandler? StateReset;
     public event EventHandler? ThinkingChanged;
     public event EventHandler<ChatEventArgs>? ChatReceived;
+
+    /// <summary>A chat line between the players (yours too, as the server confirms it).</summary>
+    public event EventHandler<ChatDto>? PlayerChat;
     public event EventHandler<bool>? DrawOfferAnswered;
     public event EventHandler? DrawOfferReceived;
 
@@ -225,6 +229,14 @@ public sealed class RemoteGameSession : IGameSession
 
     /// <summary>Server announcements (e.g. "signed in somewhere else") show up like the server's other game messages.</summary>
     private void OnNotice(string message) => Post(() => ChatReceived?.Invoke(this, new ChatEventArgs(ServerVoice, message)));
+
+    private void OnChatMessage(ChatDto message)
+    {
+        if (message.GameId == GameId) Post(() => PlayerChat?.Invoke(this, message));
+    }
+
+    /// <summary>Sends a chat line to the other player. Throws with the server's reason (too fast, not your game).</summary>
+    public Task SendChatAsync(string text) => IsSpectator ? Task.CompletedTask : _client.SendChatAsync(GameId, text);
 
     private void OnResync(GameStartDto dto)
     {
@@ -358,5 +370,6 @@ public sealed class RemoteGameSession : IGameSession
         _client.Resync -= OnResync;
         _client.RematchOffered -= OnRematchOffered;
         _client.RematchDeclined -= OnRematchDeclined;
+        _client.ChatMessage -= OnChatMessage;
     }
 }

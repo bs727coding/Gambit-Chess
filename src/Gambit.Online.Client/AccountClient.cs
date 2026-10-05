@@ -50,6 +50,24 @@ public static class AccountClient
     public static Task ChangePasswordAsync(string serverUrl, string token, string current, string replacement, CancellationToken ct = default) =>
         SendAsync<object?>(HttpMethod.Post, serverUrl, AccountApi.Password, token, new ChangePasswordRequest(current, replacement), ct);
 
+    public static Task<FriendsDto> GetFriendsAsync(string serverUrl, string token, CancellationToken ct = default) =>
+        SendAsync<FriendsDto>(HttpMethod.Get, serverUrl, AccountApi.Friends, token, null, ct);
+
+    /// <summary>Asks <paramref name="username"/> to be friends, or accepts their request.</summary>
+    public static Task<FriendsDto> AddFriendAsync(string serverUrl, string token, string username, CancellationToken ct = default) =>
+        SendAsync<FriendsDto>(HttpMethod.Post, serverUrl, AccountApi.Friends, token, new FriendRequest(username), ct);
+
+    /// <summary>Removes a friend, declines their request or withdraws yours.</summary>
+    public static Task<FriendsDto> RemoveFriendAsync(string serverUrl, string token, string username, CancellationToken ct = default) =>
+        SendAsync<FriendsDto>(HttpMethod.Post, serverUrl, AccountApi.RemoveFriend, token, new FriendRequest(username), ct);
+
+    /// <summary>Your finished games on the server, newest first (ended before <paramref name="before"/>).</summary>
+    public static Task<List<GameRecordDto>> GetGamesAsync(string serverUrl, string token, int count = 50, DateTimeOffset? before = null, CancellationToken ct = default)
+    {
+        string query = $"?count={count}" + (before is DateTimeOffset b ? "&before=" + Uri.EscapeDataString(b.UtcDateTime.ToString("O")) : "");
+        return SendAsync<List<GameRecordDto>>(HttpMethod.Get, serverUrl, AccountApi.Games + query, token, null, ct);
+    }
+
     /// <summary>Copies the server's database into <paramref name="destination"/> (admins only).</summary>
     public static async Task DownloadBackupAsync(string serverUrl, string token, Stream destination, CancellationToken ct = default)
     {

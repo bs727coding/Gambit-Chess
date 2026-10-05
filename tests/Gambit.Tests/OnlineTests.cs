@@ -37,14 +37,138 @@ public sealed class OnlineTests : IAsyncLifetime
     }
 
     /// <summary>Signs a new player up (with an invite, as on a real server) and connects them.</summary>
-    private async Task<OnlineClient> Connect(string name)
+    private async Task<OnlineClient> Connect(string name) => (await Join(name)).Client;
+
+    /// <summary>Like <see cref="Connect"/>, also returning the session key for the HTTP endpoints.</summary>
+    private async Task<(OnlineClient Client, string Token)> Join(string name)
     {
         Invite invite = _app.Services.GetRequiredService<AccountStore>().CreateInvite(null);
         SessionDto session = await AccountClient.RegisterAsync(_url, name, $"pw-{name}-long-enough", invite.Code, "tests");
         var client = new OnlineClient();
         _clients.Add(client);
         await client.ConnectAsync(_url, session.Token);
-        return client;
+        return (client, session.Token);
+    }
+
+    private static Task Signal(Action<Action> subscribe)
+    {
+        var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        subscribe(() => tcs.TrySetResult());
+        return tcs.Task.WaitAsync(Wait);
+    }
+
+    [Fact]
+    public async Task Friends_ask_accept_see_each_other_and_remove()
+    {
+        var (alice, aliceKey) = await Join("Alicia");
+        var (bob, bobKey) = await Join("Bobby");
+
+        Task bobHears = Signal(h => bob.FriendsChanged += h);
+        FriendsDto asked = await AccountClient.AddFriendAsync(_url, aliceKey, "bobby"); // names are case-insensitive
+        Assert.Equal(["Bobby"], asked.Outgoing);
+        await bobHears;
+        Assert.Equal(["Alicia"], (await AccountClient.GetFriendsAsync(_url, bobKey)).Incoming);
+
+        Task aliceHears = Signal(h => alice.FriendsChanged += h);
+        FriendsDto bobs = await AccountClient.AddFriendAsync(_url, bobKey, "Alicia"); // yes
+        await aliceHears;
+        FriendDto friend = Assert.Single(bobs.Friends);
+        Assert.Equal(("Alicia", "online"), (friend.Username, friend.Status));
+        Assert.Empty(bobs.Incoming);
+        Assert.Equal("Bobby", Assert.Single((await AccountClient.GetFriendsAsync(_url, aliceKey)).Friends).Username);
+
+        async Task<string> Refused(string name) =>
+            (await Assert.ThrowsAsync<OnlineAccountException>(() => AccountClient.AddFriendAsync(_url, aliceKey, name))).Message;
+        Assert.Equal("There's no player with that name.", await Refused("Nobody"));
+        Assert.Equal("That's you.", await Refused("Alicia"));
+        Assert.Contains("already friends", await Refused("Bobby"));
+
+        // Bob goes offline: Alice hears, and sees it.
+        aliceHears = Signal(h => alice.FriendsChanged += h);
+        await bob.DisconnectAsync();
+        await aliceHears;
+        Assert.Equal("offline", Assert.Single((await AccountClient.GetFriendsAsync(_url, aliceKey)).Friends).Status);
+
+        FriendsDto after = await AccountClient.RemoveFriendAsync(_url, aliceKey, "Bobby");
+        Assert.Empty(after.Friends);
+        Assert.Empty((await AccountClient.GetFriendsAsync(_url, bobKey)).Friends);
+    }
+
+    [Fact]
+    public async Task A_friend_challenge_goes_straight_to_the_friend()
+    {
+        var (alice, aliceKey) = await Join("Ava");
+        var (bob, bobKey) = await Join("Boris");
+        OnlineClient stranger = await Connect("Stranger");
+        await AccountClient.AddFriendAsync(_url, aliceKey, "Boris");
+        await AccountClient.AddFriendAsync(_url, bobKey, "Ava");
+        var tc = new TimeControlDto(300, 3);
+
+        Exception notFriends = await Assert.ThrowsAnyAsync<Exception>(() => alice.ChallengeFriendAsync("Stranger", tc, "white"));
+        Assert.Contains("Add them as a friend", OnlineClient.ServerMessage(notFriends));
+
+        // Declined: Ava is told, and the code is gone.
+        Task<ChallengeDto> received = Next<ChallengeDto>(h => bob.ChallengeReceived += h);
+        Task<string> declined = Next<string>(h => alice.ChallengeDeclined += (_, by) => h(by));
+        ChallengeDto first = await alice.ChallengeFriendAsync("Boris", tc, "white");
+        Assert.Equal(first.Code, (await received).Code);
+        await bob.DeclineChallengeAsync(first.Code);
+        Assert.Equal("Boris", await declined);
+        Assert.False(await bob.AcceptChallengeAsync(first.Code));
+
+        // Accepted: only the friend may take it.
+        received = Next<ChallengeDto>(h => bob.ChallengeReceived += h);
+        Task<GameStartDto> started = Next<GameStartDto>(h => alice.GameStarted += h);
+        ChallengeDto second = await alice.ChallengeFriendAsync("Boris", tc, "white");
+        await received;
+        Assert.False(await stranger.AcceptChallengeAsync(second.Code));
+        Assert.True(await bob.AcceptChallengeAsync(second.Code));
+        GameStartDto game = await started;
+        Assert.Equal(("white", "Ava", "Boris"), (game.YourColor, game.White.Name, game.Black.Name));
+        Assert.Equal("playing", Assert.Single((await AccountClient.GetFriendsAsync(_url, aliceKey)).Friends).Status);
+
+        Exception busy = await Assert.ThrowsAnyAsync<Exception>(() => bob.ChallengeFriendAsync("Ava", tc, "white"));
+        Assert.Contains("playing a game", OnlineClient.ServerMessage(busy));
+    }
+
+    [Fact]
+    public async Task Players_chat_masked_limited_and_kept_from_spectators_and_games_are_kept()
+    {
+        var (alice, aliceKey) = await Join("Ada");
+        OnlineClient bob = await Connect("Bram"), watcher = await Connect("Watcher");
+        Task<GameStartDto> aStart = Next<GameStartDto>(h => alice.GameStarted += h);
+        ChallengeDto ch = await alice.CreateChallengeAsync(new TimeControlDto(180, 0), "white");
+        Assert.True(await bob.AcceptChallengeAsync(ch.Code));
+        string id = (await aStart).GameId;
+        Assert.NotNull(await watcher.WatchAsync(id));
+        var watcherHeard = new List<ChatDto>();
+        watcher.ChatMessage += watcherHeard.Add;
+
+        Task<ChatDto> bobHears = Next<ChatDto>(h => bob.ChatMessage += h);
+        await alice.SendChatAsync(id, "  good luck, sh1thead!  ");
+        ChatDto line = await bobHears;
+        Assert.Equal(("Ada", "good luck, ********!"), (line.From, line.Text));
+
+        Exception notMine = await Assert.ThrowsAnyAsync<Exception>(() => watcher.SendChatAsync(id, "hi"));
+        Assert.Contains("your own games", OnlineClient.ServerMessage(notMine));
+        Exception tooFast = await Assert.ThrowsAnyAsync<Exception>(async () =>
+        {
+            for (int i = 0; i < 6; i++) await alice.SendChatAsync(id, $"spam {i}");
+        });
+        Assert.Contains("too fast", OnlineClient.ServerMessage(tooFast));
+
+        // The game ends (Ada resigns) and is kept, with its moves, for both players.
+        Task<GameOverDto> over = Next<GameOverDto>(h => alice.GameOver += h);
+        Assert.True(await alice.MakeMoveAsync(id, 1, "e2e4"));
+        Assert.True(await bob.MakeMoveAsync(id, 2, "e7e5"));
+        await alice.ResignAsync(id);
+        await over;
+        GameRecordDto kept = Assert.Single(await AccountClient.GetGamesAsync(_url, aliceKey));
+        Assert.Equal((id, "Ada", "Bram", "0-1"), (kept.Id, kept.White, kept.Black, kept.Result));
+        Assert.Contains("1. e4", kept.Pgn); // clock comments follow each move
+        Assert.Contains(" e5", kept.Pgn);
+        Assert.Empty(await AccountClient.GetGamesAsync(_url, aliceKey, before: kept.EndedAt));
+        Assert.Empty(watcherHeard);
     }
 
     private static Task<T> Next<T>(Action<Action<T>> subscribe)

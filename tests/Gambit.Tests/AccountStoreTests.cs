@@ -62,6 +62,13 @@ public sealed class AccountStoreTests : IDisposable
     [InlineData("Therapist")]
     public void Innocent_names_with_hidden_words_are_fine(string name) => Assert.Null(NameRules.CheckUsername(name));
 
+    [Fact]
+    public void Chat_masks_offensive_words_only()
+    {
+        Assert.Equal("gg, you ********! Dickens and the Peacock agree", NameRules.MaskOffensive("gg, you sh1thead! Dickens and the Peacock agree"));
+        Assert.Equal("big ****", NameRules.MaskOffensive("big dick"));
+    }
+
     [Theory]
     [InlineData("knight-on-f5", true)]
     [InlineData("short", false)]

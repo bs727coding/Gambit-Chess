@@ -30,6 +30,8 @@ public static class ServerHost
         builder.Services.AddSingleton<AccountStore>();
         builder.Services.AddSingleton<RatingStore>();
         builder.Services.AddSingleton<GameArchive>();
+        builder.Services.AddSingleton<FriendStore>();
+        builder.Services.AddSingleton<FriendNotifier>();
         builder.Services.AddSingleton<PlayerRegistry>();
         builder.Services.AddSingleton<Conduct>();
         builder.Services.AddSingleton<GameManager>();
@@ -66,6 +68,7 @@ public static class ServerHost
         app.UseAuthorization();
         app.MapHub<GameHub>(OnlineProtocol.HubPath).RequireRateLimiting("connect");
         app.MapAccountApi(options);
+        app.MapSocialApi();
         app.MapReleases(options);
         app.MapGet("/health", () => Results.Ok("ok"));
         app.MapGet("/", (GameManager games) =>

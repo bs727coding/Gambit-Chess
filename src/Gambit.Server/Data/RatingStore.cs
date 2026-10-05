@@ -69,6 +69,28 @@ public sealed class GameArchive(ServerDatabase db)
         return (int)(long)cmd.ExecuteScalar()!;
     }
 
+    /// <summary>
+    /// A player's finished games that ended before <paramref name="before"/> (all when null), newest
+    /// first, with both players' current names.
+    /// </summary>
+    public IReadOnlyList<Online.GameRecordDto> History(string playerId, DateTimeOffset? before, int count)
+    {
+        using SqliteConnection c = db.Open();
+        using SqliteCommand cmd = AccountStore.Command(c, null,
+            "SELECT g.id, COALESCE(w.username, '?'), COALESCE(b.username, '?'), g.time_control, g.result, g.termination, g.rated, " +
+            "g.white_change, g.black_change, g.ended_at, g.pgn FROM games g " +
+            "LEFT JOIN users w ON w.id = g.white_id LEFT JOIN users b ON b.id = g.black_id " +
+            "WHERE (g.white_id = $id OR g.black_id = $id) AND g.ended_at < $before ORDER BY g.ended_at DESC LIMIT $n",
+            ("$id", playerId), ("$before", before is DateTimeOffset t ? AccountStore.Stamp(t) : "9999"), ("$n", count));
+        using SqliteDataReader r = cmd.ExecuteReader();
+        var list = new List<Online.GameRecordDto>();
+        while (r.Read())
+            list.Add(new Online.GameRecordDto(r.GetString(0), r.GetString(1), r.GetString(2), r.GetString(3), r.GetString(4), r.GetString(5),
+                r.GetInt64(6) != 0, r.IsDBNull(7) ? null : r.GetInt32(7), r.IsDBNull(8) ? null : r.GetInt32(8),
+                AccountStore.Parse(r.GetString(9)), r.GetString(10)));
+        return list;
+    }
+
     /// <summary>A player's most recent games: (id, PGN), newest first.</summary>
     public IReadOnlyList<(string Id, string Pgn)> Recent(string playerId, int count)
     {

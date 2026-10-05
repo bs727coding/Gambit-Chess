@@ -50,11 +50,17 @@ public sealed class GameRoom(string id, Player white, Player black, TimeControlD
 /// broadcast; clocks, flags, aborts and abandonment are decided here, never by clients.
 /// </summary>
 public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerRegistry players, RatingStore ratings, GameArchive archive,
-    Conduct conduct, ILogger<GameManager> log, ServerOptions options)
+    Conduct conduct, FriendNotifier friends, ILogger<GameManager> log, ServerOptions options)
 {
+    /// <summary>Longest chat line (longer ones are cut).</summary>
+    public const int MaxChatLength = 200;
+
     private readonly ConcurrentDictionary<string, GameRoom> _rooms = new();
     private readonly ConcurrentDictionary<string, string> _activeRoomByPlayer = new();
-    private readonly ConcurrentDictionary<string, (Player Creator, TimeControlDto Tc, string Color, DateTimeOffset At, long Seq)> _challenges = new();
+
+    /// <summary>Open challenges by code; <c>ForId</c> is the friend a direct challenge was sent to (only they may accept).</summary>
+    private readonly ConcurrentDictionary<string, (Player Creator, TimeControlDto Tc, string Color, DateTimeOffset At, long Seq, string? ForId)> _challenges = new();
+    private readonly ConcurrentDictionary<string, Queue<DateTimeOffset>> _chatTimes = new();
     private long _challengeSeq;
     private readonly object _seekGate = new();
     private readonly List<(Player Player, TimeControlDto Tc)> _seeks = [];
@@ -71,6 +77,10 @@ public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerReg
     }
 
     public static bool IsValid(TimeControlDto tc) => tc.InitialSeconds is >= 30 and <= 10800 && tc.IncrementSeconds is >= 0 and <= 180;
+
+    /// <summary>The player is in a game that hasn't ended.</summary>
+    public bool IsPlaying(string playerId) =>
+        _activeRoomByPlayer.TryGetValue(playerId, out string? id) && _rooms.TryGetValue(id, out GameRoom? room) && !room.Finished;
 
     // ------------------------------------------------------------------ matchmaking
 
@@ -106,14 +116,14 @@ public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerReg
         lock (_seekGate) _seeks.RemoveAll(s => ReferenceEquals(s.Player, p));
     }
 
-    public ChallengeDto CreateChallenge(Player p, TimeControlDto tc, string color)
+    public ChallengeDto CreateChallenge(Player p, TimeControlDto tc, string color, string? forPlayerId = null)
     {
         if (!IsValid(tc)) throw new HubException("Invalid time control.");
         string code;
         do code = Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(3));
         while (_challenges.ContainsKey(code));
         color = color is "white" or "black" ? color : "random";
-        _challenges[code] = (p, tc, color, DateTimeOffset.UtcNow, Interlocked.Increment(ref _challengeSeq));
+        _challenges[code] = (p, tc, color, DateTimeOffset.UtcNow, Interlocked.Increment(ref _challengeSeq), forPlayerId);
 
         // Keep only the newest few codes per player.
         var mine = _challenges.Where(c => ReferenceEquals(c.Value.Creator, p)).OrderBy(c => c.Value.Seq).ToList();
@@ -124,7 +134,8 @@ public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerReg
     public async Task<bool> AcceptChallengeAsync(Player p, string code)
     {
         code = (code ?? "").Trim().ToUpperInvariant();
-        if (!_challenges.TryRemove(code, out var ch)) return false;
+        if (!_challenges.TryGetValue(code, out var ch) || ch.ForId != null && ch.ForId != p.PublicId) return false;
+        if (!_challenges.TryRemove(code, out _)) return false;
         if (ReferenceEquals(ch.Creator, p) || !ch.Creator.Connected) return false;
         string creatorColor = ch.Color;
         await StartGameAsync(ch.Creator, p, ch.Tc, creatorColor);
@@ -158,6 +169,47 @@ public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerReg
             if (pl.ConnectionId is not string conn) continue;
             await hub.Groups.AddToGroupAsync(conn, room.Id);
             await hub.Clients.Client(conn).GameStarted(StartDto(room, pl));
+        }
+        await friends.FriendsOfAsync(white.PublicId); // now "playing"
+        await friends.FriendsOfAsync(black.PublicId);
+    }
+
+    /// <summary>Turns down a challenge sent to this player; the challenger is told.</summary>
+    public async Task DeclineChallengeAsync(Player p, string code)
+    {
+        code = (code ?? "").Trim().ToUpperInvariant();
+        if (!_challenges.TryGetValue(code, out var ch) || ch.ForId != p.PublicId || !_challenges.TryRemove(code, out _)) return;
+        if (ch.Creator.ConnectionId is string conn) await hub.Clients.Client(conn).ChallengeDeclined(code, p.Name);
+    }
+
+    // ------------------------------------------------------------------ chat
+
+    /// <summary>
+    /// Sends a chat line to both players of a game (also after it ended, for "good game"). Spectators
+    /// don't see chat; offensive words are masked; at most 5 lines per 10 seconds.
+    /// </summary>
+    public async Task SendChatAsync(Player p, string gameId, string text)
+    {
+        text = (text ?? "").Trim();
+        if (text.Length == 0) return;
+        if (text.Length > MaxChatLength) text = text[..MaxChatLength];
+        if (!_rooms.TryGetValue(gameId ?? "", out GameRoom? room) || room.ColorOf(p) == null) throw new HubException("You can only chat in your own games.");
+        if (!ChatAllowed(p.PublicId)) throw new HubException("You're sending messages too fast. Wait a moment.");
+        var message = new ChatDto(room.Id, p.Name, NameRules.MaskOffensive(text), DateTimeOffset.UtcNow);
+        foreach (Player pl in new[] { room.White, room.Black })
+            if (pl.ConnectionId is string conn) await hub.Clients.Client(conn).ChatMessage(message);
+    }
+
+    private bool ChatAllowed(string playerId)
+    {
+        Queue<DateTimeOffset> times = _chatTimes.GetOrAdd(playerId, _ => new Queue<DateTimeOffset>());
+        lock (times)
+        {
+            DateTimeOffset now = DateTimeOffset.UtcNow;
+            while (times.Count > 0 && now - times.Peek() > TimeSpan.FromSeconds(10)) times.Dequeue();
+            if (times.Count >= 5) return false;
+            times.Enqueue(now);
+            return true;
         }
     }
 
@@ -486,6 +538,8 @@ public sealed class GameManager(IHubContext<GameHub, IGameClient> hub, PlayerReg
         Archive(room, rated, whiteChange, blackChange);
         log.LogInformation("Game {Id} over: {Result}", room.Id, description);
         await hub.Clients.Group(room.Id).GameOver(new GameOverDto(room.Id, result, room.Game.Termination.ToString(), description, whiteChange, blackChange));
+        await friends.FriendsOfAsync(room.White.PublicId); // free to play again
+        await friends.FriendsOfAsync(room.Black.PublicId);
     }
 
     // ------------------------------------------------------------------ helpers

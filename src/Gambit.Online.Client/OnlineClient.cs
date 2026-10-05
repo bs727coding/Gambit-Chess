@@ -39,6 +39,17 @@ public sealed class OnlineClient : IAsyncDisposable
     public event Action<string>? RematchOffered;
     public event Action<string, bool>? RematchDeclined;
 
+    /// <summary>The friend list changed on the server: fetch it again (AccountClient.GetFriendsAsync).</summary>
+    public event Action? FriendsChanged;
+
+    /// <summary>A friend challenges you: AcceptChallengeAsync(code) or DeclineChallengeAsync(code).</summary>
+    public event Action<ChallengeDto>? ChallengeReceived;
+
+    /// <summary>A challenge you sent a friend was turned down: (code, their name).</summary>
+    public event Action<string, string>? ChallengeDeclined;
+
+    public event Action<ChatDto>? ChatMessage;
+
     /// <summary>
     /// Connects with a session key. Throws <see cref="OnlineAccountException"/> (SignInRequired) when the
     /// server no longer accepts it.
@@ -68,6 +79,10 @@ public sealed class OnlineClient : IAsyncDisposable
         _hub.On<string>(nameof(IGameClient.Notice), m => Notice?.Invoke(m));
         _hub.On<string>(nameof(IGameClient.RematchOffered), id => RematchOffered?.Invoke(id));
         _hub.On<string, bool>(nameof(IGameClient.RematchDeclined), (id, unavailable) => RematchDeclined?.Invoke(id, unavailable));
+        _hub.On(nameof(IGameClient.FriendsChanged), () => FriendsChanged?.Invoke());
+        _hub.On<ChallengeDto>(nameof(IGameClient.ChallengeReceived), c => ChallengeReceived?.Invoke(c));
+        _hub.On<string, string>(nameof(IGameClient.ChallengeDeclined), (code, by) => ChallengeDeclined?.Invoke(code, by));
+        _hub.On<ChatDto>(nameof(IGameClient.ChatMessage), m => ChatMessage?.Invoke(m));
 
         _hub.Reconnecting += _ =>
         {
@@ -140,6 +155,10 @@ public sealed class OnlineClient : IAsyncDisposable
     public Task OfferRematchAsync(string gameId) => Hub.InvokeAsync(nameof(IGameServer.OfferRematch), gameId);
     public Task DeclineRematchAsync(string gameId) => Hub.InvokeAsync(nameof(IGameServer.DeclineRematch), gameId);
     public Task<IReadOnlyList<LiveGameDto>> ListGamesAsync() => Hub.InvokeAsync<IReadOnlyList<LiveGameDto>>(nameof(IGameServer.ListGames));
+    public Task<ChallengeDto> ChallengeFriendAsync(string username, TimeControlDto tc, string color) =>
+        Hub.InvokeAsync<ChallengeDto>(nameof(IGameServer.ChallengeFriend), username, tc, color);
+    public Task DeclineChallengeAsync(string code) => Hub.InvokeAsync(nameof(IGameServer.DeclineChallenge), code);
+    public Task SendChatAsync(string gameId, string text) => Hub.InvokeAsync(nameof(IGameServer.SendChat), gameId, text);
 
     /// <summary>Starts watching a game (null if it's no longer running). Watched games survive reconnects.</summary>
     public async Task<GameStartDto?> WatchAsync(string gameId)

@@ -29,6 +29,15 @@ public static class AccountApi
 
     /// <summary>GET (admins): a copy of the server's database (a SQLite file), made on the spot.</summary>
     public const string Backup = "/api/admin/backup";
+
+    /// <summary>GET (signed in): <see cref="FriendsDto"/>. POST <see cref="FriendRequest"/>: ask someone, or accept their request.</summary>
+    public const string Friends = "/api/friends";
+
+    /// <summary>POST <see cref="FriendRequest"/>: remove a friend, decline their request, or withdraw yours.</summary>
+    public const string RemoveFriend = "/api/friends/remove";
+
+    /// <summary>GET (signed in) ?count=50&amp;before=ISO-time: your finished games, newest first (<see cref="GameRecordDto"/>).</summary>
+    public const string Games = "/api/games";
 }
 
 public sealed record RegisterRequest(string Username, string Password, string? InviteCode, string? Device);
@@ -50,3 +59,15 @@ public sealed record ServerInfoDto(string Name, int ProtocolVersion, bool Invite
 
 /// <summary>Body of a failed account request: a message to show the player.</summary>
 public sealed record ApiError(string Message);
+
+public sealed record FriendRequest(string Username);
+
+/// <summary>A friend and what they're doing: "online", "playing" or "offline".</summary>
+public sealed record FriendDto(string Id, string Username, string Status);
+
+/// <summary>Your friends, the requests waiting for you, and the ones you sent (usernames).</summary>
+public sealed record FriendsDto(IReadOnlyList<FriendDto> Friends, IReadOnlyList<string> Incoming, IReadOnlyList<string> Outgoing);
+
+/// <summary>A finished game of yours, with its PGN.</summary>
+public sealed record GameRecordDto(string Id, string White, string Black, string TimeControl, string Result, string Termination,
+    bool Rated, int? WhiteChange, int? BlackChange, DateTimeOffset EndedAt, string Pgn);

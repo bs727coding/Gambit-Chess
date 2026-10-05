@@ -79,6 +79,13 @@ public static partial class NameRules
         return false;
     }
 
+    /// <summary>A chat line with every word that would be refused in a username replaced by asterisks.</summary>
+    public static string MaskOffensive(string text) =>
+        ChatWordPattern().Replace(text, m => IsOffensive(m.Value) ? new string('*', m.Value.Length) : m.Value);
+
+    [GeneratedRegex(@"[\p{L}\p{N}_-]+")]
+    private static partial Regex ChatWordPattern();
+
     /// <summary>Null if <paramref name="password"/> is acceptable for <paramref name="username"/>, otherwise why not.</summary>
     public static string? CheckPassword(string? password, string username)
     {

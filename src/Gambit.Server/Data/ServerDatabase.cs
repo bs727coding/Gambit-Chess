@@ -4,13 +4,13 @@ namespace Gambit.Server.Data;
 
 /// <summary>
 /// The server's SQLite database, gambit.db in the data folder: accounts, sign-in sessions, invites,
-/// ratings and finished games. A single file, so a copy of it is a complete backup. WAL mode lets the
+/// ratings, finished games and friends. A single file, so a copy of it is a complete backup. WAL mode lets the
 /// admin commands (a second process) read and write while the server runs.
 /// </summary>
 public sealed class ServerDatabase
 {
     /// <summary>Schema version this server writes (PRAGMA user_version). Add a migration step when raising it.</summary>
-    public const int SchemaVersion = 1;
+    public const int SchemaVersion = 2;
 
     public const string FileName = "gambit.db";
 
@@ -104,7 +104,26 @@ public sealed class ServerDatabase
             Execute(c, "PRAGMA user_version = 1;", tx);
             tx.Commit();
         }
+        if (version < 2)
+        {
+            using SqliteTransaction tx = c.BeginTransaction();
+            Execute(c, SchemaV2, tx);
+            Execute(c, "PRAGMA user_version = 2;", tx);
+            tx.Commit();
+        }
     }
+
+    /// <summary>2: friends (a pending row is a request; friends have an accepted row each way).</summary>
+    private const string SchemaV2 = """
+        CREATE TABLE friends (
+            user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            friend_id  TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            status     TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            PRIMARY KEY (user_id, friend_id)
+        );
+        CREATE INDEX friends_by_friend ON friends(friend_id);
+        """;
 
     private const string SchemaV1 = """
         CREATE TABLE users (
