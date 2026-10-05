@@ -221,6 +221,7 @@ public sealed partial class OnlinePage : Page
     {
         SetAccountMode(AccountPanel.Visibility == Visibility.Visible && _creatingAccount, message);
         AccountPanel.Visibility = Visibility.Visible;
+        InsecureBar.IsOpen = ServerAddress.IsUnencryptedOverInternet(url);
         UsernameBox.Text = OnlineCredentials.Get(url)?.Username ?? UsernameBox.Text;
         UsernameBox.Focus(FocusState.Programmatic);
         try

@@ -221,6 +221,19 @@
                 </StackPanel>
                 <Button Grid.Column="2" Content="Reset…" VerticalAlignment="Center" MinWidth="120" Click="Reset_Click" AutomationProperties.Name="Reset all progress" />
             </Grid>
+            <Grid Style="{StaticResource SettingRowStyle}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <FontIcon Glyph="&#xEBE8;" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="Report a problem" />
+                    <TextBlock Text="Save the recent logs and settings to a file you can send to whoever runs your Gambit server (no games, progress or passwords)" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                </StackPanel>
+                <Button Grid.Column="2" Content="Save report…" VerticalAlignment="Center" MinWidth="120" Click="BugReport_Click" AutomationProperties.Name="Save a bug report" />
+            </Grid>
             <TextBlock x:Name="DataStatus" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                        TextWrapping="Wrap" Margin="4,4,0,0" Visibility="Collapsed" />
 

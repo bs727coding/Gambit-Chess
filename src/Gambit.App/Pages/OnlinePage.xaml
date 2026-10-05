@@ -33,6 +33,8 @@
                     <StackPanel x:Name="AccountPanel" Spacing="10" Visibility="Collapsed" MaxWidth="560" HorizontalAlignment="Left">
                         <TextBlock x:Name="AccountTitle" Text="Sign in" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,4,0,0" />
                         <TextBlock x:Name="AccountHint" Style="{StaticResource SecondaryTextStyle}" />
+                        <InfoBar x:Name="InsecureBar" IsOpen="False" IsClosable="False" Severity="Warning" Title="Not encrypted"
+                                 Message="This address starts with http://, so your password would cross the internet unencrypted. Prefer a server with an https:// address, or connect through Tailscale." />
                         <Grid ColumnSpacing="12" RowSpacing="10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />

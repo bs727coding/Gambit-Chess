@@ -179,6 +179,39 @@ public sealed partial class SettingsPage : Page
         }
     }
 
+    private async void BugReport_Click(object sender, RoutedEventArgs e)
+    {
+        App.Settings.Save();
+        var picker = new FileSavePicker
+        {
+            SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+            SuggestedFileName = $"Gambit bug report {DateTime.Now:yyyy-MM-dd}",
+        };
+        picker.FileTypeChoices.Add("Zip file", new List<string> { ".zip" });
+        InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(App.Window));
+        StorageFile? file = await picker.PickSaveFileAsync();
+        if (file == null) return;
+        try
+        {
+            Log.Info("Saving a bug report");
+            using (var stream = new FileStream(file.Path, FileMode.Create, FileAccess.Write))
+                BugReport.Write(stream, AppPaths.Root, AboutText(), DateTime.Now);
+            ShowDataStatus($"Saved a bug report to {file.Path}. Send it to whoever runs your Gambit server, with a few words about what happened.");
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"Bug report failed: {ex.Message}");
+            ShowDataStatus($"Saving the report failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>The build and system, for the top of a bug report.</summary>
+    private static string AboutText() => string.Join(Environment.NewLine,
+        $"{AppInfo.DisplayName} {AppInfo.Version} {AppInfo.Commit}".TrimEnd(),
+        $"{(UpdateService.Instance.IsInstalled ? "Installed" : "Development copy")} · {AppInfo.Architecture} · .NET {Environment.Version}",
+        $"Windows {Environment.OSVersion.Version}",
+        $"Saved {DateTimeOffset.Now:yyyy-MM-dd HH:mm zzz}");
+
     private async void Restore_Click(object sender, RoutedEventArgs e)
     {
         var picker = new FileOpenPicker { SuggestedStartLocation = PickerLocationId.DocumentsLibrary };

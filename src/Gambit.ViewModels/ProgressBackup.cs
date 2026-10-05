@@ -42,11 +42,7 @@ public static class ProgressBackup
             zip.CreateEntryFromFile(Path.Combine(dataDir, ProfileFile), ProfileFile);
             if (File.Exists(Path.Combine(dataDir, CurrentGameFile)))
                 zip.CreateEntryFromFile(Path.Combine(dataDir, CurrentGameFile), CurrentGameFile);
-            if (ReadSettings(dataDir) is JsonObject settings)
-            {
-                settings.Remove(TokenProperty);
-                WriteText(zip, SettingsFile, settings.ToJsonString(Json));
-            }
+            if (SafeSettings(dataDir) is string settings) WriteText(zip, SettingsFile, settings);
 
             int games = 0;
             string gamesDir = Path.Combine(dataDir, GamesFolder);
@@ -160,6 +156,14 @@ public static class ProgressBackup
         string gamesDir = Path.Combine(dataDir, GamesFolder);
         if (Directory.Exists(gamesDir))
             foreach (string pgn in Directory.GetFiles(gamesDir, "*.pgn")) File.Delete(pgn);
+    }
+
+    /// <summary>The settings file without anything secret (the old guest sign-in), or null if there is none.</summary>
+    public static string? SafeSettings(string dataDir)
+    {
+        if (ReadSettings(dataDir) is not JsonObject settings) return null;
+        settings.Remove(TokenProperty);
+        return settings.ToJsonString(Json);
     }
 
     private static JsonObject? ReadSettings(string dataDir)
