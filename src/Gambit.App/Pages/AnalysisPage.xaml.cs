@@ -6,7 +6,9 @@ using Gambit.Core.Board;
 using Gambit.Core.Games;
 using Gambit.Core.Notation;
 using Gambit.Core.Openings;
+using Gambit.Engine.Bots;
 using Gambit.Engine.Search;
+using Gambit.ViewModels;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -337,6 +339,65 @@ public sealed partial class AnalysisPage : Page
     }
 
     private void LoadFen_Click(object sender, RoutedEventArgs e) => LoadFen(FenBox.Text);
+
+    /// <summary>Starts a game from the shown position, against a bot or pass and play (a practice game).</summary>
+    private async void PlayFromHere_Click(object sender, RoutedEventArgs e)
+    {
+        Position pos = Board.Position.Clone();
+        if (MoveGenerator.LegalMoves(pos).Count == 0)
+        {
+            ShowToast("Nothing to play here", "The game is already over in this position.", InfoBarSeverity.Informational);
+            return;
+        }
+        bool practice = pos.Key != Position.Start().Key;
+        AppSettings s = App.Settings.Current;
+
+        var opponent = new ComboBox { Header = "Opponent", HorizontalAlignment = HorizontalAlignment.Stretch };
+        opponent.Items.Add("Pass and play (two players)");
+        foreach (BotProfile b in BotRoster.Bots) opponent.Items.Add($"{b.Name} · {b.RatingText}");
+        int last = BotRoster.Bots.ToList().FindIndex(b => b.Id == s.LastBotId);
+        opponent.SelectedIndex = last < 0 ? 1 : last + 1;
+        var side = new ComboBox { Header = "You play", HorizontalAlignment = HorizontalAlignment.Stretch };
+        side.Items.Add("White");
+        side.Items.Add("Black");
+        side.SelectedIndex = pos.SideToMove == Color.White ? 0 : 1;
+        opponent.SelectionChanged += (_, _) => side.IsEnabled = opponent.SelectedIndex > 0;
+        var clock = new ComboBox { Header = "Time control", HorizontalAlignment = HorizontalAlignment.Stretch };
+        foreach (var tc in TimeControlChoices.All) clock.Items.Add(tc.Label);
+        clock.SelectedIndex = TimeControlChoices.IndexOf(s.LastTimeControl);
+
+        string note = practice ? "A practice game: it's saved with your games but doesn't count in your record." : "";
+        if (GamePage.HasActiveGame) note += (note.Length > 0 ? " " : "") + "Starting it ends your unfinished game.";
+        var panel = new StackPanel { Spacing = 12, MinWidth = 320 };
+        panel.Children.Add(opponent);
+        panel.Children.Add(side);
+        panel.Children.Add(clock);
+        if (note.Length > 0) panel.Children.Add(new TextBlock { Text = note, TextWrapping = TextWrapping.Wrap, Opacity = 0.7, FontSize = 12 });
+        var dialog = new ContentDialog
+        {
+            Title = "Play from this position",
+            Content = panel,
+            PrimaryButtonText = "Play",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Primary,
+        };
+        if (await Dialogs.ShowAsync(dialog, XamlRoot) != ContentDialogResult.Primary) return;
+
+        TimeControl timeControl = TimeControlChoices.All[Math.Max(0, clock.SelectedIndex)].Control;
+        string? fen = practice ? pos.ToFen() : null;
+        GameSetup setup;
+        if (opponent.SelectedIndex <= 0)
+        {
+            if (await PassAndPlayDialog.AskAsync(XamlRoot) is not (string white, string black)) return;
+            setup = new GameSetup(null, Color.White, timeControl, AllowTakebacks: true, fen) { WhiteName = white, BlackName = black };
+        }
+        else
+        {
+            BotProfile bot = BotRoster.Bots[opponent.SelectedIndex - 1];
+            setup = new GameSetup(bot, side.SelectedIndex == 1 ? Color.Black : Color.White, timeControl, AllowTakebacks: true, fen);
+        }
+        App.Window.Navigate(typeof(GamePage), setup, "play");
+    }
 
     private void CopyFen_Click(object sender, RoutedEventArgs e)
     {

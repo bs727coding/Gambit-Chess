@@ -221,6 +221,58 @@ public class GameViewModelTests
     }
 
     [Fact]
+    public void Pass_and_play_uses_the_players_names()
+    {
+        SynchronizationContext.SetSynchronizationContext(null);
+        var host = new FakeHost();
+        var vm = new GameViewModel(host);
+        vm.StartLocal(new GameSetup(null, Color.White, TimeControl.Unlimited, AllowTakebacks: true) { WhiteName = "Alice", BlackName = "Bob" });
+        Assert.Equal("Alice to move", vm.Status);
+        Assert.Equal("Bob", vm.Badge(Color.Black).Name);
+        Assert.Equal("Alice", vm.Session!.Game.Tags["White"]);
+
+        GameOverSummary? summary = null;
+        vm.GameOver += (_, s) => summary = s;
+        foreach (string move in new[] { "f2f3", "e7e5", "g2g4", "d8h4" }) Play(vm, move); // fool's mate
+        Assert.Equal("Bob wins", summary?.Title);
+        Assert.False(Assert.Single(host.Recorded).Practice);
+    }
+
+    [Fact]
+    public void A_game_from_a_set_up_position_is_practice()
+    {
+        SynchronizationContext.SetSynchronizationContext(null);
+        var host = new FakeHost();
+        using var vm = new GameViewModel(host, _ => new ScriptedBot());
+        vm.StartLocal(new GameSetup(BotRoster.Get("ember"), Color.White, TimeControl.Unlimited, AllowTakebacks: true, "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1"));
+        Assert.True(vm.Setup!.IsPractice);
+        Assert.Equal("Practice from a position", vm.Session!.Game.Tags["Event"]);
+
+        Play(vm, "a1a8"); // mate
+        FinishedGame finished = Assert.Single(host.Recorded);
+        Assert.True(finished.Practice);
+        Assert.Equal(GameResult.WhiteWins, finished.Game.Result);
+        GameOverSummary summary = vm.Summary();
+        Assert.Contains(summary.Details, d => d.Contains("isn't counted", StringComparison.Ordinal));
+        Assert.Equal("Try again", summary.RematchLabel);
+    }
+
+    [Fact]
+    public void A_saved_game_keeps_the_names_and_the_start_position()
+    {
+        var setup = new GameSetup(null, Color.White, TimeControl.Minutes(5), AllowTakebacks: true, "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1")
+        {
+            WhiteName = "Alice",
+            BlackName = "Bob",
+        };
+        GameSetup restored = SavedGame.From(setup, new Game(setup.StartFen), null).ToSetup();
+        Assert.Equal(("Alice", "Bob"), (restored.WhiteName, restored.BlackName));
+        Assert.True(restored.IsPractice);
+        Assert.Equal(3, TimeControlChoices.IndexOf("5+0"));
+        Assert.Equal(0, TimeControlChoices.IndexOf("no such key"));
+    }
+
+    [Fact]
     public void A_premove_is_played_when_legal_and_dropped_when_not()
     {
         var (vm, _) = NewBotGame("e7e5", "b8c6");

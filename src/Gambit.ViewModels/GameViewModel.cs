@@ -48,7 +48,9 @@ public sealed record OpponentCard(string Name, string Tagline, string Monogram, 
 public sealed record Captures(IReadOnlyList<Piece> Pieces, int Advantage);
 
 /// <summary>A finished game for the profile: stats, archive and achievements.</summary>
-public sealed record FinishedGame(Game Game, string Opponent, BotProfile? Bot, int? OpponentRating, Color? PlayerColor, TimeControl TimeControl);
+/// <summary>A finished game for the profile. <paramref name="Practice"/>: kept, but not counted (<see cref="GameSetup.IsPractice"/>).</summary>
+public sealed record FinishedGame(Game Game, string Opponent, BotProfile? Bot, int? OpponentRating, Color? PlayerColor, TimeControl TimeControl,
+    bool Practice = false);
 
 /// <summary>What the game view model needs from the app: the profile, storage and sounds.</summary>
 public interface IGameHost
@@ -160,11 +162,11 @@ public sealed class GameViewModel : IDisposable
         }
         else
         {
-            white = new PlayerInfo("White", PlayerKind.LocalHuman) { Id = "white" };
-            black = new PlayerInfo("Black", PlayerKind.LocalHuman) { Id = "black" };
+            white = new PlayerInfo(setup.WhiteName ?? "White", PlayerKind.LocalHuman) { Id = "white" };
+            black = new PlayerInfo(setup.BlackName ?? "Black", PlayerKind.LocalHuman) { Id = "black" };
         }
 
-        game.Tags["Event"] = setup.IsHotSeat ? "Pass and play" : "Casual game vs computer";
+        game.Tags["Event"] = setup.IsPractice ? "Practice from a position" : setup.IsHotSeat ? "Pass and play" : "Casual game vs computer";
         game.Tags["Site"] = $"{_host.AppName} for Windows";
         game.Tags["Date"] = DateTime.Now.ToString("yyyy.MM.dd");
         game.Tags["White"] = white.Name;
@@ -292,7 +294,7 @@ public sealed class GameViewModel : IDisposable
             if (ViewPly >= 0) return "Viewing an earlier position";
             if (Session.IsOpponentThinking) return $"{OpponentName} is thinking…";
             if (Setup?.IsSpectating == true) return $"Watching · {(g.SideToMove == Color.White ? Session.White : Session.Black).Name} to move";
-            if (Setup?.IsHotSeat == true) return $"{g.SideToMove.Name()} to move";
+            if (Setup?.IsHotSeat == true) return $"{SideName(g.SideToMove)} to move";
             return g.Position.InCheck ? "Check! Your move" : "Your move";
         }
     }
@@ -351,7 +353,7 @@ public sealed class GameViewModel : IDisposable
     {
         RematchStatus.Offered => "Rematch offered…",
         RematchStatus.Received => "Accept rematch",
-        _ => "Rematch",
+        _ => Setup is { IsPractice: true } ? "Try again" : "Rematch",
     };
 
     public bool CanRematch => IsPlaying && (Session as RemoteGameSession)?.Rematch != RematchStatus.Offered;
@@ -497,11 +499,15 @@ public sealed class GameViewModel : IDisposable
         Game g = Session.Game;
         bool aborted = g.Termination == Termination.Aborted;
         string title = aborted ? "Game aborted"
-            : Setup.IsNeutralView ? g.Winner switch { Color.White => "White wins", Color.Black => "Black wins", _ => "Draw" }
+            : Setup.IsNeutralView ? g.Winner switch { Color.White => $"{SideName(Color.White)} wins", Color.Black => $"{SideName(Color.Black)} wins", _ => "Draw" }
             : g.Winner == Setup.HumanColor ? "You won!" : g.Winner == null ? "Draw" : "You lost";
         description = aborted ? "The game ended before both players had moved, so it doesn't count." : (description ?? g.ResultDescription) + ".";
         var details = new List<string>();
-        if (Setup.Bot is BotProfile bp && !aborted)
+        if (Setup.IsPractice && !aborted)
+        {
+            details.Add("A practice game from a set-up position: it isn't counted in your record.");
+        }
+        else if (Setup.Bot is BotProfile bp && !aborted)
         {
             (int wins, int losses, int draws) = _host.RecordAgainst(bp.Id);
             details.Add($"Your record vs {bp.Name}: {wins} W · {losses} L · {draws} D");
@@ -592,10 +598,15 @@ public sealed class GameViewModel : IDisposable
             Bot: Setup.Bot,
             OpponentRating: Setup.Bot?.Rating ?? onlineOpponent?.Rating,
             PlayerColor: Setup.IsHotSeat ? null : Setup.HumanColor,
-            TimeControl: Setup.TimeControl));
+            TimeControl: Setup.TimeControl,
+            Practice: Setup.IsPractice));
     }
 
     private static string Monogram(string name) => name.Length > 0 ? name[..1].ToUpperInvariant() : "?";
+
+    /// <summary>A side's name in pass and play ("Alice"), otherwise "White" or "Black".</summary>
+    private string SideName(Color side) =>
+        (Setup is { IsHotSeat: true } s ? side == Color.White ? s.WhiteName : s.BlackName : null) ?? side.Name();
 }
 
 /// <summary>How to redraw the board after <see cref="GameViewModel.BoardChanged"/>.</summary>

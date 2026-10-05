@@ -115,6 +115,7 @@ public sealed partial class GamePage : Page
         Board.SetMarkers([]);
         Board.Flipped = _vm.StartFlipped;
         if (_vm.Position is Position pos) Board.SetPosition(pos, _vm.LastMove);
+        AutoFlip();
         SetupPlayerBars();
         SetupOpponentCard();
         RefreshMoveList();
@@ -128,6 +129,27 @@ public sealed partial class GamePage : Page
         if (update.ClearMarkers) Board.SetMarkers([]);
         if (_vm.Position is Position pos) Board.SetPosition(pos, _vm.LastMove, animate: update.Animate);
         MoveList.Highlight(_vm.DisplayedPly);
+        // Turn the board once the move has been seen.
+        if (_vm.Setup is { IsHotSeat: true }) Helpers.Delay.Run(DispatcherQueue, TimeSpan.FromMilliseconds(450), () =>
+        {
+            if (!AutoFlip()) return;
+            SetupPlayerBars();
+            RefreshAll();
+        });
+    }
+
+    /// <summary>
+    /// Pass and play with "turn the board" on: the side to move plays from the bottom. Returns whether
+    /// the board turned.
+    /// </summary>
+    private bool AutoFlip()
+    {
+        if (_vm.Setup is not { IsHotSeat: true } || !App.Settings.Current.PassAndPlayFlip || _vm.ViewPly >= 0) return false;
+        if (_vm.Session?.Game is not { IsOver: false } game) return false;
+        bool flipped = game.SideToMove == Color.Black;
+        if (Board.Flipped == flipped) return false;
+        Board.Flipped = flipped;
+        return true;
     }
 
     private async void Vm_DrawOfferReceived(object? sender, EventArgs e)

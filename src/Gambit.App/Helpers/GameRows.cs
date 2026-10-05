@@ -35,7 +35,7 @@ public static class GameRows
         string moves = g.Moves == 1 ? "1 move" : $"{g.Moves} moves";
         text.Children.Add(new TextBlock
         {
-            Text = $"{g.Termination} · {moves} · {g.TimeControl}{(g.Opening is string o ? " · " + o : "")} · {Ui.RelativeTime(g.PlayedAt)}",
+            Text = $"{g.Termination} · {moves} · {g.TimeControl}{(g.Opening is string o ? " · " + o : "")}{(g.Practice ? " · practice" : "")} · {Ui.RelativeTime(g.PlayedAt)}",
             Opacity = 0.7,
             FontSize = 12,
             TextTrimming = TextTrimming.CharacterEllipsis,

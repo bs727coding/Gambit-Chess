@@ -66,7 +66,7 @@ public sealed partial class ProfilePage : Page
     private void BuildOpenings(PlayerProfile p)
     {
         OpeningsList.Children.Clear();
-        var groups = p.RecentGames.Where(g => g.Opening != null && g.PlayerColor != "both")
+        var groups = p.RecentGames.Where(g => g.Opening != null && g.PlayerColor != "both" && !g.Practice)
             .GroupBy(g => g.Opening!)
             .OrderByDescending(g => g.Count())
             .Take(8)

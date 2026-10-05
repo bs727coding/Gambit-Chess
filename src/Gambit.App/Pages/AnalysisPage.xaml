@@ -137,6 +137,13 @@
             <!-- Import / export -->
             <Border Grid.Row="3" Style="{StaticResource CardStyle}">
                 <StackPanel Spacing="8">
+                    <Button HorizontalAlignment="Stretch" Click="PlayFromHere_Click" AutomationProperties.Name="Play from here"
+                            ToolTipService.ToolTip="Play this position against a bot or a friend">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE768;" FontSize="14" />
+                            <TextBlock Text="Play from here" />
+                        </StackPanel>
+                    </Button>
                     <Grid ColumnSpacing="6">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />

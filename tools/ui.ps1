@@ -76,15 +76,21 @@ switch ($Action) {
         }
     }
     'invoke' {
-        # Prefer a match that can be invoked (a button can share its name with a nearby label).
+        # Prefer a match that can be invoked (a button can share its name with a nearby label), and an
+        # on-screen one; an element scrolled out of view (e.g. a small test window) is the fallback.
         $el = $null
+        $offscreen = $null
         foreach ($cand in $root.FindAll($TreeScope::Descendants, [System.Windows.Automation.Condition]::TrueCondition)) {
             $cur = $cand.Current
-            $hit = ($AutomationId -and $cur.AutomationId -eq $AutomationId) -or ($Name -and $cur.Name -eq $Name -and -not $cur.IsOffscreen)
+            $hit = ($AutomationId -and $cur.AutomationId -eq $AutomationId) -or ($Name -and $cur.Name -eq $Name)
             if (-not $hit) { continue }
             $ps = $cand.GetSupportedPatterns()
-            if ($ps -contains [System.Windows.Automation.InvokePattern]::Pattern -or $ps -contains [System.Windows.Automation.SelectionItemPattern]::Pattern -or $ps -contains [System.Windows.Automation.TogglePattern]::Pattern) { $el = $cand; break }
+            if ($ps -contains [System.Windows.Automation.InvokePattern]::Pattern -or $ps -contains [System.Windows.Automation.SelectionItemPattern]::Pattern -or $ps -contains [System.Windows.Automation.TogglePattern]::Pattern) {
+                if (-not $cur.IsOffscreen -or $AutomationId) { $el = $cand; break }
+                if (-not $offscreen) { $offscreen = $cand }
+            }
         }
+        if (-not $el) { $el = $offscreen }
         if (-not $el) { $el = Find-Element }
         $patterns = $el.GetSupportedPatterns()
         if ($patterns -contains [System.Windows.Automation.InvokePattern]::Pattern) {

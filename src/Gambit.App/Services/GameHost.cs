@@ -18,8 +18,8 @@ public sealed class GameHost : IGameHost
 
     public void RecordFinished(FinishedGame f)
     {
-        App.Profile.RecordGame(f.Game, f.Opponent, f.Bot?.Id, f.OpponentRating, f.PlayerColor, f.TimeControl);
-        AchievementService.Instance.OnGameFinished(f.Game, f.PlayerColor, f.Bot, f.TimeControl);
+        App.Profile.RecordGame(f.Game, f.Opponent, f.Bot?.Id, f.OpponentRating, f.PlayerColor, f.TimeControl, f.Practice);
+        if (!f.Practice) AchievementService.Instance.OnGameFinished(f.Game, f.PlayerColor, f.Bot, f.TimeControl);
     }
 
     public (int Wins, int Losses, int Draws) RecordAgainst(string botId)

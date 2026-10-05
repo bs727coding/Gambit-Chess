@@ -104,17 +104,20 @@ public class EngineTests
     [Fact]
     public void Strong_bot_beats_weakest_bot()
     {
-        var weak = new BotMoveProvider(BotRoster.Get("acorn"), seed: 1) { HumanLikeDelay = false };
-        var strong = new BotMoveProvider(BotRoster.Get("harbor") with { ThinkTimeMs = 150 }, seed: 1) { HumanLikeDelay = false };
-        var game = new Game();
-        while (!game.IsOver && game.Moves.Count < 300)
+        // Node budgets, not the clock, limit both bots here, so the games are the same on any machine.
+        // Gale (1400) won 20 of 20 such games against Acorn (250) when this test was written.
+        for (int seed = 1; seed <= 3; seed++)
         {
-            IMoveProvider side = game.SideToMove == Color.White ? strong : weak;
-            var snapshot = new GameSnapshot(game.Position.Clone(), null, null, TimeSpan.Zero, game.Moves.Count);
-            Move m = ((BotMoveProvider)side).ChooseMove(snapshot);
-            game.Play(m);
+            var weak = new BotMoveProvider(BotRoster.Get("acorn") with { ThinkTimeMs = 60_000 }, seed: seed) { HumanLikeDelay = false };
+            var strong = new BotMoveProvider(BotRoster.Get("gale") with { ThinkTimeMs = 60_000 }, seed: seed) { HumanLikeDelay = false };
+            var game = new Game();
+            while (!game.IsOver && game.Moves.Count < 300)
+            {
+                BotMoveProvider side = game.SideToMove == Color.White ? strong : weak;
+                game.Play(side.ChooseMove(new GameSnapshot(game.Position.Clone(), null, null, TimeSpan.Zero, game.Moves.Count)));
+            }
+            Assert.Equal(GameResult.WhiteWins, game.Result);
         }
-        Assert.Equal(GameResult.WhiteWins, game.Result);
     }
 
     [Fact]

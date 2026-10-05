@@ -33,6 +33,11 @@ public sealed partial class AppSettings : ObservableObject
     // Online play (the sign-in itself is kept in Windows Credential Manager: OnlineCredentials).
     [ObservableProperty] public partial string OnlineServerUrl { get; set; } = AppInfo.HomeServer ?? "http://localhost:5080";
     [ObservableProperty] public partial string LastOnlineTimeControl { get; set; } = "3+2";
+
+    // Pass and play: the last names used, and whether the board turns to the side to move.
+    [ObservableProperty] public partial string LastWhiteName { get; set; } = "";
+    [ObservableProperty] public partial string LastBlackName { get; set; } = "";
+    [ObservableProperty] public partial bool PassAndPlayFlip { get; set; }
 }
 
 /// <summary>Loads settings at startup and saves them (debounced) whenever a property changes.</summary>

@@ -29,6 +29,9 @@ public sealed class GameRecord
     public string? Opening { get; set; }
     public string PgnFile { get; set; } = "";
 
+    /// <summary>Played from a set-up position: listed, but not counted in the record or statistics.</summary>
+    public bool Practice { get; set; }
+
     /// <summary>
     /// The PGN file, or null if it is gone. Profiles store full paths, so a profile restored from a
     /// backup made on another computer finds its games by file name in this data folder.
@@ -100,7 +103,8 @@ public sealed class ProfileService
     public event EventHandler? Changed;
 
     /// <summary>Records a finished game and stores its PGN. Returns the stored record.</summary>
-    public GameRecord RecordGame(Game game, string opponent, string? botId, int? opponentRating, Color? playerColor, TimeControl timeControl)
+    public GameRecord RecordGame(Game game, string opponent, string? botId, int? opponentRating, Color? playerColor, TimeControl timeControl,
+        bool practice = false)
     {
         string outcome = playerColor is not Color pc || game.Result == GameResult.Draw
             ? "draw"
@@ -118,6 +122,7 @@ public sealed class ProfileService
             Moves = (game.Moves.Count + 1) / 2,
             TimeControl = timeControl.DisplayName,
             Opening = game.Tags.GetValueOrDefault("Opening"),
+            Practice = practice,
         };
 
         try
@@ -132,7 +137,7 @@ public sealed class ProfileService
         }
 
         PlayerProfile p = Profile;
-        if (playerColor is not null && game.Termination != Termination.Aborted)
+        if (playerColor is not null && !practice && game.Termination != Termination.Aborted)
         {
             p.GamesPlayed++;
             switch (outcome)

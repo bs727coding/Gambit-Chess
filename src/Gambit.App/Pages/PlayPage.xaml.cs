@@ -32,16 +32,7 @@ public sealed partial class PlayPage : Page
     /// <summary>Navigation parameter that forces the opponent picker even if a game is in progress.</summary>
     public const string ChooseParameter = "choose";
 
-    private static readonly (string Key, string Label, TimeControl Control)[] TimeControls =
-    [
-        ("unlimited", "Unlimited — no clock", TimeControl.Unlimited),
-        ("1+0", "1 min · Bullet", TimeControl.Minutes(1)),
-        ("3+2", "3 | 2 · Blitz", TimeControl.Minutes(3, 2)),
-        ("5+0", "5 min · Blitz", TimeControl.Minutes(5)),
-        ("10+0", "10 min · Rapid", TimeControl.Minutes(10)),
-        ("15+10", "15 | 10 · Rapid", TimeControl.Minutes(15, 10)),
-        ("30+0", "30 min · Classical", TimeControl.Minutes(30)),
-    ];
+    private static IReadOnlyList<(string Key, string Label, TimeControl Control)> TimeControls => TimeControlChoices.All;
 
     private List<BotCardModel> _cards = [];
     private string _color = "white";
@@ -67,8 +58,7 @@ public sealed partial class PlayPage : Page
 
         _color = s.LastColor is "white" or "black" or "random" ? s.LastColor : "white";
         UpdateColorToggles();
-        int tcIndex = Array.FindIndex(TimeControls, t => t.Key == s.LastTimeControl);
-        TimeControlBox.SelectedIndex = tcIndex < 0 ? 0 : tcIndex;
+        TimeControlBox.SelectedIndex = TimeControlChoices.IndexOf(s.LastTimeControl);
         TakebacksSwitch.IsOn = s.AllowTakebacks;
 
         ResumeBar.IsOpen = GamePage.HasActiveGame;
@@ -145,9 +135,10 @@ public sealed partial class PlayPage : Page
         App.Window.Navigate(typeof(GamePage), setup, "play");
     }
 
-    private void HotSeat_Click(object sender, RoutedEventArgs e)
+    private async void HotSeat_Click(object sender, RoutedEventArgs e)
     {
-        var setup = new GameSetup(null, Color.White, SelectedTimeControl, AllowTakebacks: true);
+        if (await PassAndPlayDialog.AskAsync(XamlRoot) is not (string white, string black)) return;
+        var setup = new GameSetup(null, Color.White, SelectedTimeControl, AllowTakebacks: true) { WhiteName = white, BlackName = black };
         App.Window.Navigate(typeof(GamePage), setup, "play");
     }
 
