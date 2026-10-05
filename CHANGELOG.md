@@ -3,7 +3,10 @@
 The version is set in `Directory.Build.props`; [docs/RELEASING.md](docs/RELEASING.md) explains how a
 release goes out.
 
-## Unreleased
+## 0.3.0 — 2026-10-05
+
+Friends, chat and an opening explorer; bots that err like real players; your own board colors.
+The online protocol changed (version 3): update the server and the apps together.
 
 **Bots**
 * Every bot from Acorn (250) to Lumen (2400) now makes mistakes like real players of its rating

@@ -2,9 +2,8 @@
 
 ## Current state (update at every milestone)
 
-Sessions 1–5 and 7 of the roadmap are complete, most of 6 and 8. Version 0.2.0 (plus unreleased
-changes in CHANGELOG.md): the app builds and runs natively on Arm64 (and x64), with Velopack
-installers and updates from the server.
+Sessions 1–5 and 7 of the roadmap are complete, most of 6 and 8. Version 0.3.0 (2026-10-05): the app
+builds and runs natively on Arm64 (and x64), with Velopack installers and updates from the server.
 
 | Area | Status |
 |---|---|
