@@ -15,6 +15,9 @@ release goes out.
   what the opponent can do next, like a person's.
 
 **Play**
+* Opening explorer: the analysis board's Explorer tab lists the moves real players chose in the
+  position (40,000 Lichess rapid games, players rated 1400+), how often, and how those games
+  ended; click one to play it.
 * Play from any position: "Play from here" on the analysis board, against a bot or pass and play
   (practice games: saved, not counted).
 * Pass and play asks for the players' names and can turn the board after each move.

@@ -144,12 +144,14 @@ public sealed partial class AnalysisPage : Page
         Refresh(animate);
     }
 
-    private void Board_MoveRequested(object? sender, BoardMoveEventArgs e)
+    private void Board_MoveRequested(object? sender, BoardMoveEventArgs e) => PlayMove(e.Move);
+
+    private void PlayMove(Move move)
     {
         // A move from an earlier position starts (or follows) a variation; the old line is kept.
         MoveNode at = CurrentNode;
-        if (!MoveGenerator.LegalMoves(at.Position).Contains(e.Move)) return;
-        MoveNode child = _tree.Play(at, e.Move);
+        if (!MoveGenerator.LegalMoves(at.Position).Contains(move)) return;
+        MoveNode child = _tree.Play(at, move);
         if (at.Ply + 1 < _line.Count && ReferenceEquals(_line[at.Ply + 1], child)) ShowPly(at.Ply + 1);
         else ShowLine(child, animate: true);
         SoundService.PlayFor(_game.Moves[at.Ply]);
@@ -225,6 +227,7 @@ public sealed partial class AnalysisPage : Page
 
         var probe = new Game(pos.ToFen()) { AutoDrawRules = false };
         StatusText.Text = probe.IsOver ? probe.ResultDescription : $"{pos.SideToMove.Name()} to move";
+        if (ExplorerView.Visibility == Visibility.Visible) ShowExplorer(pos);
 
         Lines.Children.Clear();
         EngineInfo.Text = EngineSwitch.IsOn ? "Thinking…" : "Off";
@@ -238,6 +241,109 @@ public sealed partial class AnalysisPage : Page
                 Eval.SetScore(probe.Winner switch { Color.White => Searcher.Mate, Color.Black => -Searcher.Mate, _ => 0 });
             }
         }
+    }
+
+    // ------------------------------------------------------------------ opening explorer
+
+    private void ListTabs_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+    {
+        bool explorer = sender.SelectedItem == ExplorerTab;
+        ExplorerView.Visibility = explorer ? Visibility.Visible : Visibility.Collapsed;
+        MoveList.Visibility = explorer ? Visibility.Collapsed : Visibility.Visible;
+        if (explorer) ShowExplorer(Board.Position);
+    }
+
+    /// <summary>Lists the moves people played in <paramref name="pos"/>: how often, and how those games ended.</summary>
+    private void ShowExplorer(Position pos)
+    {
+        IReadOnlyList<ExplorerMove> moves = OpeningExplorer.MovesFor(pos);
+        int total = moves.Sum(m => m.Games);
+        ExplorerSummary.Text = total == 0
+            ? "None of the explorer's games reached this position (it has the first 15 moves of each game, lines played at least 3 times)."
+            : $"{total:N0} game{(total == 1 ? "" : "s")} by Lichess players · click a move to play it";
+        ToolTipService.SetToolTip(ExplorerSummary, OpeningExplorer.Source);
+
+        ExplorerRows.Children.Clear();
+        foreach (ExplorerMove move in moves)
+        {
+            var row = new Grid { ColumnSpacing = 8 };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(52) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(92) });
+            row.ColumnDefinitions.Add(new ColumnDefinition());
+            row.Children.Add(new TextBlock { Text = move.San, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center });
+            var count = new TextBlock
+            {
+                Text = $"{move.Games:N0} · {100.0 * move.Games / total:0}%",
+                FontSize = 12,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            Grid.SetColumn(count, 1);
+            row.Children.Add(count);
+            FrameworkElement bar = ResultBar(move);
+            Grid.SetColumn(bar, 2);
+            row.Children.Add(bar);
+
+            var after = pos.Clone();
+            after.MakeMove(move.Move);
+            string name = OpeningBook.ForPosition(after) is Opening o ? $"{o.Name}\n" : "";
+            var button = new Button
+            {
+                Content = row,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                Padding = new Thickness(8, 3, 8, 3),
+                Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
+                BorderThickness = new Thickness(0),
+            };
+            ToolTipService.SetToolTip(button,
+                $"{name}White won {Percent(move.WhiteWins, move.Games)}, drew {Percent(move.Draws, move.Games)}, lost {Percent(move.BlackWins, move.Games)} of {move.Games:N0} games");
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, $"Explorer {move.San}");
+            Move m = move.Move;
+            button.Click += (_, _) => PlayMove(m);
+            ExplorerRows.Children.Add(button);
+        }
+    }
+
+    private static string Percent(int part, int whole) => $"{100.0 * part / Math.Max(1, whole):0}%";
+
+    /// <summary>A bar split into White wins, draws and Black wins, with percentages where they fit.</summary>
+    private static FrameworkElement ResultBar(ExplorerMove move)
+    {
+        var bar = new Grid { Height = 18, CornerRadius = new CornerRadius(3), VerticalAlignment = VerticalAlignment.Center };
+        (int Count, string Fill, string Text)[] parts =
+        [
+            (move.WhiteWins, "#F2F2F2", "#202020"),
+            (move.Draws, "#9E9E9E", "#202020"),
+            (move.BlackWins, "#3A3A3A", "#F2F2F2"),
+        ];
+        foreach (var (count, fill, text) in parts)
+        {
+            if (count == 0) continue;
+            double share = (double)count / move.Games;
+            bar.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(count, GridUnitType.Star) });
+            var segment = new Border { Background = Ui.Brush(fill) };
+            if (share >= 0.14)
+            {
+                segment.Child = new TextBlock
+                {
+                    Text = $"{100 * share:0}%",
+                    FontSize = 11,
+                    Foreground = Ui.Brush(text),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+            }
+            Grid.SetColumn(segment, bar.ColumnDefinitions.Count - 1);
+            bar.Children.Add(segment);
+        }
+        return new Border
+        {
+            Child = bar,
+            CornerRadius = new CornerRadius(3),
+            BorderThickness = new Thickness(1),
+            BorderBrush = Ui.NeutralFill(90),
+            VerticalAlignment = VerticalAlignment.Center,
+        };
     }
 
     private void Engine_InfoUpdated(Position root, SearchInfo info)

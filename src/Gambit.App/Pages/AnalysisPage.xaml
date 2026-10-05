@@ -81,15 +81,31 @@
                         <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
-                    <Grid Padding="8,4,8,0">
-                        <StackPanel Margin="0,0,120,0">
-                            <TextBlock Text="Moves" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                            <TextBlock x:Name="OpeningText" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
-                        </StackPanel>
-                        <TextBlock x:Name="StatusText" HorizontalAlignment="Right" Style="{StaticResource CaptionTextBlockStyle}"
-                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Top" Margin="0,3,0,0" />
-                    </Grid>
+                    <StackPanel Padding="8,0,8,0">
+                        <Grid>
+                            <SelectorBar x:Name="ListTabs" Margin="-12,-4,0,0" HorizontalAlignment="Left" SelectionChanged="ListTabs_SelectionChanged">
+                                <SelectorBarItem x:Name="MovesTab" Text="Moves" IsSelected="True" AutomationProperties.Name="Moves" />
+                                <SelectorBarItem x:Name="ExplorerTab" Text="Explorer" AutomationProperties.Name="Explorer"
+                                                 ToolTipService.ToolTip="What real players chose in this position, and how their games ended" />
+                            </SelectorBar>
+                            <TextBlock x:Name="StatusText" HorizontalAlignment="Right" Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                        </Grid>
+                        <TextBlock x:Name="OpeningText" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
                     <controls:MoveTreeView x:Name="MoveList" Grid.Row="1" NodeSelected="MoveList_NodeSelected" />
+
+                    <!-- Opening explorer: the moves people played here (Core/Openings/explorer.tsv) -->
+                    <Grid x:Name="ExplorerView" Grid.Row="1" RowSpacing="6" Padding="8,0,8,0" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <TextBlock x:Name="ExplorerSummary" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="ExplorerRows" Spacing="1" />
+                        </ScrollViewer>
+                    </Grid>
 
                     <!-- Actions for the side line on display (variations are shown inline in the move list) -->
                     <StackPanel x:Name="VariationPanel" Grid.Row="2" Spacing="6" Padding="8,0,8,4" Visibility="Collapsed">
