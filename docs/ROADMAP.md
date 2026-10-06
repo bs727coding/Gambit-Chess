@@ -92,8 +92,8 @@ Legend: `[x]` done · `[~]` partially done (see PROGRESS.md) · `[ ]` not starte
       openings played, puzzle themes heat-map, streaks, time played
 - [x] Achievements (~50): data-driven definitions, progress tracking, unlock toasts, achievement gallery
 - [x] First-run welcome: name + experience level → first suggested bot and starting puzzle rating
-- [~] Themes: 8 board themes ✔, 4 piece sets ✔, live preview ✔, custom board colors ✔, highlight color ✔,
-      sound packs (Classic, Soft, Retro) ✔ — accent color options not done (the app follows the Windows accent)
+- [x] Themes: 8 board themes ✔, 4 piece sets ✔, live preview ✔, custom board colors ✔, highlight color ✔,
+      sound packs (Classic, Soft, Retro) ✔, accent color from the board theme ✔, Inter typeface ✔
 
 ## Session 7 — Online multiplayer (server + client)
 

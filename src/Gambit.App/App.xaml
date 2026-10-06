@@ -98,6 +98,12 @@
                 <Setter Property="TextWrapping" Value="Wrap" />
             </Style>
 
+            <!-- Toolbar buttons: no fill or border until the pointer is over them. -->
+            <Style x:Key="ToolbarButtonStyle" TargetType="Button" BasedOn="{StaticResource SubtleButtonStyle}">
+                <Setter Property="Padding" Value="8,7" />
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
+            </Style>
+
             <x:Double x:Key="PageMaxWidth">1100</x:Double>
         </ResourceDictionary>
     </Application.Resources>

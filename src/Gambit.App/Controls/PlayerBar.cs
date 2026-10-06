@@ -19,7 +19,13 @@ public sealed partial class PlayerBar : UserControl
     private readonly StackPanel _captured = new() { Orientation = Orientation.Horizontal, Spacing = -7, VerticalAlignment = VerticalAlignment.Center };
     private readonly TextBlock _advantage = new() { FontSize = 13, Opacity = 0.75, Margin = new Thickness(6, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
     private readonly Border _clock = new() { CornerRadius = new CornerRadius(6), Padding = new Thickness(14, 4, 14, 4), MinWidth = 104, Visibility = Visibility.Collapsed };
-    private readonly TextBlock _clockText = new() { FontSize = 24, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Right };
+    private readonly TextBlock _clockText = new()
+    {
+        FontSize = 24,
+        FontWeight = FontWeights.SemiBold,
+        HorizontalAlignment = HorizontalAlignment.Right,
+        FontFamily = new FontFamily("Segoe UI Variable Display"), // equal-width digits: a running clock doesn't jiggle
+    };
 
     public PlayerBar()
     {

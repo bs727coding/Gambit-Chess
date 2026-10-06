@@ -4,18 +4,21 @@
 
 Sessions 1–5 and 7 of the roadmap are complete, most of 6 and 8. Version 0.3.0 (2026-10-05): the app
 builds and runs natively on Arm64 (and x64), with Velopack installers and updates from the server.
+Since then (unreleased, for 0.3.1): the "update required" message on the Online page and a UI rework
+(Inter, accent from the board theme, icon-rail menu, Play tabs, new Home, tidier game page, Settings
+in sections).
 
 | Area | Status |
 |---|---|
 | Toolchain | .NET SDK 10.0.401 Arm64 (machine-wide). Windows App SDK 2.5.1 via NuGet. No Visual Studio needed. |
 | Gambit.Core | Board, legal movegen (perft-verified, also king-less lesson positions), FEN/SAN/UCI/PGN (incl. variations), Game + draw rules, `MoveTree`, clock, Glicko-2, sessions (`IGameSession`), premove rules, openings (~150, embedded TSV), opening explorer (40k Lichess games, embedded move tree), puzzles (embedded CSV), lessons (embedded JSON) |
 | Gambit.Engine | PVS + TT + QS/SEE + null-move + LMR + MultiPV; PeSTO eval; 13 bots with opening books, calibrated against real players (Chess.com rapid scale) and checked in games (docs/BOT-CALIBRATION.md); `GameReviewer` (parallel, move classes, accuracy) |
-| Gambit.App | Welcome screen (first run), Home, Play (bots, pass-and-play with names and board turning, online), Game (clocks, premoves, hints, takebacks, resume after restart, sounds, online rematch), Game Review (with plain-language explanations), Analysis (multi-core engine lines, position editor, variations, opening explorer, play from here), Puzzles (rated, Rush, Survival, daily, themes, openings), Learn (5 courses / 52 lessons, opening review), Online (lobby, friends, direct challenges, chat), Profile (stats, rating chart, openings, ~50 achievements), Settings (board themes and custom colors, highlight color, pieces, sound packs, premoves, chat, progress back up / restore / reset, report a problem, updates); one window per profile |
+| Gambit.App | Inter typeface (bundled) and an accent color that follows the board theme (`Theming/AppAccent.cs`); icon-rail menu that opens on hover. Welcome screen (first run), Home (game in progress or next bot, daily puzzle, on small boards), Play (tabs: bots grouped by level, pass-and-play with names, time control, board turning and takebacks, online), Game (clocks, premoves, hints, takebacks, resume after restart, sounds, online rematch), Game Review (with plain-language explanations), Analysis (multi-core engine lines, position editor, variations, opening explorer, play from here), Puzzles (rated, Rush, Survival, daily, themes, openings), Learn (5 courses / 52 lessons, opening review), Online (lobby, friends, direct challenges, chat), Profile (stats, rating chart, openings, ~50 achievements), Settings (board themes and custom colors, highlight color, pieces, sound packs, premoves, chat, progress back up / restore / reset, report a problem, updates); one window per profile |
 | Online | `Gambit.Server` (ASP.NET Core + SignalR, authoritative, rematches, spectators, rate limits; accounts with invite-only sign-up, SQLite `gambit.db` (schema 2), admin commands; friends with live status, direct challenges, chat, game history; protocol 3), `Gambit.Online.Client` (`RemoteGameSession`, `AccountClient`), Dockerfile, docs/ONLINE.md; `./build.ps1 server` for LAN play |
 | Tools | `import_lichess_puzzles.py`, `Gambit.PuzzleGen` (experiments), `Gambit.BotArena` (ladder in games, with `id.Property=value` variants), `build_explorer.py` (explorer data), `Gambit.BotCalibration` + `extract_lichess_games.py` (bots vs real players), `Gambit.OnlineBot` (plays online, accepts rematches), `ui.ps1`, `ui-scroll.ps1`, `screenshot-quiet.ps1` |
 | Content | 21,162 puzzles from the Lichess puzzle DB (CC0; `tools/import_lichess_puzzles.py`): 400–1,100 per 100-point band from 400 to 2999, 49 practice themes with ≥ 120 each, 25 practice openings with ≥ 50 each; 52 lessons; explorer: 14,826 moves from 40,452 Lichess rapid games; tactic/mate solutions audited by the engine in tests |
 | Install | `./build.ps1 package -ServerUrl …` → Velopack Setup.exe + portable zip + update packages for win-arm64 and win-x64 in `artifacts/releases` (docs/RELEASING.md); the server offers them at `/download` and `/releases`. Not installed on this PC (installer tests are the user's). Developer install: `./build.ps1 install` |
-| Tests | 236 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
+| Tests | 239 passing (`./build.ps1 test`) incl. in-process server + real clients (games, challenges, rematches, spectating, rate limits) |
 
 ## Next steps
 
@@ -24,16 +27,22 @@ request): the bots finished and checked in games, play from any position, pass-a
 board turning, the plain-http warning, bug report files, friends / direct challenges / chat / game
 history (protocol 3), the opening explorer, three lessons, and board and sound customisation.
 
+**UI rework done (2026-10-05, unreleased)**, from the options the user picked: Inter, accent from
+the board theme, compact menu, Play with mode tabs, Home with continue + daily, tidier game page and
+Settings in sections. **Next: package 0.3.1** when the user is happy with the look ("Before we
+package it, let's do a UI rework").
+
 **For the user to try** (can't be checked from here): a real online game with a friend, with their
 PC as the server (LAN or Tailscale, RELEASING.md "Sharing without hosting"); the x64 installer on
-an Intel/AMD PC; the sound packs (Settings > Sound pack plays a sample); the retuned Iris and Jade.
+an Intel/AMD PC; the sound packs (Settings > Sound pack plays a sample); the retuned Iris and Jade;
+the menu opening on hover (needs a real mouse; the code was reviewed, not driven).
 
 **Candidates, for the user to pick:**
 * Chess960 (left out on 2026-10-05).
 * The explorer with a rating filter or more games: its data is one 150 MB slice of one month
   (40k games); more needs a bigger Lichess download (ask first: size and source).
 * More people positions: 2400 (Lumen's fit rests on 352) and 3,000 per band (half the noise).
-* Accent color options; the full bishop-and-knight W manoeuvre lesson.
+* The full bishop-and-knight W manoeuvre lesson.
 * From the 2026-10-03 audit: a one-command release upload, walkout counts that survive a server
   restart, an editable banned-words list (compiled into `NameRules.cs`).
 * No deployment, signing or Fly.io for now (the user, 2026-10-03). Parked unless asked:
@@ -367,3 +376,22 @@ work only on request).
   results file (the writer locks it): use separate files and append them.
 * Tools: the arena takes `id.Property=value` overrides and lets node/depth-limited bots search to
   their limits; `ui.ps1 invoke` opens combo boxes.
+* Version 0.3.0 packaged. Online: a version check (`/api/info`, protocol and app version) before
+  connecting, so the Online page says "Update required" where Connect was pressed.
+* UI rework (the user: "quite clunky - especially on the play page"; options picked from a list):
+  * Inter (variable font in Assets/Fonts). WinUI's text styles name the system font outright, so
+    App.xaml redefines them with WinUI's sizes, adds an implicit TextBlock style and sets
+    `ContentControlThemeFontFamily` in the theme dictionaries. Clocks keep Segoe UI Variable
+    (equal-width digits).
+  * Accent from the board theme: `AppAccent.Apply` writes `SystemAccentColor` and its six shades
+    into the app resources; a theme change is applied by toggling the window theme once (250 ms
+    after the last change). Built-in themes have a chosen accent; Custom derives one from the dark
+    squares.
+  * Menu: `LeftCompact`, opening after 400 ms of mouse rest on the rail (`PaneContentGrid`).
+  * Play: SelectorBar tabs; bots in a grouped GridView; compact settings card; pass and play gained
+    a time control and takebacks (`PassAndPlayTimeControl`, `PassAndPlayTakebacks`).
+  * Home: next game / daily puzzle on small non-interactive boards. A bot game is saved only after
+    its first move, so Home asks `GamePage.ActiveGameSnapshot()` for the open game.
+  * Game and Analysis: `ToolbarButtonStyle` (based on WinUI's `SubtleButtonStyle`, so disabled
+    buttons stay unfilled) in one card with the actions. Settings regrouped into six sections.
+  * Checked in the test window, dark and light, on every page.

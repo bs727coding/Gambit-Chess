@@ -1,5 +1,6 @@
 using Gambit.App.Helpers;
 using Gambit.App.Services;
+using Gambit.App.Theming;
 using Gambit.Engine.Bots;
 using Microsoft.UI;
 using Microsoft.UI.Text;
@@ -28,7 +29,8 @@ public sealed partial class ProfilePage : Page
     {
         PlayerProfile p = App.Profile.Profile;
         AvatarHost.Children.Clear();
-        AvatarHost.Children.Add(Ui.Avatar(p.Name.Length > 0 ? p.Name[..1].ToUpperInvariant() : "?", "#0F6CBD", 80));
+        // Your avatar wears the accent color (it follows the board theme).
+        AvatarHost.Children.Add(Ui.Avatar(p.Name.Length > 0 ? p.Name[..1].ToUpperInvariant() : "?", BoardThemes.ToHex(Ui.AccentBrush.Color), 80));
         NameText.Text = p.Name;
         SinceText.Text = $"Playing since {p.Created:MMMM d, yyyy}";
 

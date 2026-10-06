@@ -84,3 +84,6 @@ whichever way Gambit was installed. What changed in each version: [CHANGELOG.md]
 Puzzles come from the [Lichess puzzle database](https://database.lichess.org/#puzzles), released
 under [CC0](https://creativecommons.org/publicdomain/zero/1.0/) — thank you, Lichess and its players.
 `tools/import_lichess_puzzles.py` rebuilds the collection from a fresh download.
+
+The app's typeface is [Inter](https://rsms.me/inter/) by Rasmus Andersson, bundled under the SIL
+Open Font License 1.1 (`src/Gambit.App/Assets/Fonts/Inter-OFL.txt`).

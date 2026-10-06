@@ -33,7 +33,7 @@ public sealed partial class SettingsPage : Page
         HighlightBox.SelectedIndex = Math.Max(0, BoardThemes.Highlights.ToList().FindIndex(h => h.Id == s.HighlightColor));
         foreach (var pack in SoundService.Packs) SoundPackBox.Items.Add(pack.Name);
         SoundPackBox.SelectedIndex = Math.Max(0, SoundService.Packs.ToList().FindIndex(p => p.Id == s.SoundPack));
-        SoundPackBox.IsEnabled = s.SoundEnabled;
+        SoundPackBox.IsEnabled = SoundSampleButton.IsEnabled = s.SoundEnabled;
         BoardTheme custom = BoardThemes.Custom(s.CustomLightSquare, s.CustomDarkSquare);
         LightSquarePicker.Color = custom.Light;
         DarkSquarePicker.Color = custom.Dark;
@@ -55,6 +55,7 @@ public sealed partial class SettingsPage : Page
         AboutDetails.Text = $"Native {AppInfo.Architecture} build{commit} · {copy} · .NET {Environment.Version} · Windows App SDK · Engine: Gambit search (PVS, PeSTO evaluation)";
         UpdateRow.Visibility = UpdateService.Instance.IsInstalled ? Visibility.Visible : Visibility.Collapsed;
         ShowUpdateState();
+        ShowOnlineServer();
 
         BuildSwatches();
         var pos = Position.FromFen(PreviewFen);
@@ -153,6 +154,8 @@ public sealed partial class SettingsPage : Page
         await SoundService.PlaySampleAsync();
     }
 
+    private async void SoundSample_Click(object sender, RoutedEventArgs e) => await SoundService.PlaySampleAsync();
+
     private void ApplyPreview()
     {
         AppSettings s = App.Settings.Current;
@@ -192,11 +195,26 @@ public sealed partial class SettingsPage : Page
         bool soundWasOn = s.SoundEnabled;
         s.SoundEnabled = SoundSwitch.IsOn;
         if (!soundWasOn && s.SoundEnabled) SoundService.Play(GameSound.Move);
-        SoundPackBox.IsEnabled = s.SoundEnabled;
+        SoundPackBox.IsEnabled = SoundSampleButton.IsEnabled = s.SoundEnabled;
         ApplyPreview();
     }
 
-    // ------------------------------------------------------------------ your progress
+    // ------------------------------------------------------------------ online
+
+    /// <summary>The server and who is signed in there (both are changed on the Online page).</summary>
+    private void ShowOnlineServer()
+    {
+        string server = App.Settings.Current.OnlineServerUrl;
+        OnlineService online = OnlineService.Instance;
+        string? saved = OnlineCredentials.Get(server)?.Username;
+        OnlineServerText.Text = online.IsConnected
+            ? $"Signed in as {online.Client.Me?.Name ?? saved} on {server}"
+            : saved != null ? $"{saved} on {server} · not connected" : $"{server} · not signed in";
+    }
+
+    private void OpenOnline_Click(object sender, RoutedEventArgs e) => App.Window.NavigateTo("online");
+
+    // ------------------------------------------------------------------ your data
 
     private async void Backup_Click(object sender, RoutedEventArgs e)
     {

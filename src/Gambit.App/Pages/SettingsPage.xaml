@@ -5,11 +5,20 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:Gambit.App.Controls">
 
+    <Page.Resources>
+        <!-- One line under a setting's name -->
+        <Style x:Key="SettingDescriptionStyle" TargetType="TextBlock" BasedOn="{StaticResource CaptionTextBlockStyle}">
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+    </Page.Resources>
+
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel MaxWidth="{StaticResource PageMaxWidth}" Padding="32,16,32,32" Spacing="4">
-            <TextBlock Text="Settings" Style="{StaticResource PageTitleStyle}" Margin="0,0,0,12" />
+            <TextBlock Text="Settings" Style="{StaticResource PageTitleStyle}" Margin="0,0,0,4" />
 
-            <TextBlock Text="Appearance" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,8,0,6" />
+            <!-- ============================================================ Appearance -->
+            <TextBlock Text="Appearance" Style="{StaticResource SectionHeaderStyle}" Margin="0,8,0,8" />
             <Grid ColumnSpacing="24">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -26,27 +35,13 @@
                         <FontIcon Glyph="&#xE790;" VerticalAlignment="Center" />
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock Text="App theme" />
-                            <TextBlock Text="Light, dark, or follow Windows" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Text="Light, dark, or follow Windows" Style="{StaticResource SettingDescriptionStyle}" />
                         </StackPanel>
-                        <ComboBox x:Name="ThemeBox" Grid.Column="2" VerticalAlignment="Center" MinWidth="180" SelectionChanged="ThemeBox_SelectionChanged">
+                        <ComboBox x:Name="ThemeBox" Grid.Column="2" VerticalAlignment="Center" MinWidth="180" SelectionChanged="ThemeBox_SelectionChanged" AutomationProperties.Name="App theme">
                             <ComboBoxItem Content="Use system setting" />
                             <ComboBoxItem Content="Light" />
                             <ComboBoxItem Content="Dark" />
                         </ComboBox>
-                    </Grid>
-
-                    <Grid Style="{StaticResource SettingRowStyle}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <FontIcon Glyph="&#xE8B9;" VerticalAlignment="Center" />
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="Piece set" />
-                            <TextBlock Text="How the pieces are drawn" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                        </StackPanel>
-                        <ComboBox x:Name="PieceBox" Grid.Column="2" VerticalAlignment="Center" MinWidth="180" SelectionChanged="PieceBox_SelectionChanged" />
                     </Grid>
 
                     <Grid Style="{StaticResource SettingRowStyle}" RowSpacing="12">
@@ -62,7 +57,7 @@
                         <FontIcon Glyph="&#xE771;" VerticalAlignment="Center" />
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock Text="Board theme" />
-                            <TextBlock Text="Square colors, or pick your own with Custom" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Text="Square colors, or pick your own with Custom. The app's accent color follows the board." Style="{StaticResource SettingDescriptionStyle}" />
                         </StackPanel>
                         <VariableSizedWrapGrid x:Name="ThemeSwatches" Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" ItemWidth="120" ItemHeight="104" />
                         <StackPanel x:Name="CustomColorsPanel" Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="8" Visibility="Collapsed">
@@ -97,10 +92,24 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
+                        <FontIcon Glyph="&#xE8B9;" VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Piece set" />
+                            <TextBlock Text="How the pieces are drawn" Style="{StaticResource SettingDescriptionStyle}" />
+                        </StackPanel>
+                        <ComboBox x:Name="PieceBox" Grid.Column="2" VerticalAlignment="Center" MinWidth="180" SelectionChanged="PieceBox_SelectionChanged" AutomationProperties.Name="Piece set" />
+                    </Grid>
+
+                    <Grid Style="{StaticResource SettingRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
                         <FontIcon Glyph="&#xE7E6;" VerticalAlignment="Center" />
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock Text="Highlight color" />
-                            <TextBlock Text="The last move and the selected piece" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Text="The last move and the selected piece" Style="{StaticResource SettingDescriptionStyle}" />
                         </StackPanel>
                         <ComboBox x:Name="HighlightBox" Grid.Column="2" VerticalAlignment="Center" MinWidth="180" SelectionChanged="HighlightBox_SelectionChanged" AutomationProperties.Name="Highlight color" />
                     </Grid>
@@ -108,26 +117,14 @@
 
                 <Border Grid.Column="1" Style="{StaticResource CardStyle}" Padding="12" VerticalAlignment="Top">
                     <StackPanel Spacing="8">
-                        <TextBlock Text="Preview" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="Preview" Style="{StaticResource SettingDescriptionStyle}" />
                         <controls:ChessBoardControl x:Name="Preview" Width="272" Height="272" />
                     </StackPanel>
                 </Border>
             </Grid>
 
-            <TextBlock Text="Board &amp; moves" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,20,0,6" />
-            <Grid Style="{StaticResource SettingRowStyle}">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <FontIcon Glyph="&#xE7B3;" VerticalAlignment="Center" />
-                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock Text="Show legal moves" />
-                    <TextBlock Text="Dots on the squares a selected piece can move to" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                </StackPanel>
-                <ToggleSwitch x:Name="LegalSwitch" Grid.Column="2" MinWidth="0" Toggled="Switch_Toggled" />
-            </Grid>
+            <!-- ============================================================ Board -->
+            <TextBlock Text="Board" Style="{StaticResource SectionHeaderStyle}" />
             <Grid Style="{StaticResource SettingRowStyle}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -137,9 +134,9 @@
                 <FontIcon Glyph="&#xE8D2;" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <TextBlock Text="Show coordinates" />
-                    <TextBlock Text="Files and ranks along the board edges" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="Files and ranks along the board edges" Style="{StaticResource SettingDescriptionStyle}" />
                 </StackPanel>
-                <ToggleSwitch x:Name="CoordSwitch" Grid.Column="2" MinWidth="0" Toggled="Switch_Toggled" />
+                <ToggleSwitch x:Name="CoordSwitch" Grid.Column="2" MinWidth="0" Toggled="Switch_Toggled" AutomationProperties.Name="Show coordinates" />
             </Grid>
             <Grid Style="{StaticResource SettingRowStyle}">
                 <Grid.ColumnDefinitions>
@@ -150,9 +147,22 @@
                 <FontIcon Glyph="&#xE7E6;" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <TextBlock Text="Highlight last move" />
-                    <TextBlock Text="Tint the squares of the most recent move" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="Tint the squares of the most recent move" Style="{StaticResource SettingDescriptionStyle}" />
                 </StackPanel>
-                <ToggleSwitch x:Name="LastMoveSwitch" Grid.Column="2" MinWidth="0" Toggled="Switch_Toggled" />
+                <ToggleSwitch x:Name="LastMoveSwitch" Grid.Column="2" MinWidth="0" Toggled="Switch_Toggled" AutomationProperties.Name="Highlight last move" />
+            </Grid>
+            <Grid Style="{StaticResource SettingRowStyle}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <FontIcon Glyph="&#xE7B3;" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="Show legal moves" />
+                    <TextBlock Text="Dots on the squares a selected piece can move to" Style="{StaticResource SettingDescriptionStyle}" />
+                </StackPanel>
+                <ToggleSwitch x:Name="LegalSwitch" Grid.Column="2" MinWidth="0" Toggled="Switch_Toggled" AutomationProperties.Name="Show legal moves" />
             </Grid>
             <Grid Style="{StaticResource SettingRowStyle}">
                 <Grid.ColumnDefinitions>
@@ -163,9 +173,9 @@
                 <FontIcon Glyph="&#xE945;" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <TextBlock Text="Animate moves" />
-                    <TextBlock Text="Slide pieces smoothly into place" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="Slide pieces smoothly into place" Style="{StaticResource SettingDescriptionStyle}" />
                 </StackPanel>
-                <ToggleSwitch x:Name="AnimateSwitch" Grid.Column="2" MinWidth="0" Toggled="Switch_Toggled" />
+                <ToggleSwitch x:Name="AnimateSwitch" Grid.Column="2" MinWidth="0" Toggled="Switch_Toggled" AutomationProperties.Name="Animate moves" />
             </Grid>
             <Grid Style="{StaticResource SettingRowStyle}">
                 <Grid.ColumnDefinitions>
@@ -173,12 +183,12 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="&#x265B;" FontFamily="Segoe UI Symbol" FontSize="18" VerticalAlignment="Center" />
+                <TextBlock Text="&#x265B;" FontFamily="Segoe UI Symbol" FontSize="18" Width="20" TextAlignment="Center" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <TextBlock Text="Always promote to a queen" />
-                    <TextBlock Text="Skip the promotion picker" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="Skip the promotion picker" Style="{StaticResource SettingDescriptionStyle}" />
                 </StackPanel>
-                <ToggleSwitch x:Name="QueenSwitch" Grid.Column="2" MinWidth="0" Toggled="Switch_Toggled" />
+                <ToggleSwitch x:Name="QueenSwitch" Grid.Column="2" MinWidth="0" Toggled="Switch_Toggled" AutomationProperties.Name="Always promote to a queen" />
             </Grid>
             <Grid Style="{StaticResource SettingRowStyle}">
                 <Grid.ColumnDefinitions>
@@ -186,10 +196,10 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <FontIcon Glyph="&#xE916;" FontSize="18" VerticalAlignment="Center" />
+                <FontIcon Glyph="&#xE916;" FontSize="18" Width="20" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <TextBlock Text="Premoves" />
-                    <TextBlock Text="Queue your next move while your opponent is thinking (right-click cancels)" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                    <TextBlock Text="Queue your next move while your opponent is thinking (right-click cancels)" Style="{StaticResource SettingDescriptionStyle}" />
                 </StackPanel>
                 <ToggleSwitch x:Name="PremoveSwitch" Grid.Column="2" MinWidth="0" Toggled="Switch_Toggled" AutomationProperties.Name="Premoves" />
             </Grid>
@@ -202,24 +212,13 @@
                 <FontIcon Glyph="&#xE7C1;" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <TextBlock Text="Confirm before resigning" />
-                    <TextBlock Text="Ask before ending a game by resignation" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="Ask before ending a game by resignation" Style="{StaticResource SettingDescriptionStyle}" />
                 </StackPanel>
-                <ToggleSwitch x:Name="ResignSwitch" Grid.Column="2" MinWidth="0" Toggled="Switch_Toggled" />
-            </Grid>
-            <Grid Style="{StaticResource SettingRowStyle}">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <FontIcon Glyph="&#xE8BD;" VerticalAlignment="Center" />
-                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock Text="Chat in online games" />
-                    <TextBlock Text="Show messages from your opponent and let you write back" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                </StackPanel>
-                <ToggleSwitch x:Name="ChatSwitch" Grid.Column="2" MinWidth="0" Toggled="Switch_Toggled" AutomationProperties.Name="Chat in online games" />
+                <ToggleSwitch x:Name="ResignSwitch" Grid.Column="2" MinWidth="0" Toggled="Switch_Toggled" AutomationProperties.Name="Confirm before resigning" />
             </Grid>
 
+            <!-- ============================================================ Sound -->
+            <TextBlock Text="Sound" Style="{StaticResource SectionHeaderStyle}" />
             <Grid Style="{StaticResource SettingRowStyle}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -229,7 +228,7 @@
                 <FontIcon Glyph="&#xE767;" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <TextBlock Text="Sounds" />
-                    <TextBlock Text="Move, capture, check and game sounds" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="Move, capture, check and game sounds" Style="{StaticResource SettingDescriptionStyle}" />
                 </StackPanel>
                 <ToggleSwitch x:Name="SoundSwitch" Grid.Column="2" MinWidth="0" Toggled="Switch_Toggled" AutomationProperties.Name="Sounds" />
             </Grid>
@@ -242,11 +241,47 @@
                 <FontIcon Glyph="&#xE8D6;" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <TextBlock Text="Sound pack" />
-                    <TextBlock Text="Classic wooden pieces, soft felt taps or retro blips" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="Classic wooden pieces, soft felt taps or retro blips" Style="{StaticResource SettingDescriptionStyle}" />
                 </StackPanel>
-                <ComboBox x:Name="SoundPackBox" Grid.Column="2" VerticalAlignment="Center" MinWidth="180" SelectionChanged="SoundPackBox_SelectionChanged" AutomationProperties.Name="Sound pack" />
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button x:Name="SoundSampleButton" Click="SoundSample_Click" ToolTipService.ToolTip="Play a sample" AutomationProperties.Name="Play a sample of the sound pack">
+                        <FontIcon Glyph="&#xE768;" FontSize="14" />
+                    </Button>
+                    <ComboBox x:Name="SoundPackBox" MinWidth="180" SelectionChanged="SoundPackBox_SelectionChanged" AutomationProperties.Name="Sound pack" />
+                </StackPanel>
             </Grid>
-            <TextBlock Text="Your progress" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,20,0,6" />
+
+            <!-- ============================================================ Online -->
+            <TextBlock Text="Online" Style="{StaticResource SectionHeaderStyle}" />
+            <Grid Style="{StaticResource SettingRowStyle}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <FontIcon Glyph="&#xE774;" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="Server and account" />
+                    <TextBlock x:Name="OnlineServerText" Style="{StaticResource SettingDescriptionStyle}" />
+                </StackPanel>
+                <Button Grid.Column="2" Content="Open Online" VerticalAlignment="Center" MinWidth="120" Click="OpenOnline_Click" AutomationProperties.Name="Open the Online page" />
+            </Grid>
+            <Grid Style="{StaticResource SettingRowStyle}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <FontIcon Glyph="&#xE8BD;" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="Chat in online games" />
+                    <TextBlock Text="Show messages from your opponent and let you write back" Style="{StaticResource SettingDescriptionStyle}" />
+                </StackPanel>
+                <ToggleSwitch x:Name="ChatSwitch" Grid.Column="2" MinWidth="0" Toggled="Switch_Toggled" AutomationProperties.Name="Chat in online games" />
+            </Grid>
+
+            <!-- ============================================================ Your data -->
+            <TextBlock Text="Your data" Style="{StaticResource SectionHeaderStyle}" />
             <Grid Style="{StaticResource SettingRowStyle}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -256,7 +291,7 @@
                 <FontIcon Glyph="&#xE74E;" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <TextBlock Text="Back up" />
-                    <TextBlock Text="Save your games, ratings, puzzle and lesson progress, achievements and settings to a file" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                    <TextBlock Text="Save your games, ratings, puzzle and lesson progress, achievements and settings to a file" Style="{StaticResource SettingDescriptionStyle}" />
                 </StackPanel>
                 <Button Grid.Column="2" Content="Back up…" VerticalAlignment="Center" MinWidth="120" Click="Backup_Click" AutomationProperties.Name="Back up progress" />
             </Grid>
@@ -269,7 +304,7 @@
                 <FontIcon Glyph="&#xE81C;" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <TextBlock Text="Restore from a backup" />
-                    <TextBlock Text="Replace your progress with a backup file. A copy of your current progress is saved first, and Gambit restarts." Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                    <TextBlock Text="Replace your progress with a backup file. A copy of your current progress is saved first, and Gambit restarts." Style="{StaticResource SettingDescriptionStyle}" />
                 </StackPanel>
                 <Button Grid.Column="2" Content="Restore…" VerticalAlignment="Center" MinWidth="120" Click="Restore_Click" AutomationProperties.Name="Restore progress from a backup" />
             </Grid>
@@ -282,7 +317,7 @@
                 <FontIcon Glyph="&#xE74D;" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <TextBlock Text="Reset progress" />
-                    <TextBlock Text="Start over: delete your games, ratings, puzzle and lesson progress and achievements. Settings stay, and a backup is saved first." Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                    <TextBlock Text="Start over: delete your games, ratings, puzzle and lesson progress and achievements. Settings stay, and a backup is saved first." Style="{StaticResource SettingDescriptionStyle}" />
                 </StackPanel>
                 <Button Grid.Column="2" Content="Reset…" VerticalAlignment="Center" MinWidth="120" Click="Reset_Click" AutomationProperties.Name="Reset all progress" />
             </Grid>
@@ -295,14 +330,14 @@
                 <FontIcon Glyph="&#xEBE8;" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <TextBlock Text="Report a problem" />
-                    <TextBlock Text="Save the recent logs and settings to a file you can send to whoever runs your Gambit server (no games, progress or passwords)" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                    <TextBlock Text="Save the recent logs and settings to a file you can send to whoever runs your Gambit server (no games, progress or passwords)" Style="{StaticResource SettingDescriptionStyle}" />
                 </StackPanel>
                 <Button Grid.Column="2" Content="Save report…" VerticalAlignment="Center" MinWidth="120" Click="BugReport_Click" AutomationProperties.Name="Save a bug report" />
             </Grid>
-            <TextBlock x:Name="DataStatus" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                       TextWrapping="Wrap" Margin="4,4,0,0" Visibility="Collapsed" />
+            <TextBlock x:Name="DataStatus" Style="{StaticResource SettingDescriptionStyle}" Margin="4,4,0,0" Visibility="Collapsed" />
 
-            <TextBlock Text="About" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,20,0,6" />
+            <!-- ============================================================ About -->
+            <TextBlock Text="About" Style="{StaticResource SectionHeaderStyle}" />
             <Grid Style="{StaticResource SettingRowStyle}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -312,9 +347,9 @@
                 <FontIcon Glyph="&#xE946;" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <TextBlock x:Name="AboutTitle" />
-                    <TextBlock x:Name="AboutDetails" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                    <TextBlock x:Name="AboutDetails" Style="{StaticResource SettingDescriptionStyle}" />
                 </StackPanel>
-                <Button Grid.Column="2" Content="Open data folder" VerticalAlignment="Center" Click="OpenData_Click" />
+                <Button Grid.Column="2" Content="Open data folder" VerticalAlignment="Center" MinWidth="120" Click="OpenData_Click" />
             </Grid>
             <Grid x:Name="UpdateRow" Style="{StaticResource SettingRowStyle}" Visibility="Collapsed">
                 <Grid.ColumnDefinitions>
@@ -325,9 +360,20 @@
                 <FontIcon Glyph="&#xE895;" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <TextBlock Text="Updates" />
-                    <TextBlock x:Name="UpdateText" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                    <TextBlock x:Name="UpdateText" Style="{StaticResource SettingDescriptionStyle}" />
                 </StackPanel>
                 <Button x:Name="UpdateButton" Grid.Column="2" VerticalAlignment="Center" MinWidth="120" Content="Check for updates" Click="Update_Click" />
+            </Grid>
+            <Grid Style="{StaticResource SettingRowStyle}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <FontIcon Glyph="&#xEB51;" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="Credits" />
+                    <TextBlock Text="Puzzles from the Lichess puzzle database (CC0) · Inter typeface by Rasmus Andersson (SIL Open Font License)" Style="{StaticResource SettingDescriptionStyle}" />
+                </StackPanel>
             </Grid>
         </StackPanel>
     </ScrollViewer>

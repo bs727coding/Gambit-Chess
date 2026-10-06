@@ -72,9 +72,9 @@ public sealed partial class HomePage : Page
         if (GamePage.HasActiveGame)
         {
             _nextBot = null;
-            SavedGame? saved = ActiveGameStore.Load();
+            SavedGame? saved = GamePage.ActiveGameSnapshot();
             (Position pos, Move last) = Replay(saved);
-            bool humanIsBlack = saved is { BotId: not null, HumanColor: "black" };
+            bool humanIsBlack = saved?.HumanColor == "black";
             ShowBoard(NextGameBoardHost, pos, last, humanIsBlack);
             NextGameLabel.Text = "Your game in progress";
             if (saved?.BotId is string id)
@@ -86,7 +86,7 @@ public sealed partial class HomePage : Page
             else
             {
                 NextGameAvatar.Children.Add(new FontIcon { Glyph = "", FontSize = 20 });
-                NextGameTitle.Text = saved == null ? "Online game" : $"{saved.WhiteName ?? "White"} vs {saved.BlackName ?? "Black"}";
+                NextGameTitle.Text = saved == null ? "Game in progress" : $"{saved.WhiteName ?? "White"} vs {saved.BlackName ?? "Black"}";
             }
             NextGameDetail.Text = $"{pos.SideToMove.Name()} to move · move {pos.FullmoveNumber}";
             NextGameButton.Content = "Continue";

@@ -86,6 +86,19 @@ public sealed partial class GamePage : Page
     public static bool HasActiveGame => _instance?._vm.Session != null ? _instance._vm.HasUnfinishedGame : ActiveGameStore.Exists;
 
     /// <summary>
+    /// The unfinished game, for the Home page: the one open here (a bot game is saved only after its first
+    /// move, an online game never), else the one saved to disk. Null when there is none.
+    /// </summary>
+    public static SavedGame? ActiveGameSnapshot()
+    {
+        if (_instance?._vm is not { Session: { } session, Setup: { } setup, HasUnfinishedGame: true }) return ActiveGameStore.Load();
+        SavedGame snapshot = SavedGame.From(setup, session.Game, session.Clock);
+        snapshot.WhiteName ??= session.White.Name;
+        snapshot.BlackName ??= session.Black.Name;
+        return snapshot;
+    }
+
+    /// <summary>
     /// True while the user plays an online game: closing Gambit (an update restarts it) would leave it,
     /// and it is lost if they aren't back in time. Games against bots are saved after every move.
     /// </summary>
@@ -273,7 +286,7 @@ public sealed partial class GamePage : Page
     {
         OpponentCard card = _vm.Opponent;
         OpponentAvatar.Children.Clear();
-        OpponentAvatar.Children.Add(Ui.Avatar(card.Monogram, card.ColorHex, 56));
+        OpponentAvatar.Children.Add(Ui.Avatar(card.Monogram, card.ColorHex, 40));
         OpponentName.Text = card.Name;
         OpponentTagline.Text = card.Tagline;
     }

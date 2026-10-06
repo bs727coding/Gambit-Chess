@@ -21,7 +21,6 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <!-- Engine -->
@@ -120,86 +119,87 @@
                 </Grid>
             </Border>
 
-            <!-- Navigation -->
-            <Grid Grid.Row="2" ColumnSpacing="6">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Button HorizontalAlignment="Stretch" Click="First_Click" ToolTipService.ToolTip="Start (Home)" AutomationProperties.Name="Start">
-                    <FontIcon Glyph="&#xE892;" FontSize="14" />
-                </Button>
-                <Button Grid.Column="1" HorizontalAlignment="Stretch" Click="Prev_Click" ToolTipService.ToolTip="Back (←)" AutomationProperties.Name="Back">
-                    <FontIcon Glyph="&#xE76B;" FontSize="14" />
-                </Button>
-                <Button Grid.Column="2" HorizontalAlignment="Stretch" Click="Next_Click" ToolTipService.ToolTip="Forward (→)" AutomationProperties.Name="Forward">
-                    <FontIcon Glyph="&#xE76C;" FontSize="14" />
-                </Button>
-                <Button Grid.Column="3" HorizontalAlignment="Stretch" Click="Last_Click" ToolTipService.ToolTip="End (End)" AutomationProperties.Name="End">
-                    <FontIcon Glyph="&#xE893;" FontSize="14" />
-                </Button>
-                <Button Grid.Column="4" HorizontalAlignment="Stretch" Click="Flip_Click" ToolTipService.ToolTip="Flip board (F)" AutomationProperties.Name="Flip board">
-                    <FontIcon Glyph="&#xE7AD;" FontSize="14" />
-                </Button>
-                <Button Grid.Column="5" HorizontalAlignment="Stretch" Click="Reset_Click" ToolTipService.ToolTip="New analysis from the start position" AutomationProperties.Name="New analysis from the start position">
-                    <FontIcon Glyph="&#xE72C;" FontSize="14" />
-                </Button>
-            </Grid>
-
-            <!-- Import / export -->
-            <Border Grid.Row="3" Style="{StaticResource CardStyle}">
+            <!-- Toolbar (navigation, flip, new analysis), then import / export -->
+            <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="6">
                 <StackPanel Spacing="8">
-                    <Button HorizontalAlignment="Stretch" Click="PlayFromHere_Click" AutomationProperties.Name="Play from here"
-                            ToolTipService.ToolTip="Play this position against a bot or a friend">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon Glyph="&#xE768;" FontSize="14" />
-                            <TextBlock Text="Play from here" />
-                        </StackPanel>
-                    </Button>
-                    <Grid ColumnSpacing="6">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBox x:Name="FenBox" PlaceholderText="Paste a FEN and press Load" FontSize="12" AutomationProperties.Name="FEN" />
-                        <Button Grid.Column="1" Content="Load" Click="LoadFen_Click" AutomationProperties.Name="Load FEN" />
-                    </Grid>
-                    <Grid ColumnSpacing="6">
+                    <Grid ColumnSpacing="2">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <Button Grid.Column="3" HorizontalAlignment="Stretch" Click="Edit_Click" AutomationProperties.Name="Edit position" ToolTipService.ToolTip="Set up a position">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon Glyph="&#xE70F;" FontSize="13" />
-                                <TextBlock Text="Edit" />
-                            </StackPanel>
+                        <Button Style="{StaticResource ToolbarButtonStyle}" Click="First_Click" ToolTipService.ToolTip="Start (Home)" AutomationProperties.Name="Start">
+                            <FontIcon Glyph="&#xE892;" FontSize="14" />
                         </Button>
-                        <Button HorizontalAlignment="Stretch" Click="CopyFen_Click" AutomationProperties.Name="Copy FEN">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon Glyph="&#xE8C8;" FontSize="13" />
-                                <TextBlock Text="FEN" />
-                            </StackPanel>
+                        <Button Grid.Column="1" Style="{StaticResource ToolbarButtonStyle}" Click="Prev_Click" ToolTipService.ToolTip="Back (←)" AutomationProperties.Name="Back">
+                            <FontIcon Glyph="&#xE76B;" FontSize="14" />
                         </Button>
-                        <Button Grid.Column="1" HorizontalAlignment="Stretch" Click="CopyPgn_Click" AutomationProperties.Name="Copy PGN">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon Glyph="&#xE8C8;" FontSize="13" />
-                                <TextBlock Text="PGN" />
-                            </StackPanel>
+                        <Button Grid.Column="2" Style="{StaticResource ToolbarButtonStyle}" Click="Next_Click" ToolTipService.ToolTip="Forward (→)" AutomationProperties.Name="Forward">
+                            <FontIcon Glyph="&#xE76C;" FontSize="14" />
                         </Button>
-                        <Button Grid.Column="2" HorizontalAlignment="Stretch" Click="PastePgn_Click" ToolTipService.ToolTip="Load a PGN or FEN from the clipboard" AutomationProperties.Name="Load a PGN or FEN from the clipboard">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon Glyph="&#xE77F;" FontSize="13" />
-                                <TextBlock Text="Paste" />
-                            </StackPanel>
+                        <Button Grid.Column="3" Style="{StaticResource ToolbarButtonStyle}" Click="Last_Click" ToolTipService.ToolTip="End (End)" AutomationProperties.Name="End">
+                            <FontIcon Glyph="&#xE893;" FontSize="14" />
+                        </Button>
+                        <Button Grid.Column="4" Style="{StaticResource ToolbarButtonStyle}" Click="Flip_Click" ToolTipService.ToolTip="Flip board (F)" AutomationProperties.Name="Flip board">
+                            <FontIcon Glyph="&#xE7AD;" FontSize="14" />
+                        </Button>
+                        <Button Grid.Column="5" Style="{StaticResource ToolbarButtonStyle}" Click="Reset_Click" ToolTipService.ToolTip="New analysis from the start position" AutomationProperties.Name="New analysis from the start position">
+                            <FontIcon Glyph="&#xE72C;" FontSize="14" />
                         </Button>
                     </Grid>
+
+                    <StackPanel Spacing="8" Margin="10,0,10,10">
+                        <Button HorizontalAlignment="Stretch" Click="PlayFromHere_Click" AutomationProperties.Name="Play from here"
+                                ToolTipService.ToolTip="Play this position against a bot or a friend">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE768;" FontSize="14" />
+                                <TextBlock Text="Play from here" />
+                            </StackPanel>
+                        </Button>
+                        <Grid ColumnSpacing="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="FenBox" PlaceholderText="Paste a FEN and press Load" FontSize="12" AutomationProperties.Name="FEN" />
+                            <Button Grid.Column="1" Content="Load" Click="LoadFen_Click" AutomationProperties.Name="Load FEN" />
+                        </Grid>
+                        <Grid ColumnSpacing="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="3" HorizontalAlignment="Stretch" Click="Edit_Click" AutomationProperties.Name="Edit position" ToolTipService.ToolTip="Set up a position">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE70F;" FontSize="13" />
+                                    <TextBlock Text="Edit" />
+                                </StackPanel>
+                            </Button>
+                            <Button HorizontalAlignment="Stretch" Click="CopyFen_Click" AutomationProperties.Name="Copy FEN">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE8C8;" FontSize="13" />
+                                    <TextBlock Text="FEN" />
+                                </StackPanel>
+                            </Button>
+                            <Button Grid.Column="1" HorizontalAlignment="Stretch" Click="CopyPgn_Click" AutomationProperties.Name="Copy PGN">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE8C8;" FontSize="13" />
+                                    <TextBlock Text="PGN" />
+                                </StackPanel>
+                            </Button>
+                            <Button Grid.Column="2" HorizontalAlignment="Stretch" Click="PastePgn_Click" ToolTipService.ToolTip="Load a PGN or FEN from the clipboard" AutomationProperties.Name="Load a PGN or FEN from the clipboard">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE77F;" FontSize="13" />
+                                    <TextBlock Text="Paste" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </Grid>

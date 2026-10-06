@@ -113,7 +113,7 @@ public sealed partial class PlayPage : Page
 
     private void ShowMode()
     {
-        object? tab = ModeTabs.SelectedItem;
+        SelectorBarItem? tab = ModeTabs.SelectedItem;
         ComputerView.Visibility = tab == ComputerTab || tab == null ? Visibility.Visible : Visibility.Collapsed;
         PassAndPlayView.Visibility = tab == PassAndPlayTab ? Visibility.Visible : Visibility.Collapsed;
         OnlineView.Visibility = tab == OnlineTab ? Visibility.Visible : Visibility.Collapsed;

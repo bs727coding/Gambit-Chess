@@ -5,6 +5,25 @@ release goes out.
 
 ## Unreleased
 
+**A cleaner look**
+* Inter for all text (bundled, SIL Open Font License), and the accent color follows the board
+  theme: buttons, selections and the clock turn green with Tournament green, purple with Amethyst,
+  and pick up your own colors with Custom.
+* The menu is an icon rail that leaves more room for the board; rest the mouse on it for the
+  labels (or use the button at the top).
+* Play: tabs for Computer, Pass and play and Online, so each comes first instead of below the
+  bots. Bots are grouped by level (Beginner, Club player, Expert, Full strength) beside a compact
+  card with the side, time control and takebacks. Pass and play has its own settings before the
+  game starts: names, time control, turning the board, takebacks.
+* Home: your game in progress (or the suggested next bot) and the daily puzzle, each on a small
+  board, then shortcuts to puzzles, lessons and analysis, your progress and recent games.
+* Game and analysis boards: the move buttons sit in a quiet toolbar in one card with the game's
+  actions; a smaller opponent card; clock digits keep their width as the time runs.
+* Settings in sections: Appearance, Board, Sound, Online, Your data and About, with a button to
+  hear the sound pack, the online server and account, and credits.
+* Your avatar on the Profile page wears the accent color.
+* Fixed: Home called a bot game "Online game" until its first move.
+
 **Online**
 * When this copy and the server run different versions of Gambit, the Online page says so right
   under the server address ("Update required", or that the server needs an update) and offers the

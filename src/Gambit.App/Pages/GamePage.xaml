@@ -26,6 +26,7 @@
 
         <!-- Side panel -->
         <Grid Grid.Column="1" RowSpacing="12">
+            <!-- Rows 2 and 3 share the toolbar card, so no gap between them -->
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -34,17 +35,17 @@
             </Grid.RowDefinitions>
 
             <!-- Opponent card with chat bubble -->
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel Spacing="12">
+            <Border Style="{StaticResource CardStyle}" Padding="12">
+                <StackPanel Spacing="10">
                     <Grid ColumnSpacing="12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <Grid x:Name="OpponentAvatar" Width="56" Height="56" VerticalAlignment="Top" />
+                        <Grid x:Name="OpponentAvatar" Width="40" Height="40" VerticalAlignment="Center" />
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock x:Name="OpponentName" Style="{StaticResource SubtitleTextBlockStyle}" />
-                            <TextBlock x:Name="OpponentTagline" Style="{StaticResource SecondaryTextStyle}" />
+                            <TextBlock x:Name="OpponentName" Style="{StaticResource BodyStrongTextBlockStyle}" FontSize="16" />
+                            <TextBlock x:Name="OpponentTagline" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         </StackPanel>
                     </Grid>
                     <Border x:Name="ChatBubble" CornerRadius="8" Padding="12,8"
@@ -94,8 +95,9 @@
                 </Grid>
             </Border>
 
-            <!-- History navigation -->
-            <Grid Grid.Row="2" ColumnSpacing="6">
+            <!-- Toolbar: history navigation, flip and hint, then the game actions (rows 2 and 3) -->
+            <Border Grid.Row="2" Grid.RowSpan="2" Style="{StaticResource CardStyle}" Padding="6" />
+            <Grid Grid.Row="2" ColumnSpacing="2" Margin="6,6,6,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
@@ -104,28 +106,28 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <Button x:Name="HintButton" Grid.Column="5" HorizontalAlignment="Stretch" Click="Hint_Click" ToolTipService.ToolTip="Hint: show the engine's suggestion" AutomationProperties.Name="Hint">
+                <Button x:Name="HintButton" Grid.Column="5" Style="{StaticResource ToolbarButtonStyle}" Click="Hint_Click" ToolTipService.ToolTip="Hint: show the engine's suggestion" AutomationProperties.Name="Hint">
                     <FontIcon Glyph="&#xE82F;" FontSize="14" />
                 </Button>
-                <Button x:Name="FirstButton" HorizontalAlignment="Stretch" Click="First_Click" ToolTipService.ToolTip="First move (Home)" AutomationProperties.Name="First move">
+                <Button x:Name="FirstButton" Style="{StaticResource ToolbarButtonStyle}" Click="First_Click" ToolTipService.ToolTip="First move (Home)" AutomationProperties.Name="First move">
                     <FontIcon Glyph="&#xE892;" FontSize="14" />
                 </Button>
-                <Button x:Name="PrevButton" Grid.Column="1" HorizontalAlignment="Stretch" Click="Prev_Click" ToolTipService.ToolTip="Previous move (←)" AutomationProperties.Name="Previous move">
+                <Button x:Name="PrevButton" Grid.Column="1" Style="{StaticResource ToolbarButtonStyle}" Click="Prev_Click" ToolTipService.ToolTip="Previous move (←)" AutomationProperties.Name="Previous move">
                     <FontIcon Glyph="&#xE76B;" FontSize="14" />
                 </Button>
-                <Button x:Name="NextButton" Grid.Column="2" HorizontalAlignment="Stretch" Click="Next_Click" ToolTipService.ToolTip="Next move (→)" AutomationProperties.Name="Next move">
+                <Button x:Name="NextButton" Grid.Column="2" Style="{StaticResource ToolbarButtonStyle}" Click="Next_Click" ToolTipService.ToolTip="Next move (→)" AutomationProperties.Name="Next move">
                     <FontIcon Glyph="&#xE76C;" FontSize="14" />
                 </Button>
-                <Button x:Name="LastButton" Grid.Column="3" HorizontalAlignment="Stretch" Click="Last_Click" ToolTipService.ToolTip="Latest position (End)" AutomationProperties.Name="Latest position">
+                <Button x:Name="LastButton" Grid.Column="3" Style="{StaticResource ToolbarButtonStyle}" Click="Last_Click" ToolTipService.ToolTip="Latest position (End)" AutomationProperties.Name="Latest position">
                     <FontIcon Glyph="&#xE893;" FontSize="14" />
                 </Button>
-                <Button Grid.Column="4" HorizontalAlignment="Stretch" Click="Flip_Click" ToolTipService.ToolTip="Flip board (F)" AutomationProperties.Name="Flip board">
+                <Button Grid.Column="4" Style="{StaticResource ToolbarButtonStyle}" Click="Flip_Click" ToolTipService.ToolTip="Flip board (F)" AutomationProperties.Name="Flip board">
                     <FontIcon Glyph="&#xE7AD;" FontSize="14" />
                 </Button>
             </Grid>
 
             <!-- Game actions (columns are laid out in code: only the visible buttons get one) -->
-            <Grid Grid.Row="3" x:Name="GameActions" ColumnSpacing="6">
+            <Grid Grid.Row="3" x:Name="GameActions" ColumnSpacing="6" Margin="12,0,12,12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
@@ -152,7 +154,7 @@
             </Grid>
 
             <!-- Post-game (same row: the game actions hide when the game ends) -->
-            <Grid Grid.Row="3" x:Name="PostGamePanel" ColumnSpacing="6" RowSpacing="6" Visibility="Collapsed">
+            <Grid Grid.Row="3" x:Name="PostGamePanel" ColumnSpacing="6" RowSpacing="6" Visibility="Collapsed" Margin="12,0,12,12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
